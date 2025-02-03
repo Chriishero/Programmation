@@ -1,0 +1,35 @@
+*
+
+!*/
+
+C#/
+Python/Autre/
+C-C++/external libs/
+build/
+C-C++/Project/SFML/
+C-C++/Apprentissage/External/SFML/
+C-C++/Apprentissage/External/SFML - Mario Game/vcpkg-master/ 
+C-C++/Apprentissage/External/SFML - Mario Game/include/
+Python/Intelligence Artificielle/13 - Seaborn/data-sns/
+
+!*.gitignore
+
+!*.pro
+!*.pro.user
+!*.sln
+!*.vcxproj
+!*.vcxproj.filters
+!*.vcxproj.user
+
+!*.ttf
+!*.wav
+!*.png
+!*.jpeg
+
+!*.ipynb
+!*.py
+!*.c
+!*.cpp
+!*.h
+!*.hpp
+!*.ui

@@ -1,0 +1,610 @@
+#include "Character.h"
+#include <iostream>
+#include <random>
+#include <algorithm>
+#include <filesystem>
+
+const float runVelocity = 3.0f;
+const float jumpVelocity = 10.0f;
+
+Character::Character(sf::String name) : m_name(name)
+{
+}
+
+void Character::loadAnimation()
+{
+	for (auto animationName : animationNames)
+	{
+		std::vector<sf::Texture> textures{};
+		std::cout << animationName << " : " << std::endl;
+		for (auto texture : Resources::textures)
+		{
+			std::string stardWith = m_name + "/" + animationName;
+			if (texture.first.starts_with(stardWith))
+			{
+				std::cout << "	" << texture.first << std::endl;
+
+				textures.push_back(texture.second);
+			}
+		}
+		//std::reverse(standTextures.begin(), standTextures.end());
+		std::cout << "textyres size : " << textures.size() << std::endl;
+
+		std::vector<AnimFrame> frames{};
+		for (size_t i = 0; i < textures.size(); i++)
+		{
+			auto animFrame = AnimFrame(i * 0.15f, textures[i]);
+			frames.push_back(animFrame);
+		}
+		std::reverse(frames.begin(), frames.end());
+		animations[animationName] = Animation(0.15f * textures.size(), frames);
+		std::cout << "taille frames : " << frames.size() << std::endl;
+	}
+	std::cout << "name animations : " << std::endl;
+	for (auto name : animations)
+	{
+		std::cout << "	" << name.first << std::endl;
+	}
+}
+
+void Character::loadSprites()
+{
+	for (auto& directory : std::filesystem::directory_iterator("./res/sprites/"))
+	{
+		if (directory.is_directory())
+		{
+			for (auto& file : std::filesystem::directory_iterator("./res/sprites/" + directory.path().filename().string()))
+			{
+				if (file.is_regular_file() && (file.path().extension() == ".png" || file.path().extension() == ".jpg"))
+				{
+					Resources::textures[directory.path().filename().string() + "/" + file.path().filename().string()].loadFromFile(file.path().string());
+				}
+			}
+		}
+	}
+}
+
+void Character::createShape(sf::Vector2f size)
+{
+	fixtureData.listener = this;
+	fixtureData.character = this;
+	fixtureData.type = FixtureDataType::Character;
+
+	b2FixtureDef fixtureDef{};
+	fixtureDef.userData.pointer = (uintptr_t)&fixtureData;
+	fixtureDef.density = 1.0f;
+	fixtureDef.friction = 0.0f;
+
+	b2PolygonShape polygonShape{};
+	polygonShape.SetAsBox(size.x / 2, size.y / 2);
+	fixtureDef.shape = &polygonShape;
+	body->CreateFixture(&fixtureDef);
+
+	polygonShape.SetAsBox(size.x / 2, size.y / 2);
+	fixtureDef.isSensor = true;
+	bodyFixture = body->CreateFixture(&fixtureDef);
+
+	polygonShape.SetAsBox(0.2f, 0.2f, b2Vec2(0.0f, 2.0f), 0.0f);
+	fixtureDef.isSensor = true;
+	groundFixture = body->CreateFixture(&fixtureDef);
+}
+
+void Character::begin()
+{
+	sf::Texture marioSheet = Resources::textures["Sheet/" + m_name + ".png"];
+	sf::Image imageMarioSheet = marioSheet.copyToImage();
+	sf::Vector2u sheetSize = imageMarioSheet.getSize();
+
+	sf::RenderTexture* spriteRenderTexture;
+
+	std::vector<std::string> animName = animationNames;
+	std::reverse(animName.begin(), animName.end());
+
+	int emptyLine = 0;
+	int nSprite = 0;
+	int spriteSize = 0;
+	for (auto y = 0; y < sheetSize.y; y++)
+	{
+		for (auto x = 0; x < sheetSize.x; x++)
+		{
+			if (imageMarioSheet.getPixel(x, y).a != 0)
+			{
+				emptyLine = 0;
+
+				sf::Image pixelN;
+				pixelN.create(1, 1, imageMarioSheet.getPixel(x, y));
+
+				sf::Texture texturePixel;
+				texturePixel.loadFromImage(pixelN);
+
+				sf::Sprite spritePixel;
+				spritePixel.setTexture(texturePixel);
+				spritePixel.setPosition(x, y);
+
+				spriteRenderTexture = new sf::RenderTexture();
+				spriteRenderTexture->draw(spritePixel);
+				spriteRenderTexture->create(sheetSize.x, sheetSize.y);
+
+				imageMarioSheet.setPixel(x, y, sf::Color(0, 0, 0, 0));
+
+				int sx = x;
+				int sy = y;
+				
+				std::vector<std::vector<int>> previousPos;
+				previousPos.push_back({sx, sy});
+
+				int left = x;
+				int top = y;
+				int right{};
+				int bottom{};
+
+				bool firstPixel = false;
+
+				const int offsets[8][2] = {
+					{0, 1}, {0, -1},
+					{1, 0}, {1, 1}, {1, -1},
+					{-1, 0}, {-1, 1}, {-1, -1}
+				};
+				while (1)
+				{
+					bool foundPixel = false;
+
+					for (auto offset : offsets) 
+					{
+						int newSX = sx + offset[0];
+						int newSY = sy + offset[1];
+
+						if (imageMarioSheet.getPixel(newSX, newSY).a != 0)
+						{
+							sx = newSX;
+							sy = newSY;
+							previousPos.push_back({ sx, sy });
+
+							if (!firstPixel || sx > right)
+							{
+								firstPixel = true;
+								right = sx;
+							}
+							if (!firstPixel || sy > bottom)
+							{
+								firstPixel = true;
+								bottom = sy;
+							}
+							if (!firstPixel || sx < left)
+							{
+								firstPixel = true;
+								left = sx;
+							}
+							if (!firstPixel || sy < top)
+							{
+								firstPixel = true;
+								top = sy;
+							}
+
+							pixelN.create(1, 1, imageMarioSheet.getPixel(sx, sy));
+							texturePixel.loadFromImage(pixelN);
+							spritePixel.setTexture(texturePixel);
+							spritePixel.setPosition(sx, sy);
+							spriteRenderTexture->draw(spritePixel);
+							imageMarioSheet.setPixel(sx, sy, sf::Color(0, 0, 0, 0));
+
+							//std::cout << "Nouveau pixel trouvé. : (" << sx << ";" << sy << ")" << std::endl;
+							foundPixel = true;
+						}
+					}
+					if (!foundPixel)
+					{
+						previousPos.pop_back();
+						if (previousPos.empty())
+						{
+							break;
+						}
+						auto prev = previousPos.back();
+						sx = prev[0];
+						sy = prev[1];
+					}
+				}
+				spriteRenderTexture->display();
+				sf::Sprite characterSprite;
+				characterSprite.setTexture(spriteRenderTexture->getTexture());
+
+				spriteSize = bottom - top + 1;
+				sf::IntRect spriteBounds(left, top, right-left+1, spriteSize);
+				characterSprite.setTextureRect(spriteBounds);
+
+				spriteRenderTexture = new sf::RenderTexture();
+				spriteRenderTexture->create(spriteBounds.width, spriteBounds.height);
+				spriteRenderTexture->draw(characterSprite);
+				renderList.push_back(spriteRenderTexture);
+
+				nSprite++;
+				continue;
+			}
+			else
+			{
+				bool foundPixel = false;
+				for (size_t i = 0; i < 8; i++)
+				{
+					if (y + i < sheetSize.y && imageMarioSheet.getPixel(x, y + i).a != 0)
+					{
+						foundPixel = true;
+						y += i;
+						break;
+					}
+				}
+				if (foundPixel)
+				{
+					break;
+				}
+			}
+		}
+		emptyLine++;
+		if (emptyLine > spriteSize / 3)
+		{
+			if(!renderList.empty())
+			{
+				for (size_t i = 0; i < renderList.size(); i++)
+				{
+					renderList[i]->display();
+					sf::Texture marioTexture = renderList[i]->getTexture();
+					sf::Sprite spriteToDisplay;
+					spriteToDisplay.setTexture(marioTexture);
+
+					sf::Image image = marioTexture.copyToImage();
+					image.saveToFile("res/sprites/" + m_name + "/" + animName.back() + "-" + std::to_string(i) + ".png");
+
+				}
+				std::cout << renderList.size() << " : " << animName.back() << std::endl;
+				renderList.clear();
+				animName.pop_back();
+			}
+		}
+	}
+
+	loadSprites();
+	loadAnimation();
+
+	for (auto name : animationNames)
+	{
+		animationsKeyPress[name] = false;
+		animationsFrame[name] = animations[name].getm_frames().size()-1;
+	}
+	animationsFrame["guarding"] = 2;
+
+	b2BodyDef bodyDef{};
+	bodyDef.type = b2_dynamicBody;
+	bodyDef.position.Set(position.x, position.y);
+	bodyDef.fixedRotation = true;
+	body = Physics::world->CreateBody(&bodyDef);
+
+	createShape(sf::Vector2f(0.5f, 0.5f));
+}
+
+void Character::update(float deltaTime)
+{
+	float xSpeed = runVelocity;
+	float ySpeed = jumpVelocity;
+
+	b2Vec2 velocity = body->GetLinearVelocity();
+	velocity.x = 0.0f;
+
+	if(!damaged)
+	{
+		if (knockback)
+		{
+			for (auto animation : animations)
+			{
+				if (animation.first != "damage")
+					animation.second.setm_time(0.0f);
+			}
+			animations["damage"].update(deltaTime);
+			textureToDraw = animations["damage"].getTexture();
+
+			auto frames = animations["damage"].getm_frames();
+			if (animations["damage"].getm_time() >= frames[0].time)
+			{
+				std::cout << std::string(m_name) << " : knockack off" << std::endl;
+				knockback = false;
+				animations["damage"].setm_time(0.0f);
+			}
+		}
+		else
+		{
+			auto updateReleasedFrames = [this, deltaTime](std::string name) -> void
+				{
+					if (!animationsKeyPress[name])
+					{
+						animations[name].update(deltaTime);
+						std::cout << "attacks ! " << std::endl;
+						if (m_forceLoad > 1.0f)
+						{
+							attacks = true;
+							std::cout << "attacks ! " << std::endl;
+						}
+					}
+					textureToDraw = animations[name].getTexture();
+
+					auto frames = animations[name].getm_frames();
+					if (animations[name].getm_time() >= frames[animationsFrame[name]].time)
+					{
+						animationsKeyPress[name] = true;
+					}
+				};
+
+			bool keyPress = false;
+			sf::Keyboard::Key key;
+			if (sf::Mouse::isButtonPressed(sf::Mouse::Right) || sf::Keyboard::isKeyPressed(sf::Keyboard::B))
+			{
+				if(m_forceLoad <= 5.0f)
+					m_forceLoad += 0.05f;
+				std::cout << "smash force load : " << m_forceLoad << std::endl;
+				updateReleasedFrames("smash");
+			}
+			else if (sf::Keyboard::isKeyPressed(sf::Keyboard::V) &&
+				(sf::Keyboard::isKeyPressed(key = sf::Keyboard::Right) || sf::Keyboard::isKeyPressed(key = sf::Keyboard::Left)))
+			{
+				if (m_forceLoad <= 5.0f)
+					m_forceLoad += 0.05f;
+
+				facingLeft = (key == sf::Keyboard::Right) ? false : true;
+				updateReleasedFrames("tilt");
+				std::cout << "tilt force load : " << m_forceLoad << std::endl;
+			}
+			else if (sf::Keyboard::isKeyPressed(sf::Keyboard::V) &&
+				(sf::Keyboard::isKeyPressed(sf::Keyboard::Up) || sf::Keyboard::isKeyPressed(sf::Keyboard::Space)))
+			{
+				if (m_forceLoad <= 5.0f)
+					m_forceLoad += 0.05f;
+
+				updateReleasedFrames("uptilt");
+				std::cout << "uptilt force load : " << m_forceLoad << std::endl;
+			}
+			else if (sf::Keyboard::isKeyPressed(sf::Keyboard::V) &&
+				(sf::Keyboard::isKeyPressed(sf::Keyboard::Down)))
+			{
+				if (m_forceLoad <= 5.0f)
+					m_forceLoad += 0.05f;
+
+				updateReleasedFrames("downtilt");
+				std::cout << "downtilt force load : " << m_forceLoad << std::endl;
+			}
+
+			else if (sf::Mouse::isButtonPressed(sf::Mouse::Middle) || sf::Keyboard::isKeyPressed(sf::Keyboard::X))
+			{
+				updateReleasedFrames("guarding");
+			}
+
+			else if (win)
+			{
+				animations["win"].update(deltaTime);
+				textureToDraw = animations["win"].getTexture();
+			}
+			else
+			{
+				for (auto name : animationNames)
+				{
+					if (animationsKeyPress[name])
+					{
+						keyPress = true;
+						auto previousTime = animations[name].getm_time();
+
+						animations[name].update(deltaTime);
+						textureToDraw = animations[name].getTexture();
+
+						if (name != "guarding")
+						{
+							attacks = true;
+						}
+						if (name == "uptilt" && isGrounded)
+						{
+							velocity.y = -ySpeed;
+						}
+
+						if (animations[name].getm_time() < previousTime)
+						{
+							animationsKeyPress[name] = false;
+						}
+					}
+				}
+				if (!keyPress)
+				{
+					attacks = false;
+					run = false;
+					m_forceLoad = 1.0f;
+					if (sf::Keyboard::isKeyPressed(key = sf::Keyboard::Right) || sf::Keyboard::isKeyPressed(key = sf::Keyboard::Left))
+					{
+						run = true;
+						facingLeft = (key == sf::Keyboard::Right) ? false : true;
+						velocity.x += (key == sf::Keyboard::Right) ? xSpeed : -xSpeed;
+
+						if (std::string(m_name) == "Link")
+						{
+							facingLeft = true;
+							velocity.x += -xSpeed;
+						}
+
+						animations["running"].update(deltaTime);
+						textureToDraw = animations["running"].getTexture();
+					}
+					if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up) || sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
+					{
+						if (isGrounded)
+						{
+							velocity.y = -ySpeed;
+							landing = true;
+						}
+						textureToDraw = animations["jump"].getTexture();
+					}
+					if (sf::Mouse::isButtonPressed(sf::Mouse::Left) || sf::Keyboard::isKeyPressed(sf::Keyboard::C))
+					{
+						if (isGrounded && !run)
+						{
+							animations["attacks"].update(deltaTime);
+							textureToDraw = animations["attacks"].getTexture();
+							attacks = true;
+						}
+						else if (!isGrounded)
+						{
+							aerial = true;
+							landing = false;
+						}
+					}
+					if (landing || aerial)
+					{
+						std::string name;
+						if (aerial && velocity.x == 0.0f)
+						{
+							velocity.x += !facingLeft ? xSpeed - 1 : -xSpeed + 1;
+							name = "aerial";
+						}
+						else if (damaged)
+							name = "damage";
+						else
+							name = "jump";
+
+						if ((previousYPosition < body->GetPosition().y))
+						{
+							auto frames = animations[name].getm_frames();
+							animations[name].update(deltaTime);
+							textureToDraw = animations[name].getTexture();
+							if (animations[name].getm_time() >= frames[0].time)
+							{
+								if (!isGrounded)
+									textureToDraw = animations[name].getTexture();
+							}
+						}
+						else if ((previousYPosition > body->GetPosition().y))
+						{
+							textureToDraw = animations[name].getTexture();
+						}
+						else
+						{
+							landing = false;
+							aerial = false;
+							animations[name].setm_time(0.0f);
+						}
+					}
+					if (isGrounded && !run && !attacks && !knockback)
+					{
+						animations["aerial"].setm_time(0.0f);
+						animations["jump"].setm_time(0.0f);
+
+						velocity.x = 0.0f;
+						animations["stand"].update(deltaTime);
+						textureToDraw = animations["stand"].getTexture();
+					}
+				}
+			}
+			if (std::string(m_name) == "Link")
+			{
+				velocity.x = 0.0f;
+				animations["stand"].update(deltaTime);
+				textureToDraw = animations["stand"].getTexture();
+			}
+			body->SetLinearVelocity(velocity);
+		}
+	}
+
+	else if(damaged)
+	{
+		std::cout << std::string(m_name) << " : damaged + impulse" << std::endl;
+		body->ApplyLinearImpulseToCenter(b2Vec2(m_xDamageVelocity * m_lifePourcentage, m_yDamageVelocity/2.0f * m_lifePourcentage), true);
+		std::cout << std::string(m_name) << " : knockack on" << std::endl;
+		damaged = false;
+		knockback = true;
+	}
+
+	position = sf::Vector2f(body->GetPosition().x, body->GetPosition().y);
+	previousYPosition = body->GetPosition().y;
+}
+
+void Character::draw(Renderer& renderer)
+{
+	//renderer.draw(textureToDraw, position, sf::Vector2f(facingLeft ? -0.75f : 0.75f, 4.0f));
+	auto textureSize = textureToDraw.getSize();
+	float xRatio = 0.02f;
+	float yRatio = 0.1f;
+
+	size = sf::Vector2f(textureSize.x * xRatio, textureSize.y * yRatio);
+
+	if(size.x != previousSize.x || size.y != previousSize.y)
+	{
+		auto fixtures = body->GetFixtureList();
+		while (fixtures != nullptr) {
+			auto next = fixtures->GetNext(); // Stocker la prochaine fixture
+			body->DestroyFixture(fixtures); // Détruire l'actuelle
+			fixtures = next;                // Passer à la suivante
+		}
+
+		createShape(sf::Vector2f(textureSize.x * xRatio, textureSize.y * yRatio));
+		previousSize = size;
+	}
+
+	renderer.draw(textureToDraw, position, 
+		sf::Vector2f(facingLeft ? -(float)textureSize.x* xRatio : textureSize.x * xRatio, textureSize.y * yRatio));
+}
+
+void Character::onBeginContact(b2Fixture* self, b2Fixture* other)
+{
+	FixtureData* data = (FixtureData*)other->GetUserData().pointer;
+
+	if (!data)
+		return;
+
+	if (groundFixture == self && data->type == FixtureDataType::Map && !isGrounded)
+	{
+		//std::cout << "grounded" << std::endl;
+		isGrounded = true;
+		landing = false;
+		aerial = false;
+	}
+	if (bodyFixture == self && data->type == FixtureDataType::Character && !characterContact)
+	{
+		characterContact = true;
+
+		if (attacks && std::string(m_name) == "Mario")
+		{
+			std::cout << std::string(m_name) << " : " << m_lifePourcentage << "%" << std::endl;
+			std::cout << std::string(data->character->m_name) << " : " << data->character->m_lifePourcentage << "%" << std::endl;
+
+			std::cout << std::string(m_name) << " attaque " << std::string(data->character->m_name) << std::endl;
+			data->character->damaged = true;
+			data->character->m_lifePourcentage += m_attacksPoint * m_forceLoad/2;
+
+			auto xDamage = data->character->m_baseXDamage;
+			auto yDamage = data->character->m_baseYDamage;
+			data->character->m_xDamageVelocity = (body->GetPosition().x < data->character->body->GetPosition().x) ? 
+																								xDamage : -xDamage;
+			data->character->m_xDamageVelocity *= m_forceLoad;
+			data->character->m_yDamageVelocity *= m_forceLoad;
+
+			m_forceLoad = 1.0f;
+
+			attacks = false;
+
+		}
+	}
+}
+
+void Character::onEndContact(b2Fixture* self, b2Fixture* other)
+{
+	FixtureData* data = (FixtureData*)other->GetUserData().pointer;
+
+	if (!data)
+		return;
+
+	if (groundFixture == self && data->type == FixtureDataType::Map && isGrounded)
+	{
+		//std::cout << "pas Grounded" << std::endl;
+		isGrounded = false;
+		if (!aerial)
+		{
+			landing = true;
+		}
+	}
+	if (bodyFixture == self && data->type == FixtureDataType::Character && characterContact)
+	{
+		characterContact = false;
+	}
+	std::cout << "coutou" << std::endl;
+}

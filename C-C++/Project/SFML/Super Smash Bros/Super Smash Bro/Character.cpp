@@ -606,5 +606,5 @@ void Character::onEndContact(b2Fixture* self, b2Fixture* other)
 	{
 		characterContact = false;
 	}
-	std::cout << "coutou" << std::endl;
+	std::cout << "AHHAHAHAH" << std::endl;
 }

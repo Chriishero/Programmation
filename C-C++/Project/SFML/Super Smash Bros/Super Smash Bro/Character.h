@@ -23,6 +23,8 @@ public:
 	void update(float deltaTime);
 	void draw(Renderer& renderer);
 
+	void takeDamage(float xDamage, float yDamage, float life);
+
 	// Hérité via ContactListener
 	virtual void onBeginContact(b2Fixture* self, b2Fixture* other) override;
 	virtual void onEndContact(b2Fixture* self, b2Fixture* other) override;
@@ -52,7 +54,7 @@ private:
 
 	float previousYPosition = 0;
 
-	bool facingLeft{};
+	bool m_facingLeft{};
 	bool isGrounded = true;
 	bool characterContact = false;
 
@@ -67,8 +69,8 @@ private:
 	
 	bool win = false;
 
-	int m_lifePourcentage = 100 / 100;
-	int m_attacksPoint = 5 / 100;
+	float m_lifePourcentage = 1;
+	float m_attacksPoint = 0.05;
 
 	float m_baseXDamage = 3.0f;
 	float m_baseYDamage = -1.5f;

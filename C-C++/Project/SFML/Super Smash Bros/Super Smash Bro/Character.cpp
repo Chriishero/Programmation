@@ -335,26 +335,26 @@ void Character::update(float deltaTime)
 			sf::Keyboard::Key key;
 			if (sf::Mouse::isButtonPressed(sf::Mouse::Right) || sf::Keyboard::isKeyPressed(sf::Keyboard::B))
 			{
-				if(m_forceLoad <= 5.0f)
-					m_forceLoad += 0.05f;
+				if(m_forceLoad <= 4.0f)
+					m_forceLoad += 0.025f;
 				std::cout << "smash force load : " << m_forceLoad << std::endl;
 				updateReleasedFrames("smash");
 			}
 			else if (sf::Keyboard::isKeyPressed(sf::Keyboard::V) &&
 				(sf::Keyboard::isKeyPressed(key = sf::Keyboard::Right) || sf::Keyboard::isKeyPressed(key = sf::Keyboard::Left)))
 			{
-				if (m_forceLoad <= 5.0f)
-					m_forceLoad += 0.05f;
+				if (m_forceLoad <= 4.0f)
+					m_forceLoad += 0.025f;
 
-				facingLeft = (key == sf::Keyboard::Right) ? false : true;
+				m_facingLeft = (key == sf::Keyboard::Right) ? false : true;
 				updateReleasedFrames("tilt");
 				std::cout << "tilt force load : " << m_forceLoad << std::endl;
 			}
 			else if (sf::Keyboard::isKeyPressed(sf::Keyboard::V) &&
 				(sf::Keyboard::isKeyPressed(sf::Keyboard::Up) || sf::Keyboard::isKeyPressed(sf::Keyboard::Space)))
 			{
-				if (m_forceLoad <= 5.0f)
-					m_forceLoad += 0.05f;
+				if (m_forceLoad <= 4.0f)
+					m_forceLoad += 0.025f;
 
 				updateReleasedFrames("uptilt");
 				std::cout << "uptilt force load : " << m_forceLoad << std::endl;
@@ -362,8 +362,8 @@ void Character::update(float deltaTime)
 			else if (sf::Keyboard::isKeyPressed(sf::Keyboard::V) &&
 				(sf::Keyboard::isKeyPressed(sf::Keyboard::Down)))
 			{
-				if (m_forceLoad <= 5.0f)
-					m_forceLoad += 0.05f;
+				if (m_forceLoad <= 4.0f)
+					m_forceLoad += 0.025f;
 
 				updateReleasedFrames("downtilt");
 				std::cout << "downtilt force load : " << m_forceLoad << std::endl;
@@ -414,12 +414,12 @@ void Character::update(float deltaTime)
 					if (sf::Keyboard::isKeyPressed(key = sf::Keyboard::Right) || sf::Keyboard::isKeyPressed(key = sf::Keyboard::Left))
 					{
 						run = true;
-						facingLeft = (key == sf::Keyboard::Right) ? false : true;
+						m_facingLeft = (key == sf::Keyboard::Right) ? false : true;
 						velocity.x += (key == sf::Keyboard::Right) ? xSpeed : -xSpeed;
 
 						if (std::string(m_name) == "Link")
 						{
-							facingLeft = true;
+							m_facingLeft = true;
 							velocity.x += -xSpeed;
 						}
 
@@ -454,7 +454,7 @@ void Character::update(float deltaTime)
 						std::string name;
 						if (aerial && velocity.x == 0.0f)
 						{
-							velocity.x += !facingLeft ? xSpeed - 1 : -xSpeed + 1;
+							velocity.x += !m_facingLeft ? xSpeed - 1 : -xSpeed + 1;
 							name = "aerial";
 						}
 						else if (damaged)
@@ -512,6 +512,9 @@ void Character::update(float deltaTime)
 		std::cout << std::string(m_name) << " : knockack on" << std::endl;
 		damaged = false;
 		knockback = true;
+
+		m_xDamageVelocity = m_baseXDamage;
+		m_yDamageVelocity = m_baseYDamage;
 	}
 
 	position = sf::Vector2f(body->GetPosition().x, body->GetPosition().y);
@@ -541,7 +544,14 @@ void Character::draw(Renderer& renderer)
 	}
 
 	renderer.draw(textureToDraw, position, 
-		sf::Vector2f(facingLeft ? -(float)textureSize.x* xRatio : textureSize.x * xRatio, textureSize.y * yRatio));
+		sf::Vector2f(m_facingLeft ? -(float)textureSize.x* xRatio : textureSize.x * xRatio, textureSize.y * yRatio));
+}
+
+void Character::takeDamage(float xDamage, float yDamage, float life)
+{
+	m_xDamageVelocity = xDamage;
+	m_yDamageVelocity = yDamage;
+	m_lifePourcentage = life;
 }
 
 void Character::onBeginContact(b2Fixture* self, b2Fixture* other)
@@ -564,22 +574,22 @@ void Character::onBeginContact(b2Fixture* self, b2Fixture* other)
 
 		if (attacks && std::string(m_name) == "Mario")
 		{
-			std::cout << std::string(m_name) << " : " << m_lifePourcentage << "%" << std::endl;
-			std::cout << std::string(data->character->m_name) << " : " << data->character->m_lifePourcentage << "%" << std::endl;
+			auto victim = data->character;
+			victim->damaged = true;
 
-			std::cout << std::string(m_name) << " attaque " << std::string(data->character->m_name) << std::endl;
-			data->character->damaged = true;
-			data->character->m_lifePourcentage += m_attacksPoint * m_forceLoad/2;
+			std::cout << std::string(victim->m_name) << " : " << victim->m_lifePourcentage*100 << "%" << std::endl;
+			std::cout << std::string(m_name) << " attaque " << std::string(victim->m_name) << std::endl;
+			
+			float xDamage = (body->GetPosition().x < victim->body->GetPosition().x) ?
+				victim->m_baseXDamage : -victim->m_baseXDamage;
+			xDamage *= m_forceLoad;
+			float yDamage = victim->m_yDamageVelocity * m_forceLoad;
+			float life = victim->m_lifePourcentage + m_attacksPoint * m_forceLoad/2;
+			std::cout << "life :l " << life << std::endl;
 
-			auto xDamage = data->character->m_baseXDamage;
-			auto yDamage = data->character->m_baseYDamage;
-			data->character->m_xDamageVelocity = (body->GetPosition().x < data->character->body->GetPosition().x) ? 
-																								xDamage : -xDamage;
-			data->character->m_xDamageVelocity *= m_forceLoad;
-			data->character->m_yDamageVelocity *= m_forceLoad;
+			victim->takeDamage(xDamage, yDamage, life);
 
 			m_forceLoad = 1.0f;
-
 			attacks = false;
 
 		}
@@ -606,5 +616,4 @@ void Character::onEndContact(b2Fixture* self, b2Fixture* other)
 	{
 		characterContact = false;
 	}
-	std::cout << "AHHAHAHAH" << std::endl;
 }

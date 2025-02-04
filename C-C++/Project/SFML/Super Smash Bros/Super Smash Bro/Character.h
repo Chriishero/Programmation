@@ -37,8 +37,8 @@ public:
 
 private:
 	sf::String m_name;
-	std::vector<std::string> animationNames = { "stand", "jump", "running", "attacks", "uptilt", "downtilt",
-										"smash", "tilt", "aerial", "damage", "guarding", "win", "loose" };
+	std::vector<std::string> animationNames = { "stand", "jump", "running", "attacks", "upaerial", "downtilt",
+										"smash", "tilt", "aerial", "damage", "guarding", "win", "loose", "uptilt"};
 
 	std::map<std::string, Animation> animations{};
 	std::map<std::string, bool> animationsKeyPress{};
@@ -63,21 +63,24 @@ private:
 
 	bool landing = false;
 	bool aerial = false;
+	bool upaerial = false;
 	bool run = false;
 
 	bool attacks = false;
 	
 	bool win = false;
 
-	float m_lifePourcentage = 1;
-	float m_attacksPoint = 0.05;
+	float m_lifePourcentage = 1.0f;
+	float m_prevLife = m_lifePourcentage;
+	float m_attacksPoint = 0.05f;
 
 	float m_baseXDamage = 3.0f;
 	float m_baseYDamage = -1.5f;
 	float m_xDamageVelocity = m_baseXDamage;
 	float m_yDamageVelocity = m_baseYDamage;
 
-	float m_forceLoad = 1.0f;
+	float m_xKBScaling = 1.0f;
+	float m_yKBScaling = 1.0f;
 
 };
 

@@ -270,6 +270,7 @@ void Character::begin()
 		animationsFrame[name] = animations[name].getm_frames().size()-1;
 	}
 	animationsFrame["guarding"] = 2;
+	animationsFrame["uptilt"] = 6;
 
 	b2BodyDef bodyDef{};
 	bodyDef.type = b2_dynamicBody;
@@ -316,7 +317,7 @@ void Character::update(float deltaTime)
 					{
 						animations[name].update(deltaTime);
 						std::cout << "attacks ! " << std::endl;
-						if (m_forceLoad > 1.0f)
+						if (m_xKBScaling > 1.0f || m_yKBScaling > 1.0f)
 						{
 							attacks = true;
 							std::cout << "attacks ! " << std::endl;
@@ -335,38 +336,50 @@ void Character::update(float deltaTime)
 			sf::Keyboard::Key key;
 			if (sf::Mouse::isButtonPressed(sf::Mouse::Right) || sf::Keyboard::isKeyPressed(sf::Keyboard::B))
 			{
-				if(m_forceLoad <= 4.0f)
-					m_forceLoad += 0.025f;
-				std::cout << "smash force load : " << m_forceLoad << std::endl;
+				if(m_xKBScaling <= 4.0f)
+				{
+					m_xKBScaling += 0.025f;
+					m_yKBScaling += 0.0125f;
+				}
+				std::cout << "smash force load : " << m_xKBScaling << " & " << m_yKBScaling << std::endl;
 				updateReleasedFrames("smash");
 			}
 			else if (sf::Keyboard::isKeyPressed(sf::Keyboard::V) &&
 				(sf::Keyboard::isKeyPressed(key = sf::Keyboard::Right) || sf::Keyboard::isKeyPressed(key = sf::Keyboard::Left)))
 			{
-				if (m_forceLoad <= 4.0f)
-					m_forceLoad += 0.025f;
+				if (m_xKBScaling <= 4.0f)
+				{
+					m_xKBScaling += 0.025f;
+					m_yKBScaling += 0.0125f;
+				}
 
 				m_facingLeft = (key == sf::Keyboard::Right) ? false : true;
 				updateReleasedFrames("tilt");
-				std::cout << "tilt force load : " << m_forceLoad << std::endl;
+				std::cout << "tilt force load : " << m_xKBScaling << " & " << m_yKBScaling << std::endl;
 			}
 			else if (sf::Keyboard::isKeyPressed(sf::Keyboard::V) &&
 				(sf::Keyboard::isKeyPressed(sf::Keyboard::Up) || sf::Keyboard::isKeyPressed(sf::Keyboard::Space)))
 			{
-				if (m_forceLoad <= 4.0f)
-					m_forceLoad += 0.025f;
+				if (m_yKBScaling <= 4.0f)
+				{
+					m_xKBScaling += 0.0125f;
+					m_yKBScaling += 0.025;
+				}
 
 				updateReleasedFrames("uptilt");
-				std::cout << "uptilt force load : " << m_forceLoad << std::endl;
+				std::cout << "uptilt force load : " << m_xKBScaling << " & " << m_yKBScaling << std::endl;
 			}
 			else if (sf::Keyboard::isKeyPressed(sf::Keyboard::V) &&
 				(sf::Keyboard::isKeyPressed(sf::Keyboard::Down)))
 			{
-				if (m_forceLoad <= 4.0f)
-					m_forceLoad += 0.025f;
+				if (m_xKBScaling <= 4.0f)
+				{
+					m_xKBScaling += 0.025f;
+					m_yKBScaling += 0.0125f;
+				}
 
 				updateReleasedFrames("downtilt");
-				std::cout << "downtilt force load : " << m_forceLoad << std::endl;
+				std::cout << "downtilt force load : " << m_xKBScaling << " & " << m_yKBScaling << std::endl;
 			}
 
 			else if (sf::Mouse::isButtonPressed(sf::Mouse::Middle) || sf::Keyboard::isKeyPressed(sf::Keyboard::X))
@@ -395,10 +408,6 @@ void Character::update(float deltaTime)
 						{
 							attacks = true;
 						}
-						if (name == "uptilt" && isGrounded)
-						{
-							velocity.y = -ySpeed;
-						}
 
 						if (animations[name].getm_time() < previousTime)
 						{
@@ -410,7 +419,8 @@ void Character::update(float deltaTime)
 				{
 					attacks = false;
 					run = false;
-					m_forceLoad = 1.0f;
+					m_xKBScaling = 1.0f;
+					m_yKBScaling = 1.0f;
 					if (sf::Keyboard::isKeyPressed(key = sf::Keyboard::Right) || sf::Keyboard::isKeyPressed(key = sf::Keyboard::Left))
 					{
 						run = true;
@@ -442,14 +452,24 @@ void Character::update(float deltaTime)
 							animations["attacks"].update(deltaTime);
 							textureToDraw = animations["attacks"].getTexture();
 							attacks = true;
+
+							m_xKBScaling = 0.25f;
+							m_yKBScaling = 0.4f;
 						}
-						else if (!isGrounded)
+						else if (!isGrounded && !aerial && (sf::Keyboard::isKeyPressed(sf::Keyboard::Up) || sf::Keyboard::isKeyPressed(sf::Keyboard::Space)))
+						{
+							aerial = false;
+							upaerial = true;
+							landing = false;
+						}
+						else if (!isGrounded && !upaerial)
 						{
 							aerial = true;
+							upaerial = false;
 							landing = false;
 						}
 					}
-					if (landing || aerial)
+					if (landing || aerial || upaerial || damaged)
 					{
 						std::string name;
 						if (aerial && velocity.x == 0.0f)
@@ -459,6 +479,11 @@ void Character::update(float deltaTime)
 						}
 						else if (damaged)
 							name = "damage";
+						else if (upaerial)
+						{
+							velocity.y = -ySpeed;
+							name = "upaerial";
+						}
 						else
 							name = "jump";
 
@@ -476,16 +501,22 @@ void Character::update(float deltaTime)
 						else if ((previousYPosition > body->GetPosition().y))
 						{
 							textureToDraw = animations[name].getTexture();
+							if (aerial || upaerial )
+							{
+								attacks = true;
+							}
 						}
 						else
 						{
 							landing = false;
 							aerial = false;
+							upaerial = false;
 							animations[name].setm_time(0.0f);
 						}
 					}
 					if (isGrounded && !run && !attacks && !knockback)
 					{
+						animations["upaerial"].setm_time(0.0f);
 						animations["aerial"].setm_time(0.0f);
 						animations["jump"].setm_time(0.0f);
 
@@ -508,10 +539,12 @@ void Character::update(float deltaTime)
 	else if(damaged)
 	{
 		std::cout << std::string(m_name) << " : damaged + impulse" << std::endl;
-		body->ApplyLinearImpulseToCenter(b2Vec2(m_xDamageVelocity * m_lifePourcentage, m_yDamageVelocity/2.0f * m_lifePourcentage), true);
+		body->ApplyLinearImpulseToCenter(b2Vec2(m_xDamageVelocity * m_lifePourcentage, m_yDamageVelocity * m_lifePourcentage), true);
 		std::cout << std::string(m_name) << " : knockack on" << std::endl;
 		damaged = false;
-		knockback = true;
+
+		if(m_lifePourcentage > m_prevLife + 0.05)
+			knockback = true;
 
 		m_xDamageVelocity = m_baseXDamage;
 		m_yDamageVelocity = m_baseYDamage;
@@ -551,6 +584,7 @@ void Character::takeDamage(float xDamage, float yDamage, float life)
 {
 	m_xDamageVelocity = xDamage;
 	m_yDamageVelocity = yDamage;
+	m_prevLife = m_lifePourcentage;
 	m_lifePourcentage = life;
 }
 
@@ -565,6 +599,7 @@ void Character::onBeginContact(b2Fixture* self, b2Fixture* other)
 	{
 		//std::cout << "grounded" << std::endl;
 		isGrounded = true;
+		upaerial = false;
 		landing = false;
 		aerial = false;
 	}
@@ -582,16 +617,15 @@ void Character::onBeginContact(b2Fixture* self, b2Fixture* other)
 			
 			float xDamage = (body->GetPosition().x < victim->body->GetPosition().x) ?
 				victim->m_baseXDamage : -victim->m_baseXDamage;
-			xDamage *= m_forceLoad;
-			float yDamage = victim->m_yDamageVelocity * m_forceLoad;
-			float life = victim->m_lifePourcentage + m_attacksPoint * m_forceLoad/2;
-			std::cout << "life :l " << life << std::endl;
+			xDamage *= m_xKBScaling;
+			float yDamage = victim->m_baseYDamage * m_yKBScaling;
+			float life = victim->m_lifePourcentage + m_attacksPoint * (m_xKBScaling+m_yKBScaling)/4;
 
 			victim->takeDamage(xDamage, yDamage, life);
 
-			m_forceLoad = 1.0f;
+			m_xKBScaling = 1.0f;
+			m_yKBScaling = 1.0f;
 			attacks = false;
-
 		}
 	}
 }
@@ -607,7 +641,7 @@ void Character::onEndContact(b2Fixture* self, b2Fixture* other)
 	{
 		//std::cout << "pas Grounded" << std::endl;
 		isGrounded = false;
-		if (!aerial)
+		if (!aerial && !upaerial)
 		{
 			landing = true;
 		}

@@ -9,7 +9,7 @@
 #include <vector>
 
 Map map("Final Destination");
-Camera camera(20.0f);
+Camera camera(25.0f);
 Character mario("Mario");
 Character link("Link");
 
@@ -36,6 +36,7 @@ void restart()
 	link = Character("Link");
 	link.begin();
 
+	std::cout << "Load map : " << std::endl;
 	map = Map("Final Destination");
 	map.begin();
 }

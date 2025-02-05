@@ -3,6 +3,7 @@
 #include <random>
 #include <algorithm>
 #include <filesystem>
+#include <math.h>
 
 const float runVelocity = 3.0f;
 const float jumpVelocity = 10.0f;
@@ -268,9 +269,10 @@ void Character::begin()
 	{
 		animationsKeyPress[name] = false;
 		animationsFrame[name] = animations[name].getm_frames().size()-1;
+		std::cout << std::string(m_name) << " : " << name << " : " << animationsFrame[name] << std::endl;
 	}
 	animationsFrame["guarding"] = 2;
-	animationsFrame["uptilt"] = 6;
+	animationsFrame["upaerial"] = 1;
 
 	b2BodyDef bodyDef{};
 	bodyDef.type = b2_dynamicBody;
@@ -336,55 +338,68 @@ void Character::update(float deltaTime)
 			sf::Keyboard::Key key;
 			if (sf::Mouse::isButtonPressed(sf::Mouse::Right) || sf::Keyboard::isKeyPressed(sf::Keyboard::B))
 			{
-				if(m_xKBScaling <= 4.0f)
+				if (!landing)
 				{
-					m_xKBScaling += 0.025f;
-					m_yKBScaling += 0.0125f;
+					if (m_xKBScaling <= 4.0f)
+					{
+						m_xKBScaling += 0.025f;
+						m_yKBScaling += 0.025f;
+					}
+					std::cout << "smash force load : " << m_xKBScaling << " & " << m_yKBScaling << std::endl;
+					updateReleasedFrames("smash");
 				}
-				std::cout << "smash force load : " << m_xKBScaling << " & " << m_yKBScaling << std::endl;
-				updateReleasedFrames("smash");
 			}
 			else if (sf::Keyboard::isKeyPressed(sf::Keyboard::V) &&
 				(sf::Keyboard::isKeyPressed(key = sf::Keyboard::Right) || sf::Keyboard::isKeyPressed(key = sf::Keyboard::Left)))
 			{
-				if (m_xKBScaling <= 4.0f)
+				if (!landing)
 				{
-					m_xKBScaling += 0.025f;
-					m_yKBScaling += 0.0125f;
-				}
+					if (m_xKBScaling <= 4.0f)
+					{
+						m_xKBScaling += 0.025f;
+						m_yKBScaling += 0.025f;
+					}
 
-				m_facingLeft = (key == sf::Keyboard::Right) ? false : true;
-				updateReleasedFrames("tilt");
-				std::cout << "tilt force load : " << m_xKBScaling << " & " << m_yKBScaling << std::endl;
+					m_facingLeft = (key == sf::Keyboard::Right) ? false : true;
+					updateReleasedFrames("tilt");
+					std::cout << "tilt force load : " << m_xKBScaling << " & " << m_yKBScaling << std::endl;
+				}
 			}
 			else if (sf::Keyboard::isKeyPressed(sf::Keyboard::V) &&
 				(sf::Keyboard::isKeyPressed(sf::Keyboard::Up) || sf::Keyboard::isKeyPressed(sf::Keyboard::Space)))
 			{
-				if (m_yKBScaling <= 4.0f)
+				if (!landing)
 				{
-					m_xKBScaling += 0.0125f;
-					m_yKBScaling += 0.025;
-				}
+					if (m_yKBScaling <= 8.0f)
+					{
+						m_xKBScaling += 0.01f;
+						m_yKBScaling += 0.05;
+					}
 
-				updateReleasedFrames("uptilt");
-				std::cout << "uptilt force load : " << m_xKBScaling << " & " << m_yKBScaling << std::endl;
+					updateReleasedFrames("uptilt");
+					std::cout << "uptilt force load : " << m_xKBScaling << " & " << m_yKBScaling << std::endl;
+				}
 			}
 			else if (sf::Keyboard::isKeyPressed(sf::Keyboard::V) &&
 				(sf::Keyboard::isKeyPressed(sf::Keyboard::Down)))
 			{
-				if (m_xKBScaling <= 4.0f)
+				if (!landing)
 				{
-					m_xKBScaling += 0.025f;
-					m_yKBScaling += 0.0125f;
-				}
+					if (m_xKBScaling <= 4.0f)
+					{
+						m_xKBScaling += 0.025f;
+						m_yKBScaling += 0.025f;
+					}
 
-				updateReleasedFrames("downtilt");
-				std::cout << "downtilt force load : " << m_xKBScaling << " & " << m_yKBScaling << std::endl;
+					updateReleasedFrames("downtilt");
+					std::cout << "downtilt force load : " << m_xKBScaling << " & " << m_yKBScaling << std::endl;
+				}
 			}
 
 			else if (sf::Mouse::isButtonPressed(sf::Mouse::Middle) || sf::Keyboard::isKeyPressed(sf::Keyboard::X))
 			{
-				updateReleasedFrames("guarding");
+				if(!landing)
+					updateReleasedFrames("guarding");
 			}
 
 			else if (win)
@@ -427,12 +442,6 @@ void Character::update(float deltaTime)
 						m_facingLeft = (key == sf::Keyboard::Right) ? false : true;
 						velocity.x += (key == sf::Keyboard::Right) ? xSpeed : -xSpeed;
 
-						if (std::string(m_name) == "Link")
-						{
-							m_facingLeft = true;
-							velocity.x += -xSpeed;
-						}
-
 						animations["running"].update(deltaTime);
 						textureToDraw = animations["running"].getTexture();
 					}
@@ -453,11 +462,12 @@ void Character::update(float deltaTime)
 							textureToDraw = animations["attacks"].getTexture();
 							attacks = true;
 
-							m_xKBScaling = 0.25f;
-							m_yKBScaling = 0.4f;
+							m_xKBScaling = 0.1f;
+							m_yKBScaling = 0.5f;
 						}
-						else if (!isGrounded && !aerial && (sf::Keyboard::isKeyPressed(sf::Keyboard::Up) || sf::Keyboard::isKeyPressed(sf::Keyboard::Space)))
+						else if (!isGrounded && !upaerial && (sf::Keyboard::isKeyPressed(sf::Keyboard::Up) || sf::Keyboard::isKeyPressed(sf::Keyboard::Space)))
 						{
+							velocity.y = -ySpeed;
 							aerial = false;
 							upaerial = true;
 							landing = false;
@@ -481,7 +491,6 @@ void Character::update(float deltaTime)
 							name = "damage";
 						else if (upaerial)
 						{
-							velocity.y = -ySpeed;
 							name = "upaerial";
 						}
 						else
@@ -489,21 +498,39 @@ void Character::update(float deltaTime)
 
 						if ((previousYPosition < body->GetPosition().y))
 						{
-							auto frames = animations[name].getm_frames();
-							animations[name].update(deltaTime);
-							textureToDraw = animations[name].getTexture();
-							if (animations[name].getm_time() >= frames[0].time)
+							if(!upaerial)
 							{
-								if (!isGrounded)
-									textureToDraw = animations[name].getTexture();
+								auto frames = animations[name].getm_frames();
+								animations[name].update(deltaTime);
+								textureToDraw = animations[name].getTexture();
+								if (animations[name].getm_time() >= frames[0].time)
+								{
+									if (!isGrounded)
+										textureToDraw = animations[name].getTexture();
+								}
+							}
+							else
+							{
+								textureToDraw = animations[name].getTexture();
 							}
 						}
 						else if ((previousYPosition > body->GetPosition().y))
 						{
 							textureToDraw = animations[name].getTexture();
-							if (aerial || upaerial )
+							if (aerial || upaerial)
 							{
 								attacks = true;
+								if (upaerial)
+								{
+									auto frames = animations[name].getm_frames();
+									animations[name].update(deltaTime);
+									textureToDraw = animations[name].getTexture();
+									if (animations[name].getm_time() >= frames[0].time)
+									{
+										if (!isGrounded)
+											textureToDraw = animations[name].getTexture();
+									}
+								}
 							}
 						}
 						else
@@ -539,11 +566,11 @@ void Character::update(float deltaTime)
 	else if(damaged)
 	{
 		std::cout << std::string(m_name) << " : damaged + impulse" << std::endl;
-		body->ApplyLinearImpulseToCenter(b2Vec2(m_xDamageVelocity * m_lifePourcentage, m_yDamageVelocity * m_lifePourcentage), true);
+		body->ApplyLinearImpulseToCenter(b2Vec2(m_xDamageVelocity * pow(m_lifePourcentage, 2), m_yDamageVelocity * pow(m_lifePourcentage, 2)), true);
 		std::cout << std::string(m_name) << " : knockack on" << std::endl;
 		damaged = false;
 
-		if(m_lifePourcentage > m_prevLife + 0.05)
+		if(m_lifePourcentage > m_prevLife + 0.02)
 			knockback = true;
 
 		m_xDamageVelocity = m_baseXDamage;

@@ -74,8 +74,8 @@ private:
 	float m_prevLife = m_lifePourcentage;
 	float m_attacksPoint = 0.05f;
 
-	float m_baseXDamage = 3.0f;
-	float m_baseYDamage = -1.5f;
+	float m_baseXDamage = 2.0f;
+	float m_baseYDamage = -4.0f;
 	float m_xDamageVelocity = m_baseXDamage;
 	float m_yDamageVelocity = m_baseYDamage;
 

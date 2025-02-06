@@ -77,11 +77,11 @@ void Character::createShape(sf::Vector2f size)
 	fixtureDef.friction = 0.0f;
 
 	b2PolygonShape polygonShape{};
-	polygonShape.SetAsBox(size.x / 2, size.y / 2);
+	polygonShape.SetAsBox(size.x / 2 - size.x * 0.1, size.y / 2);
 	fixtureDef.shape = &polygonShape;
 	body->CreateFixture(&fixtureDef);
 
-	polygonShape.SetAsBox(size.x / 2, size.y / 2);
+	polygonShape.SetAsBox(size.x / 2 + size.x * 0.1, size.y / 2);
 	fixtureDef.isSensor = true;
 	bodyFixture = body->CreateFixture(&fixtureDef);
 
@@ -318,10 +318,8 @@ void Character::update(float deltaTime)
 					if (!animationsKeyPress[name])
 					{
 						animations[name].update(deltaTime);
-						std::cout << "attacks ! " << std::endl;
 						if (m_xKBScaling > 1.0f || m_yKBScaling > 1.0f)
 						{
-							attacks = true;
 							std::cout << "attacks ! " << std::endl;
 						}
 					}
@@ -340,10 +338,11 @@ void Character::update(float deltaTime)
 			{
 				if (!landing)
 				{
-					if (m_xKBScaling <= 4.0f)
+					if (m_xKBScaling <= 5.0f)
 					{
-						m_xKBScaling += 0.025f;
+						m_xKBScaling += 0.035f;
 						m_yKBScaling += 0.025f;
+						m_forceDemultiplication += 0.015;
 					}
 					std::cout << "smash force load : " << m_xKBScaling << " & " << m_yKBScaling << std::endl;
 					updateReleasedFrames("smash");
@@ -356,8 +355,9 @@ void Character::update(float deltaTime)
 				{
 					if (m_xKBScaling <= 4.0f)
 					{
-						m_xKBScaling += 0.025f;
-						m_yKBScaling += 0.025f;
+						m_xKBScaling += 0.03f;
+						m_yKBScaling += 0.03f;
+						m_forceDemultiplication += 0.015;
 					}
 
 					m_facingLeft = (key == sf::Keyboard::Right) ? false : true;
@@ -374,6 +374,7 @@ void Character::update(float deltaTime)
 					{
 						m_xKBScaling += 0.01f;
 						m_yKBScaling += 0.05;
+						m_forceDemultiplication += 0.015;
 					}
 
 					updateReleasedFrames("uptilt");
@@ -387,8 +388,9 @@ void Character::update(float deltaTime)
 				{
 					if (m_xKBScaling <= 4.0f)
 					{
-						m_xKBScaling += 0.025f;
+						m_xKBScaling += 0.035f;
 						m_yKBScaling += 0.025f;
+						m_forceDemultiplication += 0.015;
 					}
 
 					updateReleasedFrames("downtilt");
@@ -462,8 +464,15 @@ void Character::update(float deltaTime)
 							textureToDraw = animations["attacks"].getTexture();
 							attacks = true;
 
-							m_xKBScaling = 0.1f;
-							m_yKBScaling = 0.5f;
+							m_xKBScaling = 0.2f;
+							m_yKBScaling = 0.4f;
+
+							if (m_forceDemultiplication > 0.15f)
+								m_forceDemultiplication = 0.15f;
+							else if (m_forceDemultiplication > 0.0f)
+								m_forceDemultiplication -= 0.01f;
+							else
+								m_forceDemultiplication = 0.05f;
 						}
 						else if (!isGrounded && !upaerial && (sf::Keyboard::isKeyPressed(sf::Keyboard::Up) || sf::Keyboard::isKeyPressed(sf::Keyboard::Space)))
 						{
@@ -566,7 +575,7 @@ void Character::update(float deltaTime)
 	else if(damaged)
 	{
 		std::cout << std::string(m_name) << " : damaged + impulse" << std::endl;
-		body->ApplyLinearImpulseToCenter(b2Vec2(m_xDamageVelocity * pow(m_lifePourcentage, 2), m_yDamageVelocity * pow(m_lifePourcentage, 2)), true);
+		body->ApplyLinearImpulseToCenter(b2Vec2(m_xDamageVelocity * pow(m_lifePourcentage, 2.5), m_yDamageVelocity * pow(m_lifePourcentage, 2.5)), true);
 		std::cout << std::string(m_name) << " : knockack on" << std::endl;
 		damaged = false;
 
@@ -646,10 +655,11 @@ void Character::onBeginContact(b2Fixture* self, b2Fixture* other)
 				victim->m_baseXDamage : -victim->m_baseXDamage;
 			xDamage *= m_xKBScaling;
 			float yDamage = victim->m_baseYDamage * m_yKBScaling;
-			float life = victim->m_lifePourcentage + m_attacksPoint * (m_xKBScaling+m_yKBScaling)/4;
+			float life = victim->m_lifePourcentage + m_attacksPoint * m_forceDemultiplication;
 
 			victim->takeDamage(xDamage, yDamage, life);
 
+			m_forceDemultiplication = 1.0f;
 			m_xKBScaling = 1.0f;
 			m_yKBScaling = 1.0f;
 			attacks = false;

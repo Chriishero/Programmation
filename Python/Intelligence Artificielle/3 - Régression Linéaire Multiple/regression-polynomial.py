@@ -50,8 +50,12 @@ theta_final, cost_history = gradient_descent(X, y, theta, learning_rate, n_itera
 print(f"Theta Final : {theta_final}")
 
 predictions = model(X, theta_final) # modèle final, grâce à la valeur de 'theta' (paramètre de la fonction) trouvé avec l'algorithm de la descente de gradient
+
+plt.figure()
+plt.plot(range(n_iterations), cost_history) # sur 1000 points, trâce le coût du modèle pour chaque point 'cost_history'
+
+plt.figure()
 plt.plot(x, predictions, c='r') # affiche la droite du modèle, par rapport au dataset 'x', en rouge
-#plt.plot(range(n_iterations), cost_history) # sur 1000 points, trâce le coût du modèle pour chaque point 'cost_history'
 
 print(f"Coefficient de détermination : {coef_determination(y, predictions)}")
  

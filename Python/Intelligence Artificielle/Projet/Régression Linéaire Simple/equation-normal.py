@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from sklearn.datasets import make_regression
 
 n_samples = 500
-n_features = 1
+n_features = 10
 
 x, y = make_regression(n_samples=n_samples, n_features=n_features, noise=10, random_state=0)
 y = y.reshape(y.shape[0], 1)
@@ -16,10 +16,11 @@ def model(X, theta):
 
 def cost_function(h, theta):
     m = len(y)
-    return 1/(2*m) * np.sum(np.square(h - y))
+    return 1/m * np.sum(np.square(h - y))
 
 def normal_equation(X, y):
-    return np.linalg.inv(X.T.dot(X)).dot(X.T).dot(y)
+    theta = np.linalg.inv(X.T.dot(X)).dot(X.T).dot(y)
+    return theta
 
 theta = normal_equation(X, y)
 prediction = model(X, theta)

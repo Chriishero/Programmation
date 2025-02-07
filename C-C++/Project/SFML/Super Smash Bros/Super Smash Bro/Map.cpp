@@ -238,6 +238,7 @@ void Map::begin()
 				sf::Image image = marioTexture.copyToImage();
 				image.saveToFile("res/sprites/Map/" + m_name + "-" + std::to_string(nSprite) + ".png");
 
+				std::cout << m_name + "-" + std::to_string(nSprite) + ".png" << std::endl;
 				nSprite++;
 				continue;
 			}

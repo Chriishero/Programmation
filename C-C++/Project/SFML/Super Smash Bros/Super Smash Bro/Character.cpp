@@ -85,7 +85,7 @@ void Character::createShape(sf::Vector2f size)
 	fixtureDef.isSensor = true;
 	bodyFixture = body->CreateFixture(&fixtureDef);
 
-	polygonShape.SetAsBox(0.2f, 0.2f, b2Vec2(0.0f, 2.0f), 0.0f);
+	polygonShape.SetAsBox(0.2f, 0.4f, b2Vec2(0.0f, size.y / 2), 0.0f);
 	fixtureDef.isSensor = true;
 	groundFixture = body->CreateFixture(&fixtureDef);
 }
@@ -522,6 +522,12 @@ void Character::update(float deltaTime)
 							{
 								textureToDraw = animations[name].getTexture();
 							}
+							if (aerial && !aerialattacks)
+							{
+								attacks = true;
+								aerialattacks = true;
+							}
+
 						}
 						else if ((previousYPosition > body->GetPosition().y))
 						{
@@ -537,7 +543,11 @@ void Character::update(float deltaTime)
 									if (animations[name].getm_time() >= frames[0].time)
 									{
 										if (!isGrounded)
+										{
 											textureToDraw = animations[name].getTexture();
+											upaerial = false;
+											landing = true;
+										}
 									}
 								}
 							}
@@ -562,7 +572,7 @@ void Character::update(float deltaTime)
 					}
 				}
 			}
-			if (std::string(m_name) == "Link")
+			if (std::string(m_name) == "Mario")
 			{
 				velocity.x = 0.0f;
 				animations["stand"].update(deltaTime);
@@ -643,7 +653,7 @@ void Character::onBeginContact(b2Fixture* self, b2Fixture* other)
 	{
 		characterContact = true;
 
-		if (attacks && std::string(m_name) == "Mario")
+		if (attacks && std::string(m_name) == "Link")
 		{
 			auto victim = data->character;
 			victim->damaged = true;

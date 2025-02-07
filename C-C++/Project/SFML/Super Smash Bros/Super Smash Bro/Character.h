@@ -67,6 +67,7 @@ private:
 	bool run = false;
 
 	bool attacks = false;
+	bool aerialattacks = false;
 	
 	bool win = false;
 

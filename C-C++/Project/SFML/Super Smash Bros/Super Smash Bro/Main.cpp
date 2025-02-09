@@ -1,10 +1,12 @@
 #include <SFML/Graphics.hpp>
+#include <enet/enet.h>
 #include "Game.h"
 #include "Renderer.h"
 
 int main()
 {
-	sf::RenderWindow window(sf::VideoMode(1280, 720), "Super Smash Bros");
+	sf::RenderWindow window;
+	window.create(sf::VideoMode(1280, 720), "Super Smash Bros");
 	sf::Clock deltaClock;
 	Renderer renderer(window);
 	window.setFramerateLimit(60);
@@ -21,6 +23,7 @@ int main()
 			{
 				window.close();
 			}
+			updateUI(deltaTime, event);
 		}
 		update(deltaTime);
 		

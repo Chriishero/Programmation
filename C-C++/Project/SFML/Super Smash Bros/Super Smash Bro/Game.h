@@ -6,11 +6,12 @@
 
 extern Camera camera;
 extern bool paused;
-extern bool title;
+extern bool menuState;
 
 void restart();
 void begin();
 void update(float deltaTime);
+void updateUI(float deltaTime, sf::Event event);
 void render(Renderer& renderer);
 void renderUI(Renderer& renderer);
 

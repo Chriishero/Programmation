@@ -16,10 +16,13 @@ public:
 	Menu();
 
 	void begin();
-	void character();
-	void multiplayer();
-	void update(float deltaTime, sf::Vector2f size);
+	void resetTextureToDisplay();
+	void selectGame(sf::Event event);
+	void character(sf::Event event);
+	void multiplayer(sf::Event event);
+	void update(float deltaTime, sf::Event event, sf::Vector2f size, sf::Vector2f position);
 	void draw(Renderer& renderer);
+
 
 private:
 	std::map<std::string, sf::Texture> m_texturesToDraw{};
@@ -27,7 +30,11 @@ private:
 	std::map<std::string, sf::Vector2f> m_texturesSize{};
 	std::map<std::string, bool> m_to_display{};
 
+	bool m_gameUI = false;
 	bool m_charactersUI = false;
 	bool m_multiplayerUI = false;
+
+	sf::Texture titleBackground;
+
 };
 

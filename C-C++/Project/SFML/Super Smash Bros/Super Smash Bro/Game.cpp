@@ -15,7 +15,7 @@ Character mario("Mario");
 Character link("Link");
 
 bool paused = false;
-bool title = true;
+bool menuState = true;
 
 sf::Font font{};
 
@@ -26,35 +26,25 @@ void restart()
 	Physics::init();
 
 	paused = false;
-	title = true;
+	menuState = true;
 
 	menu = Menu();
 	menu.begin();
 
-	mario.begin();
-	link.begin();
+	if (!menuState)
+	{
+		mario.begin();
+		link.begin();
 
-	std::cout << "Load map : " << std::endl;
-	map = Map("Final Destination");
-	map.begin();
+		std::cout << "Load map : " << std::endl;
+		map = Map("Final Destination");
+		map.begin();
+	}
 }
 
 
 void begin()
 {
-	for (auto& directory : std::filesystem::directory_iterator("./res/menu/"))
-	{
-		if (directory.is_directory())
-		{
-			for (auto& file : std::filesystem::directory_iterator("./res/menu/" + directory.path().filename().string()))
-			{
-				if (file.is_regular_file() && (file.path().extension() == ".png" || file.path().extension() == ".jpg"))
-				{
-					Resources::textures[directory.path().filename().string() + "/" + file.path().filename().string()].loadFromFile(file.path().string());
-				}
-			}
-		}
-	}
 	for (auto& directory : std::filesystem::directory_iterator("./res/sprites/"))
 	{
 		if (directory.is_directory())
@@ -90,7 +80,7 @@ void begin()
 
 void update(float deltaTime)
 {
-	if(!title)
+	if(!menuState)
 	{
 		Physics::update(deltaTime);
 		map.update(deltaTime);
@@ -98,15 +88,19 @@ void update(float deltaTime)
 		link.update(deltaTime);
 		mario.update(deltaTime);
 	}
-	else
+}
+
+void updateUI(float deltaTime, sf::Event event)
+{
+	if(menuState)
 	{
-		menu.update(deltaTime, camera.getm_viewSize());
+		menu.update(deltaTime, event, camera.getm_viewSize(), camera.getm_position());
 	}
 }
 
 void render(Renderer& renderer)
 {
-	if (!title)
+	if (!menuState)
 	{
 		map.draw(renderer, camera.getm_position(), camera.getm_viewSize());
 		
@@ -119,7 +113,7 @@ void render(Renderer& renderer)
 
 void renderUI(Renderer& renderer)
 {
-	if (title)
+	if (menuState)
 	{
 		menu.draw(renderer);
 	}

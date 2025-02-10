@@ -13,7 +13,7 @@
 class Menu
 {
 public:
-	Menu();
+	Menu(sf::RenderWindow& window);
 
 	void begin();
 	void resetTextureToDisplay();
@@ -23,8 +23,9 @@ public:
 	void update(float deltaTime, sf::Event event, sf::Vector2f size, sf::Vector2f position);
 	void draw(Renderer& renderer);
 
-
 private:
+	sf::RenderWindow& m_window;
+
 	std::map<std::string, sf::Texture> m_texturesToDraw{};
 	std::map<std::string, sf::Vector2f> m_texturesPosition{};
 	std::map<std::string, sf::Vector2f> m_texturesSize{};

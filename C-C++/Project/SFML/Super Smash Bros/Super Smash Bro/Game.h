@@ -3,10 +3,10 @@
 #include "Camera.h"
 #include <iostream>
 
-
 extern Camera camera;
 extern bool paused;
 extern bool menuState;
+extern sf::RenderWindow window;
 
 void restart();
 void begin();

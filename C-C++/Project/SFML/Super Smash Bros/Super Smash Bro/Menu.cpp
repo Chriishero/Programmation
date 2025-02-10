@@ -1,7 +1,9 @@
 #include "Menu.h"
 #include <algorithm>
 
-Menu::Menu()
+static char text[256] = "";
+
+Menu::Menu(sf::RenderWindow& window) : m_window(window)
 {
 }
 

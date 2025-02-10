@@ -8,7 +8,7 @@
 #include <algorithm>
 #include "Character.h"
 
-Menu menu;
+Menu menu(window);
 Map map("Final Destination");
 Camera camera(25.0f);
 Character mario("Mario");
@@ -28,7 +28,6 @@ void restart()
 	paused = false;
 	menuState = true;
 
-	menu = Menu();
 	menu.begin();
 
 	if (!menuState)

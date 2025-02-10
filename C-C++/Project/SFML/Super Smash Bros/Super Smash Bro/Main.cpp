@@ -3,9 +3,9 @@
 #include "Game.h"
 #include "Renderer.h"
 
+sf::RenderWindow window;
 int main()
 {
-	sf::RenderWindow window;
 	window.create(sf::VideoMode(1280, 720), "Super Smash Bros");
 	sf::Clock deltaClock;
 	Renderer renderer(window);

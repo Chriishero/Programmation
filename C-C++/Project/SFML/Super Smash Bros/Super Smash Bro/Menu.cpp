@@ -2,6 +2,7 @@
 #include <algorithm>
 
 static char text[256] = "";
+sf::Text m_hostText("host:port", font);
 
 Menu::Menu(sf::RenderWindow& window) : m_window(window)
 {
@@ -9,6 +10,8 @@ Menu::Menu(sf::RenderWindow& window) : m_window(window)
 
 void Menu::begin()
 {
+	menuState = true;
+
 	for (auto const texture : Resources::textures)
 	{
 		std::string path = texture.first;
@@ -20,8 +23,11 @@ void Menu::begin()
 			m_to_display[path] = false;
 		}
 	}
-
-	menuState = true;
+	m_hostText.setFont(font);
+	m_hostText.setString("host:port");
+	m_hostText.setCharacterSize(45);
+	m_hostText.setFillColor(sf::Color::Black);
+	m_hostText.setScale(0.1, 0.2);
 }
 
 void Menu::resetTextureToDisplay()
@@ -30,6 +36,11 @@ void Menu::resetTextureToDisplay()
 	{
 		m_to_display[t.first] = false;
 	}
+}
+
+void Menu::createInputBox()
+{
+	
 }
 
 void Menu::selectGame(sf::Event event)
@@ -49,28 +60,57 @@ void Menu::selectGame(sf::Event event)
 
 void Menu::character(sf::Event event)
 {
-
+	
 }
 
 void Menu::multiplayer(sf::Event event)
 {
 	if (event.type == sf::Event::KeyReleased)
 	{
-		if (event.mouseButton.button == sf::Keyboard::C)
+		if (!m_intputBox)
 		{
-			std::cout << "create party" << std::endl;
-			m_charactersUI = true;
-			m_multiplayerUI = false;
+				if (event.mouseButton.button == sf::Keyboard::C)
+				{
+					std::cout << "create party" << std::endl;
+					m_charactersUI = true;
+					m_multiplayerUI = false;
 
-			resetTextureToDisplay();
+					resetTextureToDisplay();
+				}
+				else if (event.mouseButton.button == sf::Keyboard::J)
+				{
+					std::cout << "join party" << std::endl;
+					m_multiplayerUI = true;
+					m_gameUI = false;
+
+					resetTextureToDisplay();
+				}
+				else if (event.mouseButton.button == sf::Keyboard::I)
+				{
+					std::cout << "input" << std::endl;
+					m_intputBox = true;
+				}
 		}
-		else if (event.mouseButton.button == sf::Keyboard::J)
+		if (event.key.code == sf::Keyboard::Enter)
 		{
-			std::cout << "join party" << std::endl;
-			m_multiplayerUI = true;
-			m_gameUI = false;
-
-			resetTextureToDisplay();
+			std::cout << "enter" << std::endl;
+		}
+	}
+	if(m_intputBox)
+	{
+		if (event.type == sf::Event::KeyPressed)
+		{
+			if (m_keyToString.find(event.key.code) != m_keyToString.end())
+			{
+				m_host_port.push_back(m_keyToString[event.key.code]);
+				m_hostText.setString(m_host_port);
+				std::cout << m_keyToString[event.key.code];
+			}
+			else if (event.key.code == sf::Keyboard::Backspace)
+			{
+				m_host_port.pop_back();
+				m_hostText.setString(m_host_port);
+			}
 		}
 	}
 }
@@ -92,10 +132,27 @@ void Menu::update(float deltaTime, sf::Event event, sf::Vector2f size, sf::Vecto
 	else if (m_multiplayerUI)
 	{
 		m_texturesSize["menu/multiplayer-button-1.png"] = sf::Vector2f(size.x * 0.5, size.y * 0.2);
-		m_texturesPosition["menu/multiplayer-button-1.png"] = sf::Vector2f(position.x, position.y - 20);
+		m_texturesPosition["menu/multiplayer-button-1.png"] = sf::Vector2f(position.x, position.y - 30);
 		m_to_display["menu/multiplayer-button-1.png"] = true;
+
+		if(!m_intputBox)
+		{
+			m_texturesSize["menu/multiplayer-inputbox-2.png"] = sf::Vector2f(size.x * 0.5, size.y * 0.1);
+			m_texturesPosition["menu/multiplayer-inputbox-2.png"] = sf::Vector2f(position.x, position.y + 10);
+			m_to_display["menu/multiplayer-inputbox-2.png"] = true;
+			m_to_display["menu/multiplayer-inputbox-1.png"] = false;
+		}
+		else
+		{
+			m_texturesSize["menu/multiplayer-inputbox-1.png"] = sf::Vector2f(size.x * 0.5, size.y * 0.1);
+			m_texturesPosition["menu/multiplayer-inputbox-1.png"] = sf::Vector2f(position.x, position.y + 10);
+			m_to_display["menu/multiplayer-inputbox-1.png"] = true;
+			m_to_display["menu/multiplayer-inputbox-2.png"] = false;
+			m_hostText.setPosition(sf::Vector2f(position.x - m_texturesSize["menu/multiplayer-inputbox-1.png"].x/2.1, position.y + 4));
+		}
+
 		m_texturesSize["menu/multiplayer-button-2.png"] = sf::Vector2f(size.x * 0.5, size.y * 0.2);
-		m_texturesPosition["menu/multiplayer-button-2.png"] = sf::Vector2f(position.x, position.y + 20);
+		m_texturesPosition["menu/multiplayer-button-2.png"] = sf::Vector2f(position.x, position.y + 50);
 		m_to_display["menu/multiplayer-button-2.png"] = true;
 
 		multiplayer(event);
@@ -136,5 +193,9 @@ void Menu::draw(Renderer& renderer)
 		{
 			renderer.draw(texture.second, m_texturesPosition[name], m_texturesSize[name]);
 		}
+	}
+	if (m_intputBox)
+	{
+		renderer.target.draw(m_hostText);
 	}
 }

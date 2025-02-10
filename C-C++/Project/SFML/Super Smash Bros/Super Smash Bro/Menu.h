@@ -17,6 +17,7 @@ public:
 
 	void begin();
 	void resetTextureToDisplay();
+	void createInputBox();
 	void selectGame(sf::Event event);
 	void character(sf::Event event);
 	void multiplayer(sf::Event event);
@@ -34,8 +35,24 @@ private:
 	bool m_gameUI = false;
 	bool m_charactersUI = false;
 	bool m_multiplayerUI = false;
+	bool m_intputBox = false;
 
 	sf::Texture titleBackground;
+    std::string m_host_port = "";
+
+    std::map<sf::Keyboard::Key, char> m_keyToString = {
+        {sf::Keyboard::Numpad0, '0'},
+        {sf::Keyboard::Numpad1, '1'},
+        {sf::Keyboard::Numpad2, '2'},
+        {sf::Keyboard::Numpad3, '3'},
+        {sf::Keyboard::Numpad4, '4'},
+        {sf::Keyboard::Numpad5, '5'},
+        {sf::Keyboard::Numpad6, '6'},
+        {sf::Keyboard::Numpad7, '7'},
+        {sf::Keyboard::Numpad8, '8'},
+        {sf::Keyboard::Numpad9, '9'},
+        {sf::Keyboard::Period, '.'},
+        {sf::Keyboard::Semicolon, ':'}};
 
 };
 

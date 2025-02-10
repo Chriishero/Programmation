@@ -6,6 +6,7 @@
 extern Camera camera;
 extern bool paused;
 extern bool menuState;
+extern sf::Font font;
 extern sf::RenderWindow window;
 
 void restart();

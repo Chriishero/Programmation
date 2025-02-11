@@ -19,7 +19,7 @@ public:
 	void resetTextureToDisplay();
 	void createInputBox();
 	void selectGame(sf::Event event);
-	void character(sf::Event event);
+	void characterUI(sf::Event event);
 	void multiplayer(sf::Event event);
 	void update(float deltaTime, sf::Event event, sf::Vector2f size, sf::Vector2f position);
 	void draw(Renderer& renderer);
@@ -38,7 +38,6 @@ private:
 	bool m_intputBox = false;
 
 	sf::Texture titleBackground;
-    std::string m_host_port = "";
 
     std::map<sf::Keyboard::Key, char> m_keyToString = {
         {sf::Keyboard::Numpad0, '0'},

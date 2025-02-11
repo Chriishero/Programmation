@@ -572,12 +572,6 @@ void Character::update(float deltaTime)
 					}
 				}
 			}
-			if (std::string(m_name) == "Mario")
-			{
-				velocity.x = 0.0f;
-				animations["stand"].update(deltaTime);
-				textureToDraw = animations["stand"].getTexture();
-			}
 			body->SetLinearVelocity(velocity);
 		}
 	}
@@ -653,7 +647,7 @@ void Character::onBeginContact(b2Fixture* self, b2Fixture* other)
 	{
 		characterContact = true;
 
-		if (attacks && std::string(m_name) == "Link")
+		if (attacks)
 		{
 			auto victim = data->character;
 			victim->damaged = true;

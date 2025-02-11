@@ -12,6 +12,10 @@ int main()
 	window.setFramerateLimit(60);
 
 	begin();
+	if (enet_initialize() != 0)
+	{
+		std::cerr << "An error occured while initializing Enet." << std::endl;
+	}
 	while (window.isOpen())
 	{
 		float deltaTime = deltaClock.restart().asSeconds();
@@ -25,6 +29,8 @@ int main()
 			}
 			updateUI(deltaTime, event);
 		}
+		manageHost();
+
 		update(deltaTime);
 		
 		window.clear();
@@ -36,6 +42,6 @@ int main()
 
 		window.display();
 	}
-
+	atexit(enet_deinitialize);
 	return 0;
 }

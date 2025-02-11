@@ -58,42 +58,63 @@ void Menu::selectGame(sf::Event event)
 	}
 }
 
-void Menu::character(sf::Event event)
+void Menu::characterUI(sf::Event event)
 {
-	
+	if (event.type == sf::Event::KeyReleased)
+	{
+		if (event.mouseButton.button == sf::Keyboard::M)
+		{
+			character = new Character("Mario");
+			character->begin();
+			characters.push_back(character);
+			m_charactersUI = false;
+
+			resetTextureToDisplay();
+			menuState = false;
+		}
+		else if (event.mouseButton.button == sf::Keyboard::L)
+		{
+			character = new Character("Link");
+			character->begin();
+			characters.push_back(character);
+			m_charactersUI = false;
+
+			resetTextureToDisplay();
+			menuState = false;
+		}
+	}
 }
 
 void Menu::multiplayer(sf::Event event)
 {
 	if (event.type == sf::Event::KeyReleased)
 	{
-		if (!m_intputBox)
+		if (event.mouseButton.button == sf::Keyboard::C)
 		{
-				if (event.mouseButton.button == sf::Keyboard::C)
-				{
-					std::cout << "create party" << std::endl;
-					m_charactersUI = true;
-					m_multiplayerUI = false;
+			std::cout << "create party" << std::endl;
+			m_charactersUI = true;
+			m_multiplayerUI = false; 
+			m_intputBox = false;
 
-					resetTextureToDisplay();
-				}
-				else if (event.mouseButton.button == sf::Keyboard::J)
-				{
-					std::cout << "join party" << std::endl;
-					m_multiplayerUI = true;
-					m_gameUI = false;
+			resetTextureToDisplay();
 
-					resetTextureToDisplay();
-				}
-				else if (event.mouseButton.button == sf::Keyboard::I)
-				{
-					std::cout << "input" << std::endl;
-					m_intputBox = true;
-				}
+			initializeServer();
 		}
-		if (event.key.code == sf::Keyboard::Enter)
+		else if (event.mouseButton.button == sf::Keyboard::J)
 		{
-			std::cout << "enter" << std::endl;
+			std::cout << "join party" << std::endl;
+			m_charactersUI = true;
+			m_multiplayerUI = false;
+			m_intputBox = false;
+
+			resetTextureToDisplay();
+
+			joinServer();
+		}
+		else if (event.mouseButton.button == sf::Keyboard::I)
+		{
+			std::cout << "input" << std::endl;
+			m_intputBox = true;
 		}
 	}
 	if(m_intputBox)
@@ -102,14 +123,14 @@ void Menu::multiplayer(sf::Event event)
 		{
 			if (m_keyToString.find(event.key.code) != m_keyToString.end())
 			{
-				m_host_port.push_back(m_keyToString[event.key.code]);
-				m_hostText.setString(m_host_port);
+				hostPort.push_back(m_keyToString[event.key.code]);
+				m_hostText.setString(hostPort);
 				std::cout << m_keyToString[event.key.code];
 			}
 			else if (event.key.code == sf::Keyboard::Backspace)
 			{
-				m_host_port.pop_back();
-				m_hostText.setString(m_host_port);
+				hostPort.pop_back();
+				m_hostText.setString(hostPort);
 			}
 		}
 	}
@@ -127,7 +148,11 @@ void Menu::update(float deltaTime, sf::Event event, sf::Vector2f size, sf::Vecto
 	}
 	else if (m_charactersUI)
 	{
-		character(event);
+		m_texturesSize["menu/character-1.png"] = sf::Vector2f(size.x * 0.6, size.y * 0.8);
+		m_texturesPosition["menu/character-1.png"] = sf::Vector2f(position.x, position.y);
+		m_to_display["menu/character-1.png"] = true;
+
+		characterUI(event);
 	}
 	else if (m_multiplayerUI)
 	{

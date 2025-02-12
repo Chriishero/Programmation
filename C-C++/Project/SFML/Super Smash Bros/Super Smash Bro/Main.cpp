@@ -29,7 +29,8 @@ int main()
 			}
 			updateUI(deltaTime, event);
 		}
-		manageHost();
+		updateServer();
+		updateClient();
 
 		update(deltaTime);
 		

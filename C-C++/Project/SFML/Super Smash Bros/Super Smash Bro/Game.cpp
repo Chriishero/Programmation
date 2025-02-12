@@ -17,13 +17,11 @@ ENetPeer* peer;
 Menu menu(window);
 Map map("Final Destination");
 Camera camera(25.0f);
-Character* character = new Character("Mario");
+Character* character = new Character("Mario", true);
 std::vector<Character*> characters{};
 
 bool paused = false;
 bool menuState = true;
-
-std::string hostPort;
 
 sf::Font font{};
 
@@ -123,12 +121,13 @@ void renderUI(Renderer& renderer)
 	}
 }
 
-void manageHost()
+void updateServer()
 {
-	if(client != NULL)
+	if(server != NULL)
 	{
-		/* Wait up to 1000 milliseconds for an event. */
-		while (enet_host_service(client, &enetEvent, 1000) > 0)
+		sf::Vector2f position;
+		/* Wait up to 0 milliseconds for an event. */
+		while (enet_host_service(server, &enetEvent, 0) > 0)
 		{
 			switch (enetEvent.type)
 			{
@@ -136,18 +135,16 @@ void manageHost()
 				printf("A new client connected from %x:%u.\n",
 					enetEvent.peer->address.host,
 					enetEvent.peer->address.port);
-
-				/* Store any relevant client information here. */
-				//enetEvent.peer->data = "Client information";
-
 				break;
 
 			case ENET_EVENT_TYPE_RECEIVE:
-				printf("A packet of length %u containing %s was received from %s on channel %u.\n",
-					enetEvent.packet->dataLength,
-					enetEvent.packet->data,
-					enetEvent.peer->data,
-					enetEvent.channelID);
+				memcpy(&position, enetEvent.packet->data, sizeof(sf::Vector2f));
+
+				std::cout << "Position reçu par le serveur : (" << position.x << ", " << position.y << ")" << std::endl;
+
+				// Envoie le packet à tous les clients
+				enet_host_broadcast(server, 0, enetEvent.packet);
+				enet_host_flush(server);
 
 				/* Clean up the packet now that we're done using it. */
 				enet_packet_destroy(enetEvent.packet);
@@ -156,10 +153,28 @@ void manageHost()
 
 			case ENET_EVENT_TYPE_DISCONNECT:
 				printf("%s disconnected.\n", enetEvent.peer->data);
-
-				/* Reset the peer's client information. */
-
 				enetEvent.peer->data = NULL;
+			}
+		}
+	}
+}
+
+void updateClient()
+{
+	if(client != NULL)
+	{
+		sf::Vector2f position;
+		while (enet_host_service(client, &enetEvent, 0) > 0)
+		{
+			switch (enetEvent.type)
+			{
+			case ENET_EVENT_TYPE_RECEIVE:
+				memcpy(&position, enetEvent.packet->data, sizeof(sf::Vector2f));
+
+				std::cout << "Position d'un autre joueur reçu : (" << position.x << "," << position.y << ")" << std::endl;
+
+				enet_packet_destroy(enetEvent.packet);
+				break;
 			}
 		}
 	}
@@ -167,8 +182,12 @@ void manageHost()
 
 void initializeServer()
 {
+	if (enet_initialize() != 0)
+	{
+		std::cerr << "An error occured while initializing Enet." << std::endl;
+	}
 
-	enet_address_set_host(&address, "172.30.32.1");
+	address.host = ENET_HOST_ANY;
 	address.port = 1234;
 
 	server = enet_host_create(&address /* the address to bind the server host to */,
@@ -176,16 +195,22 @@ void initializeServer()
 								2      /* allow up to 2 channels to be used, 0 and 1 */,
 								0      /* assume any amount of incoming bandwidth */,
 								0      /* assume any amount of outgoing bandwidth */);
-	if (server == NULL)
+	if (server) 
+	{
+		std::cout << "Serveur lancé avec succès sur le port " << address.port << std::endl;
+	}
+	else
 	{
 		std::cerr << "An error occured while trying to create an ENet server host." << std::endl;
 	}
 
 	std::cout << "Server host : " << address.host << std::endl;
 	std::cout << "Server port : " << address.port << std::endl;
+
+	joinServer("127.0.0.1:" + std::to_string(address.port));
 }
 
-void joinServer()
+void joinServer(std::string hostPort)
 {
 	std::cout << "joinServer" << std::endl;
 	std::string hostStr;
@@ -202,7 +227,7 @@ void joinServer()
 			{
 				hostStr.push_back(hostPort[j]);
 			}
-			for (auto j = i+1; j < hostPort.size(); j++)
+			for (auto j = i + 1; j < hostPort.size(); j++)
 			{
 				portStr.push_back(hostPort[j]);
 			}
@@ -225,11 +250,15 @@ void joinServer()
 	}
 
 	std::cout << "Connexion au serveur" << std::endl;
-	enet_address_set_host(&address, host);
+	if (enet_address_set_host(&address, host) != 0)
+	{
+		std::cerr << "erreur lors du set_host" << std::endl;
+	}
 	address.port = port;
 
 	std::cout << "initialisation de la connexion" << std::endl;
 	peer = enet_host_connect(client, &address, 2, 0);
+	enet_host_flush(client);
 
 	if (peer == NULL)
 	{
@@ -237,7 +266,7 @@ void joinServer()
 	}
 
 	/* Wait up to 5 seconds for the connection attempt to succeed. */
-	if (enet_host_service(client, &enetEvent, 5000) > 0 &&
+	if (enet_host_service(client, &enetEvent, 10000) > 0 &&
 		enetEvent.type == ENET_EVENT_TYPE_CONNECT)
 	{
 		std::cout << "Connexion Succeeded" << std::endl;
@@ -249,7 +278,7 @@ void joinServer()
 		/* Either the 5 seconds are up or a disconnect event was */
 		/* received. Reset the peer in the event the 5 seconds   */
 		/* had run out without any significant event.            */
-		enet_peer_reset(peer);
+		//enet_peer_reset(peer);
 
 		std::cout << "Connexion Failed" << std::endl;
 		std::cout << "Server host : " << address.host << std::endl;

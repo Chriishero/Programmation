@@ -38,6 +38,7 @@ private:
 	bool m_intputBox = false;
 
 	sf::Texture titleBackground;
+	std::string m_hostPort;
 
     std::map<sf::Keyboard::Key, char> m_keyToString = {
         {sf::Keyboard::Numpad0, '0'},

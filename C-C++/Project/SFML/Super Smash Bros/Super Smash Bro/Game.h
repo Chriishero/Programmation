@@ -12,7 +12,12 @@ extern bool paused;
 extern bool menuState;
 extern sf::Font font;
 extern sf::RenderWindow window;
-extern std::string hostPort;
+
+extern ENetAddress address;
+extern ENetHost* server;
+extern ENetHost* client;
+extern ENetEvent enetEvent;
+extern ENetPeer* peer;
 
 void restart();
 void begin();
@@ -20,6 +25,7 @@ void update(float deltaTime);
 void updateUI(float deltaTime, sf::Event event);
 void render(Renderer& renderer);
 void renderUI(Renderer& renderer);
-void manageHost();
+void updateServer();
+void updateClient();
 void initializeServer();
-void joinServer();
+void joinServer(std::string hostPort);

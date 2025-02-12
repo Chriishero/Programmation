@@ -64,7 +64,7 @@ void Menu::characterUI(sf::Event event)
 	{
 		if (event.mouseButton.button == sf::Keyboard::M)
 		{
-			character = new Character("Mario");
+			character = new Character("Mario", true);
 			character->begin();
 			characters.push_back(character);
 			m_charactersUI = false;
@@ -74,7 +74,7 @@ void Menu::characterUI(sf::Event event)
 		}
 		else if (event.mouseButton.button == sf::Keyboard::L)
 		{
-			character = new Character("Link");
+			character = new Character("Link", true);
 			character->begin();
 			characters.push_back(character);
 			m_charactersUI = false;
@@ -109,7 +109,7 @@ void Menu::multiplayer(sf::Event event)
 
 			resetTextureToDisplay();
 
-			joinServer();
+			joinServer(m_hostPort);
 		}
 		else if (event.mouseButton.button == sf::Keyboard::I)
 		{
@@ -123,14 +123,14 @@ void Menu::multiplayer(sf::Event event)
 		{
 			if (m_keyToString.find(event.key.code) != m_keyToString.end())
 			{
-				hostPort.push_back(m_keyToString[event.key.code]);
-				m_hostText.setString(hostPort);
+				m_hostPort.push_back(m_keyToString[event.key.code]);
+				m_hostText.setString(m_hostPort);
 				std::cout << m_keyToString[event.key.code];
 			}
 			else if (event.key.code == sf::Keyboard::Backspace)
 			{
-				hostPort.pop_back();
-				m_hostText.setString(hostPort);
+				m_hostPort.pop_back();
+				m_hostText.setString(m_hostPort);
 			}
 		}
 	}

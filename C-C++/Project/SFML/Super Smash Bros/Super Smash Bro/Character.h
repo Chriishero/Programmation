@@ -13,13 +13,14 @@
 class Character : public ContactListener
 {
 public:
-	Character(sf::String name);
+	Character(sf::String name, bool local);
 
 	void loadAnimation();
 	void loadSprites();
 	void createShape(sf::Vector2f size);
 	void begin();
 
+	void sendPacket();
 	void update(float deltaTime);
 	void draw(Renderer& renderer);
 
@@ -36,7 +37,9 @@ public:
 	float yPosition = 0.0f;
 
 private:
+	bool m_local;
 	sf::String m_name;
+
 	std::vector<std::string> animationNames = { "stand", "jump", "running", "attacks", "upaerial", "downtilt",
 										"smash", "tilt", "aerial", "damage", "guarding", "win", "loose", "uptilt"};
 

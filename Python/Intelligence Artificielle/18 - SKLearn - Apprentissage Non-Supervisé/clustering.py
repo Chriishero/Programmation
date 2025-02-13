@@ -39,7 +39,7 @@ for k in K_range: # permet de tester différent nombre de cluster pour trouver l
 
 plt.plot(K_range, inertia)
 plt.xlabel("Nombre de clusters")
-plt.ylabel("Cout du model (intertia)")
+plt.ylabel("Coût du model (inertia)")
 plt.show()
 
 model = KMeans(n_clusters=3).fit(X)

@@ -9,7 +9,7 @@
 const float runVelocity = 3.0f;
 const float jumpVelocity = 10.0f;
 
-Character::Character(sf::String name, bool local) : m_name(name), m_local(local)
+Character::Character(std::string name, bool local) : m_name(name), m_local(local)
 {
 }
 
@@ -282,12 +282,21 @@ void Character::begin()
 	body = Physics::world->CreateBody(&bodyDef);
 
 	createShape(sf::Vector2f(0.5f, 0.5f));
+
+	sendPacket(true);
 }
 
-void Character::sendPacket()
+void Character::sendPacket(bool creation)
 {
-	char data[sizeof(sf::Vector2f)];
-	memcpy(data, &position, sizeof(sf::Vector2f));
+	strncpy_s(m_characterData.name, m_name.c_str(), sizeof(m_characterData.name) - 1);
+	m_characterData.name[sizeof(m_characterData.name) - 1] = '\0';
+	m_characterData.position = position;
+	m_characterData.size = size;
+	m_characterData.texture = textureToDraw;
+	m_characterData.creation = creation;
+
+	char data[sizeof(CharacterData)];
+	memcpy(data, &m_characterData, sizeof(CharacterData));
 
 	ENetPacket* packet = enet_packet_create(data, sizeof(data), ENET_PACKET_FLAG_RELIABLE);
 	enet_peer_send(peer, 0, packet);
@@ -606,7 +615,7 @@ void Character::update(float deltaTime)
 		position = sf::Vector2f(body->GetPosition().x, body->GetPosition().y);
 		previousYPosition = body->GetPosition().y;
 
-		sendPacket();
+		sendPacket(false);
 	}
 }
 
@@ -632,8 +641,8 @@ void Character::draw(Renderer& renderer)
 		previousSize = size;
 	}
 
-	renderer.draw(textureToDraw, position, 
-		sf::Vector2f(m_facingLeft ? -(float)textureSize.x* xRatio : textureSize.x * xRatio, textureSize.y * yRatio));
+	size = sf::Vector2f(m_facingLeft ? -(float)textureSize.x * xRatio : textureSize.x * xRatio, textureSize.y * yRatio);
+	renderer.draw(textureToDraw, position, size);
 }
 
 void Character::takeDamage(float xDamage, float yDamage, float life)

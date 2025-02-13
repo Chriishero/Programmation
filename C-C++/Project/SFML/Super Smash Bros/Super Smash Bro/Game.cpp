@@ -20,6 +20,8 @@ Camera camera(25.0f);
 Character* character = new Character("Mario", true);
 std::vector<Character*> characters{};
 
+std::map<ENetPeer*, Character*> playersCharacter;
+
 bool paused = false;
 bool menuState = true;
 
@@ -125,7 +127,7 @@ void updateServer()
 {
 	if(server != NULL)
 	{
-		sf::Vector2f position;
+		Character::CharacterData characterData;
 		/* Wait up to 0 milliseconds for an event. */
 		while (enet_host_service(server, &enetEvent, 0) > 0)
 		{
@@ -138,9 +140,9 @@ void updateServer()
 				break;
 
 			case ENET_EVENT_TYPE_RECEIVE:
-				memcpy(&position, enetEvent.packet->data, sizeof(sf::Vector2f));
+				memcpy(&characterData, enetEvent.packet->data, sizeof(Character::CharacterData));
 
-				std::cout << "Position reçu par le serveur : (" << position.x << ", " << position.y << ")" << std::endl;
+				//std::cout << "Packet reçu par le serveur : " << enetEvent.packet->userData << std::endl;
 
 				// Envoie le packet à tous les clients
 				enet_host_broadcast(server, 0, enetEvent.packet);
@@ -163,15 +165,29 @@ void updateClient()
 {
 	if(client != NULL)
 	{
-		sf::Vector2f position;
+		Character::CharacterData characterData;
 		while (enet_host_service(client, &enetEvent, 0) > 0)
 		{
 			switch (enetEvent.type)
 			{
 			case ENET_EVENT_TYPE_RECEIVE:
-				memcpy(&position, enetEvent.packet->data, sizeof(sf::Vector2f));
+				memcpy(&characterData, enetEvent.packet->data, sizeof(Character::CharacterData));
 
-				std::cout << "Position d'un autre joueur reçu : (" << position.x << "," << position.y << ")" << std::endl;
+				if (!playersCharacter[enetEvent.peer])
+				{
+					std::cout << "nouveau personnage" << std::endl;
+					Character* player = new Character(characterData.name, false);
+					player->begin();
+					playersCharacter[enetEvent.peer] = player;
+				}
+				else
+				{
+					playersCharacter[enetEvent.peer]->position = characterData.position;
+					playersCharacter[enetEvent.peer]->size = characterData.size;
+					playersCharacter[enetEvent.peer]->textureToDraw = characterData.texture;
+				}
+
+				//printf("Packet : %s : (%f;%f)\n", characterData.name, characterData.position.x, characterData.position.y);
 
 				enet_packet_destroy(enetEvent.packet);
 				break;
@@ -260,13 +276,15 @@ void joinServer(std::string hostPort)
 	peer = enet_host_connect(client, &address, 2, 0);
 	enet_host_flush(client);
 
+	playersCharacter[peer] = character;
+
 	if (peer == NULL)
 	{
 		fprintf(stderr, "No available peers for initiating an ENet connection.\n");
 	}
 
 	/* Wait up to 5 seconds for the connection attempt to succeed. */
-	if (enet_host_service(client, &enetEvent, 10000) > 0 &&
+	if (enet_host_service(client, &enetEvent, 5000) > 0 &&
 		enetEvent.type == ENET_EVENT_TYPE_CONNECT)
 	{
 		std::cout << "Connexion Succeeded" << std::endl;

@@ -13,14 +13,14 @@
 class Character : public ContactListener
 {
 public:
-	Character(sf::String name, bool local);
+	Character(std::string name, bool local);
 
 	void loadAnimation();
 	void loadSprites();
 	void createShape(sf::Vector2f size);
 	void begin();
 
-	void sendPacket();
+	void sendPacket(bool creation);
 	void update(float deltaTime);
 	void draw(Renderer& renderer);
 
@@ -30,6 +30,16 @@ public:
 	virtual void onBeginContact(b2Fixture* self, b2Fixture* other) override;
 	virtual void onEndContact(b2Fixture* self, b2Fixture* other) override;
 
+	struct CharacterData
+	{
+		char name[32];
+		sf::Vector2f position;
+		sf::Texture texture;
+		sf::Vector2f size;
+		bool creation;
+	};
+
+	sf::Texture textureToDraw{};
 	sf::Vector2f position = sf::Vector2f(0.0f, -5.0f);
 	sf::Vector2f size = sf::Vector2f(0.0f, 0.0f);
 	sf::Vector2f previousSize = sf::Vector2f(0.0f, 0.0f);
@@ -38,7 +48,9 @@ public:
 
 private:
 	bool m_local;
-	sf::String m_name;
+	std::string m_name;
+
+	CharacterData m_characterData;
 
 	std::vector<std::string> animationNames = { "stand", "jump", "running", "attacks", "upaerial", "downtilt",
 										"smash", "tilt", "aerial", "damage", "guarding", "win", "loose", "uptilt"};
@@ -46,8 +58,6 @@ private:
 	std::map<std::string, Animation> animations{};
 	std::map<std::string, bool> animationsKeyPress{};
 	std::map<std::string, int> animationsFrame{};
-
-	sf::Texture textureToDraw{};
 
 	FixtureData fixtureData{};
 	b2Body* body{};

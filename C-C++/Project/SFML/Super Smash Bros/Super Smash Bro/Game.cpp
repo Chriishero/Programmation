@@ -29,6 +29,8 @@ sf::Font font{};
 
 sf::RectangleShape backgroundShape(sf::Vector2f(1.0f, 1.0f));
 
+int iPacket = 0;
+	
 void restart()
 {
 	Physics::init();
@@ -129,11 +131,16 @@ void updateServer()
 	{
 		Character::CharacterData characterData;
 		/* Wait up to 0 milliseconds for an event. */
-		while (enet_host_service(server, &enetEvent, 0) > 0)
+		while (enet_host_service(server, &enetEvent, 10) > 0)
 		{
 			switch (enetEvent.type)
 			{
 			case ENET_EVENT_TYPE_CONNECT:
+				if (enetEvent.peer == nullptr)
+				{
+					std::cerr << "Erreur: peer est NULL lors de la connexion !" << std::endl;
+					break;
+				}
 				printf("A new client connected from %x:%u.\n",
 					enetEvent.peer->address.host,
 					enetEvent.peer->address.port);
@@ -154,8 +161,10 @@ void updateServer()
 				break;
 
 			case ENET_EVENT_TYPE_DISCONNECT:
-				printf("%s disconnected.\n", enetEvent.peer->data);
-				enetEvent.peer->data = NULL;
+				printf("A client disconnected from %x:%u.\n",
+					enetEvent.peer->address.host,
+					enetEvent.peer->address.port);
+				break;
 			}
 		}
 	}
@@ -163,7 +172,7 @@ void updateServer()
 
 void updateClient()
 {
-	if(client != NULL)
+	if(client != nullptr)
 	{
 		Character::CharacterData characterData;
 		while (enet_host_service(client, &enetEvent, 0) > 0)
@@ -173,7 +182,7 @@ void updateClient()
 			case ENET_EVENT_TYPE_RECEIVE:
 				memcpy(&characterData, enetEvent.packet->data, sizeof(Character::CharacterData));
 
-				if (!playersCharacter[enetEvent.peer])
+				/*if (!playersCharacter.contains(enetEvent.peer))
 				{
 					std::cout << "nouveau personnage" << std::endl;
 					Character* player = new Character(characterData.name, false);
@@ -185,10 +194,10 @@ void updateClient()
 					playersCharacter[enetEvent.peer]->position = characterData.position;
 					playersCharacter[enetEvent.peer]->size = characterData.size;
 					playersCharacter[enetEvent.peer]->textureToDraw = characterData.texture;
-				}
+				}*/
 
-				//printf("Packet : %s : (%f;%f)\n", characterData.name, characterData.position.x, characterData.position.y);
-
+				printf("Packet n°%d : %s : (%f;%f)\n", iPacket, characterData.name, characterData.position.x, characterData.position.y);
+				iPacket++;
 				enet_packet_destroy(enetEvent.packet);
 				break;
 			}

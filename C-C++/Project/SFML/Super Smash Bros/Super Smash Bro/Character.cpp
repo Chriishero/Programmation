@@ -299,8 +299,19 @@ void Character::sendPacket(bool creation)
 	memcpy(data, &m_characterData, sizeof(CharacterData));
 
 	ENetPacket* packet = enet_packet_create(data, sizeof(data), ENET_PACKET_FLAG_RELIABLE);
-	enet_peer_send(peer, 0, packet);
+	if (packet == NULL){
+		std::cerr << "Erreur de création du paquet ENet !" << std::endl;
+		return;
+	}
+	if (enet_peer_send(peer, 0, packet) < 0){
+		std::cerr << "Erreur lors de l'envoi du paquet ENet !" << std::endl;
+	}
+
+	// Pas nécessaire de flush ici si on est dans un environnement de boucle d'événements
 	enet_host_flush(client);
+
+	// Libérer le paquet après l'envoi
+	enet_packet_destroy(packet);
 }
 
 void Character::update(float deltaTime)

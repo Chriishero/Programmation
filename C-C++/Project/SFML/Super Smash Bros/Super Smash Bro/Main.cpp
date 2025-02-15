@@ -1,5 +1,6 @@
 #include <SFML/Graphics.hpp>
 #include <enet/enet.h>
+#include <thread>
 #include "Game.h"
 #include "Renderer.h"
 
@@ -33,7 +34,7 @@ int main()
 		updateClient();
 
 		update(deltaTime);
-		
+
 		window.clear();
 
 		window.setView(camera.getView(window.getSize()));

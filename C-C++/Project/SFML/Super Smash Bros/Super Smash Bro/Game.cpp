@@ -20,7 +20,8 @@ Camera camera(25.0f);
 Character* character = new Character("Mario", true);
 std::vector<Character*> characters{};
 
-std::map<ENetPeer*, Character*> playersCharacter;
+std::map<ENetPeer*, Character*> playersCharacter{};
+std::map<ENetPeer*, bool> playersAvailability{};
 
 bool paused = false;
 bool menuState = true;
@@ -131,7 +132,7 @@ void updateServer()
 	{
 		Character::CharacterData characterData;
 		/* Wait up to 0 milliseconds for an event. */
-		while (enet_host_service(server, &enetEvent, 10) > 0)
+		while (enet_host_service(server, &enetEvent, 30) > 0)
 		{
 			switch (enetEvent.type)
 			{
@@ -144,15 +145,28 @@ void updateServer()
 				printf("A new client connected from %x:%u.\n",
 					enetEvent.peer->address.host,
 					enetEvent.peer->address.port);
+				enet_peer_timeout(enetEvent.peer, 10000, 5000, 50000); // timeout du kick
+				// 10000 : limite avant que l'inactivité du client soit condidéré comme suspectf
+				// 5000 : temps minimum avant la première vérification du timeout
+				// 50000 : temps maximum avant que le client soit déconnecté pour inactivité
+
+				playersAvailability[enetEvent.peer] = false;
 				break;
 
 			case ENET_EVENT_TYPE_RECEIVE:
+				playersAvailability[enetEvent.peer] = true;
 				memcpy(&characterData, enetEvent.packet->data, sizeof(Character::CharacterData));
 
-				//std::cout << "Packet reçu par le serveur : " << enetEvent.packet->userData << std::endl;
-
 				// Envoie le packet à tous les clients
-				enet_host_broadcast(server, 0, enetEvent.packet);
+
+				for (auto i = 0; i < server->peerCount; i++)
+				{
+					if (playersAvailability[&server->peers[i]])
+					{
+						enet_peer_send(&server->peers[i], 0, enetEvent.packet);;
+					}
+				}
+				//enet_host_broadcast(server, 0, enetEvent.packet);
 				enet_host_flush(server);
 
 				/* Clean up the packet now that we're done using it. */
@@ -172,10 +186,10 @@ void updateServer()
 
 void updateClient()
 {
-	if(client != nullptr)
+	if(client != NULL)
 	{
 		Character::CharacterData characterData;
-		while (enet_host_service(client, &enetEvent, 0) > 0)
+		while (enet_host_service(client, &enetEvent, 10) > 0)
 		{
 			switch (enetEvent.type)
 			{
@@ -196,7 +210,7 @@ void updateClient()
 					playersCharacter[enetEvent.peer]->textureToDraw = characterData.texture;
 				}*/
 
-				printf("Packet n°%d : %s : (%f;%f)\n", iPacket, characterData.name, characterData.position.x, characterData.position.y);
+				printf("Packet n%d : %s : (%f;%f)\n", iPacket, characterData.name, characterData.position.x, characterData.position.y);
 				iPacket++;
 				enet_packet_destroy(enetEvent.packet);
 				break;

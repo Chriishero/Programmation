@@ -65,8 +65,8 @@ void Menu::characterUI(sf::Event event)
 		if (event.mouseButton.button == sf::Keyboard::M)
 		{
 			character = new Character("Mario", true);
-			character->begin();
 			characters.push_back(character);
+			character->begin();
 			m_charactersUI = false;
 
 			resetTextureToDisplay();

@@ -284,6 +284,7 @@ void Character::begin()
 	createShape(sf::Vector2f(0.5f, 0.5f));
 
 	sendPacket(true);
+	isLoading = false;
 }
 
 void Character::sendPacket(bool creation)
@@ -294,6 +295,7 @@ void Character::sendPacket(bool creation)
 	m_characterData.size = size;
 	m_characterData.texture = textureToDraw;
 	m_characterData.creation = creation;
+	m_characterData.loading = isLoading;
 
 	char data[sizeof(CharacterData)];
 	memcpy(data, &m_characterData, sizeof(CharacterData));

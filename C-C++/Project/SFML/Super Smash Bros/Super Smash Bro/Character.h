@@ -37,6 +37,7 @@ public:
 		sf::Texture texture;
 		sf::Vector2f size;
 		bool creation;
+		bool loading;
 	};
 
 	sf::Texture textureToDraw{};
@@ -45,6 +46,9 @@ public:
 	sf::Vector2f previousSize = sf::Vector2f(0.0f, 0.0f);
 
 	float yPosition = 0.0f;
+
+	bool isLoading = true;
+
 
 private:
 	bool m_local;

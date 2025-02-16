@@ -305,7 +305,7 @@ void Character::sendPacket(bool creation)
 		std::cerr << "Erreur de création du paquet ENet !" << std::endl;
 		return;
 	}
-	if (enet_peer_send(peer, 0, packet) < 0){
+	if (enet_peer_send(peer, 0, packet) < 0) {
 		std::cerr << "Erreur lors de l'envoi du paquet ENet !" << std::endl;
 	}
 
@@ -313,7 +313,7 @@ void Character::sendPacket(bool creation)
 	enet_host_flush(client);
 
 	// Libérer le paquet après l'envoi
-	enet_packet_destroy(packet);
+	//enet_packet_destroy(packet);
 }
 
 void Character::update(float deltaTime)
@@ -628,7 +628,8 @@ void Character::update(float deltaTime)
 		position = sf::Vector2f(body->GetPosition().x, body->GetPosition().y);
 		previousYPosition = body->GetPosition().y;
 
-		sendPacket(false);
+		if(m_name == "Mario")
+			sendPacket(false);
 	}
 }
 

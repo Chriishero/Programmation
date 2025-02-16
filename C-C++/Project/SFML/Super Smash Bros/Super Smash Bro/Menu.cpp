@@ -92,24 +92,24 @@ void Menu::multiplayer(sf::Event event)
 		if (event.mouseButton.button == sf::Keyboard::C)
 		{
 			std::cout << "create party" << std::endl;
+			initializeServer();
+
 			m_charactersUI = true;
 			m_multiplayerUI = false; 
 			m_intputBox = false;
 
 			resetTextureToDisplay();
-
-			initializeServer();
 		}
 		else if (event.mouseButton.button == sf::Keyboard::J)
 		{
 			std::cout << "join party" << std::endl;
+			joinServer(m_hostPort);
+
 			m_charactersUI = true;
 			m_multiplayerUI = false;
 			m_intputBox = false;
 
 			resetTextureToDisplay();
-
-			joinServer(m_hostPort);
 		}
 		else if (event.mouseButton.button == sf::Keyboard::I)
 		{

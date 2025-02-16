@@ -130,9 +130,10 @@ void updateServer()
 {
 	if(server != NULL)
 	{
+		bool host_service = true;
 		Character::CharacterData characterData;
 		/* Wait up to 0 milliseconds for an event. */
-		while (enet_host_service(server, &enetEvent, 30) > 0)
+		while (enet_host_service(server, &enetEvent, 30) > 0 && host_service)
 		{
 			switch (enetEvent.type)
 			{
@@ -158,19 +159,21 @@ void updateServer()
 				memcpy(&characterData, enetEvent.packet->data, sizeof(Character::CharacterData));
 
 				// Envoie le packet à tous les clients
-
 				for (auto i = 0; i < server->peerCount; i++)
 				{
 					if (playersAvailability[&server->peers[i]])
 					{
-						enet_peer_send(&server->peers[i], 0, enetEvent.packet);;
+						//std::cout << "enet_peer_send(server->peers)" << std::endl;
+						enet_peer_send(&server->peers[i], 0, enetEvent.packet);
 					}
 				}
 				//enet_host_broadcast(server, 0, enetEvent.packet);
 				enet_host_flush(server);
+				//updateClient();
 
 				/* Clean up the packet now that we're done using it. */
 				enet_packet_destroy(enetEvent.packet);
+				//host_service = false;
 
 				break;
 
@@ -186,11 +189,15 @@ void updateServer()
 
 void updateClient()
 {
+	int delay = 0;
+	if (server != NULL)
+		delay = 10;
 	if(client != NULL)
 	{
 		Character::CharacterData characterData;
-		while (enet_host_service(client, &enetEvent, 10) > 0)
+		while (enet_host_service(client, &enetEvent, 0) > 0)
 		{
+			//std::cout << "enet_host_service > 0" << std::endl;
 			switch (enetEvent.type)
 			{
 			case ENET_EVENT_TYPE_RECEIVE:

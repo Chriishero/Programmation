@@ -133,7 +133,7 @@ void updateServer()
 		bool host_service = true;
 		Character::CharacterData characterData;
 		/* Wait up to 0 milliseconds for an event. */
-		while (enet_host_service(server, &enetEvent, 30) > 0 && host_service)
+		while (enet_host_service(server, &enetEvent, 10) > 0 && host_service)
 		{
 			switch (enetEvent.type)
 			{
@@ -152,6 +152,7 @@ void updateServer()
 				// 50000 : temps maximum avant que le client soit déconnecté pour inactivité
 
 				playersAvailability[enetEvent.peer] = false;
+
 				break;
 
 			case ENET_EVENT_TYPE_RECEIVE:
@@ -161,7 +162,7 @@ void updateServer()
 				// Envoie le packet à tous les clients
 				for (auto i = 0; i < server->peerCount; i++)
 				{
-					if (playersAvailability[&server->peers[i]])
+					if (playersAvailability[&server->peers[i]] && enetEvent.peer != &server->peers[i])
 					{
 						//std::cout << "enet_peer_send(server->peers)" << std::endl;
 						enet_peer_send(&server->peers[i], 0, enetEvent.packet);
@@ -189,13 +190,10 @@ void updateServer()
 
 void updateClient()
 {
-	int delay = 0;
-	if (server != NULL)
-		delay = 10;
 	if(client != NULL)
 	{
 		Character::CharacterData characterData;
-		while (enet_host_service(client, &enetEvent, 0) > 0)
+		while (enet_host_service(client, &enetEvent, 10) > 0)
 		{
 			//std::cout << "enet_host_service > 0" << std::endl;
 			switch (enetEvent.type)
@@ -203,22 +201,23 @@ void updateClient()
 			case ENET_EVENT_TYPE_RECEIVE:
 				memcpy(&characterData, enetEvent.packet->data, sizeof(Character::CharacterData));
 
-				/*if (!playersCharacter.contains(enetEvent.peer))
+				if (!playersCharacter.contains(enetEvent.peer)) // marche pas
 				{
-					std::cout << "nouveau personnage" << std::endl;
+					std::cout << "nouveau joueur" << std::endl;
 					Character* player = new Character(characterData.name, false);
 					player->begin();
 					playersCharacter[enetEvent.peer] = player;
 				}
-				else
+				else // marche
 				{
 					playersCharacter[enetEvent.peer]->position = characterData.position;
 					playersCharacter[enetEvent.peer]->size = characterData.size;
 					playersCharacter[enetEvent.peer]->textureToDraw = characterData.texture;
-				}*/
+				}
 
 				printf("Packet n%d : %s : (%f;%f)\n", iPacket, characterData.name, characterData.position.x, characterData.position.y);
 				iPacket++;
+
 				enet_packet_destroy(enetEvent.packet);
 				break;
 			}

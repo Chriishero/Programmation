@@ -628,8 +628,8 @@ void Character::update(float deltaTime)
 		position = sf::Vector2f(body->GetPosition().x, body->GetPosition().y);
 		previousYPosition = body->GetPosition().y;
 
-		if(m_name == "Mario")
-			sendPacket(false);
+		//if(m_name == "Mario")
+		sendPacket(false);
 	}
 }
 
@@ -730,4 +730,9 @@ void Character::onEndContact(b2Fixture* self, b2Fixture* other)
 	{
 		characterContact = false;
 	}
+}
+
+bool Character::getm_local()
+{
+	return m_local;
 }

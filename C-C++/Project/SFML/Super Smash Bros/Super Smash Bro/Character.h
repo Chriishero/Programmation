@@ -30,6 +30,8 @@ public:
 	virtual void onBeginContact(b2Fixture* self, b2Fixture* other) override;
 	virtual void onEndContact(b2Fixture* self, b2Fixture* other) override;
 
+	bool getm_local();
+
 	struct CharacterData
 	{
 		char name[32];

@@ -17,6 +17,7 @@ public:
 
 	void loadAnimation();
 	void loadSprites();
+	void createBody();
 	void createShape(sf::Vector2f size);
 	void begin();
 
@@ -40,7 +41,14 @@ public:
 		sf::Vector2f size;
 		bool creation;
 		bool loading;
-	};
+	};/*
+	struct CharacterData
+	{
+		char name[32];
+		Character* player;
+		bool creation;
+		bool loading;
+	};*/
 
 	sf::Texture textureToDraw{};
 	sf::Vector2f position = sf::Vector2f(0.0f, -5.0f);

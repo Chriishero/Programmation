@@ -7,7 +7,8 @@
 
 extern Camera camera;
 extern Character* character;
-extern std::vector<Character*> characters;
+extern std::map<Character*, bool> characters;
+extern std::map<ENetPeer*, Character*> playersCharacter;
 extern bool paused;
 extern bool menuState;
 extern sf::Font font;

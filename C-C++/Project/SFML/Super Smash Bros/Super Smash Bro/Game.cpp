@@ -18,7 +18,8 @@ Menu menu(window);
 Map map("Final Destination");
 Camera camera(25.0f);
 Character* character = new Character("Mario", true);
-std::vector<Character*> characters{};
+
+std::map<Character*, bool> characters{};
 
 std::map<ENetPeer*, Character*> playersCharacter{};
 std::map<ENetPeer*, bool> playersAvailability{};
@@ -88,9 +89,12 @@ void update(float deltaTime)
 		Physics::update(deltaTime);
 		map.update(deltaTime);
 
-		for (auto const chara : characters)
+		for (auto const player : playersCharacter)
 		{
-			chara->update(deltaTime);
+			if(player.first == 0)
+			{
+				player.second->update(deltaTime);
+			}	
 		}
 	}
 }
@@ -109,9 +113,17 @@ void render(Renderer& renderer)
 	{
 		map.draw(renderer, camera.getm_position(), camera.getm_viewSize());
 		
-		for (auto const chara : characters)
+		for (auto const player : playersCharacter)
 		{
-			chara->draw(renderer);
+			if (player.first == 0)
+			{
+				player.second->draw(renderer);
+			}
+			else
+			{
+				std::cout << "draw d'un player" << std::endl;
+				player.second->draw(renderer);
+			}
 		}
 
 		Physics::DebugDraw(renderer);
@@ -200,20 +212,23 @@ void updateClient()
 			{
 			case ENET_EVENT_TYPE_RECEIVE:
 				memcpy(&characterData, enetEvent.packet->data, sizeof(Character::CharacterData));
-
-				if (!playersCharacter.contains(enetEvent.peer)) // marche pas
+				
+				if (!playersCharacter.contains(enetEvent.peer))
 				{
 					std::cout << "nouveau joueur" << std::endl;
 					Character* player = new Character(characterData.name, false);
 					player->begin();
 					playersCharacter[enetEvent.peer] = player;
 				}
-				else // marche
+				else
 				{
 					playersCharacter[enetEvent.peer]->position = characterData.position;
 					playersCharacter[enetEvent.peer]->size = characterData.size;
 					playersCharacter[enetEvent.peer]->textureToDraw = characterData.texture;
 				}
+
+				/*playersCharacter[enetEvent.peer] = characterData.player;
+				std::cout << "playersCharacter[enetEvent.peer] mis à jour" << std::endl;*/
 
 				printf("Packet n%d : %s : (%f;%f)\n", iPacket, characterData.name, characterData.position.x, characterData.position.y);
 				iPacket++;
@@ -304,8 +319,6 @@ void joinServer(std::string hostPort)
 	std::cout << "initialisation de la connexion" << std::endl;
 	peer = enet_host_connect(client, &address, 2, 0);
 	enet_host_flush(client);
-
-	playersCharacter[peer] = character;
 
 	if (peer == NULL)
 	{

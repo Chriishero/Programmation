@@ -65,8 +65,9 @@ void Menu::characterUI(sf::Event event)
 		if (event.mouseButton.button == sf::Keyboard::M)
 		{
 			character = new Character("Mario", true);
-			characters.push_back(character);
 			character->begin();
+			characters[character] = true;
+			playersCharacter[0] = character;
 			m_charactersUI = false;
 
 			resetTextureToDisplay();
@@ -76,7 +77,8 @@ void Menu::characterUI(sf::Event event)
 		{
 			character = new Character("Link", true);
 			character->begin();
-			characters.push_back(character);
+			characters[character] = true;
+			playersCharacter[0] = character;
 			m_charactersUI = false;
 
 			resetTextureToDisplay();

@@ -66,6 +66,15 @@ void Character::loadSprites()
 	}
 }
 
+void Character::createBody()
+{
+	b2BodyDef bodyDef{};
+	bodyDef.type = b2_dynamicBody;
+	bodyDef.position.Set(position.x, position.y);
+	bodyDef.fixedRotation = true;
+	body = Physics::world->CreateBody(&bodyDef);
+}
+
 void Character::createShape(sf::Vector2f size)
 {
 	fixtureData.listener = this;
@@ -93,178 +102,181 @@ void Character::createShape(sf::Vector2f size)
 
 void Character::begin()
 {
-	sf::Texture marioSheet = Resources::textures["Sheet/" + m_name + ".png"];
-	sf::Image imageMarioSheet = marioSheet.copyToImage();
-	sf::Vector2u sheetSize = imageMarioSheet.getSize();
-
-	sf::RenderTexture* spriteRenderTexture;
-
-	std::vector<std::string> animName = animationNames;
-	std::reverse(animName.begin(), animName.end());
-
-	int emptyLine = 0;
-	int nSprite = 0;
-	int spriteSize = 0;
-	for (auto y = 0; y < sheetSize.y; y++)
+	if(m_local)
 	{
-		for (auto x = 0; x < sheetSize.x; x++)
+		sf::Texture marioSheet = Resources::textures["Sheet/" + m_name + ".png"];
+		sf::Image imageMarioSheet = marioSheet.copyToImage();
+		sf::Vector2u sheetSize = imageMarioSheet.getSize();
+
+		sf::RenderTexture* spriteRenderTexture;
+
+		std::vector<std::string> animName = animationNames;
+		std::reverse(animName.begin(), animName.end());
+
+		int emptyLine = 0;
+		int nSprite = 0;
+		int spriteSize = 0;
+		for (auto y = 0; y < sheetSize.y; y++)
 		{
-			if (imageMarioSheet.getPixel(x, y).a != 0)
+			for (auto x = 0; x < sheetSize.x; x++)
 			{
-				emptyLine = 0;
+				if (imageMarioSheet.getPixel(x, y).a != 0)
+				{
+					emptyLine = 0;
 
-				sf::Image pixelN;
-				pixelN.create(1, 1, imageMarioSheet.getPixel(x, y));
+					sf::Image pixelN;
+					pixelN.create(1, 1, imageMarioSheet.getPixel(x, y));
 
-				sf::Texture texturePixel;
-				texturePixel.loadFromImage(pixelN);
+					sf::Texture texturePixel;
+					texturePixel.loadFromImage(pixelN);
 
-				sf::Sprite spritePixel;
-				spritePixel.setTexture(texturePixel);
-				spritePixel.setPosition(x, y);
+					sf::Sprite spritePixel;
+					spritePixel.setTexture(texturePixel);
+					spritePixel.setPosition(x, y);
 
-				spriteRenderTexture = new sf::RenderTexture();
-				spriteRenderTexture->draw(spritePixel);
-				spriteRenderTexture->create(sheetSize.x, sheetSize.y);
+					spriteRenderTexture = new sf::RenderTexture();
+					spriteRenderTexture->draw(spritePixel);
+					spriteRenderTexture->create(sheetSize.x, sheetSize.y);
 
-				imageMarioSheet.setPixel(x, y, sf::Color(0, 0, 0, 0));
+					imageMarioSheet.setPixel(x, y, sf::Color(0, 0, 0, 0));
 
-				int sx = x;
-				int sy = y;
-				
-				std::vector<std::vector<int>> previousPos;
-				previousPos.push_back({sx, sy});
+					int sx = x;
+					int sy = y;
 
-				int left = x;
-				int top = y;
-				int right{};
-				int bottom{};
+					std::vector<std::vector<int>> previousPos;
+					previousPos.push_back({ sx, sy });
 
-				bool firstPixel = false;
+					int left = x;
+					int top = y;
+					int right{};
+					int bottom{};
 
-				const int offsets[8][2] = {
-					{0, 1}, {0, -1},
-					{1, 0}, {1, 1}, {1, -1},
-					{-1, 0}, {-1, 1}, {-1, -1}
-				};
-				while (1)
+					bool firstPixel = false;
+
+					const int offsets[8][2] = {
+						{0, 1}, {0, -1},
+						{1, 0}, {1, 1}, {1, -1},
+						{-1, 0}, {-1, 1}, {-1, -1}
+					};
+					while (1)
+					{
+						bool foundPixel = false;
+
+						for (auto offset : offsets)
+						{
+							int newSX = sx + offset[0];
+							int newSY = sy + offset[1];
+
+							if (imageMarioSheet.getPixel(newSX, newSY).a != 0)
+							{
+								sx = newSX;
+								sy = newSY;
+								previousPos.push_back({ sx, sy });
+
+								if (!firstPixel || sx > right)
+								{
+									firstPixel = true;
+									right = sx;
+								}
+								if (!firstPixel || sy > bottom)
+								{
+									firstPixel = true;
+									bottom = sy;
+								}
+								if (!firstPixel || sx < left)
+								{
+									firstPixel = true;
+									left = sx;
+								}
+								if (!firstPixel || sy < top)
+								{
+									firstPixel = true;
+									top = sy;
+								}
+
+								pixelN.create(1, 1, imageMarioSheet.getPixel(sx, sy));
+								texturePixel.loadFromImage(pixelN);
+								spritePixel.setTexture(texturePixel);
+								spritePixel.setPosition(sx, sy);
+								spriteRenderTexture->draw(spritePixel);
+								imageMarioSheet.setPixel(sx, sy, sf::Color(0, 0, 0, 0));
+
+								//std::cout << "Nouveau pixel trouvé. : (" << sx << ";" << sy << ")" << std::endl;
+								foundPixel = true;
+							}
+						}
+						if (!foundPixel)
+						{
+							previousPos.pop_back();
+							if (previousPos.empty())
+							{
+								break;
+							}
+							auto prev = previousPos.back();
+							sx = prev[0];
+							sy = prev[1];
+						}
+					}
+					spriteRenderTexture->display();
+					sf::Sprite characterSprite;
+					characterSprite.setTexture(spriteRenderTexture->getTexture());
+
+					spriteSize = bottom - top + 1;
+					sf::IntRect spriteBounds(left, top, right - left + 1, spriteSize);
+					characterSprite.setTextureRect(spriteBounds);
+
+					spriteRenderTexture = new sf::RenderTexture();
+					spriteRenderTexture->create(spriteBounds.width, spriteBounds.height);
+					spriteRenderTexture->draw(characterSprite);
+					renderList.push_back(spriteRenderTexture);
+
+					nSprite++;
+					continue;
+				}
+				else
 				{
 					bool foundPixel = false;
-
-					for (auto offset : offsets) 
+					for (size_t i = 0; i < 8; i++)
 					{
-						int newSX = sx + offset[0];
-						int newSY = sy + offset[1];
-
-						if (imageMarioSheet.getPixel(newSX, newSY).a != 0)
+						if (y + i < sheetSize.y && imageMarioSheet.getPixel(x, y + i).a != 0)
 						{
-							sx = newSX;
-							sy = newSY;
-							previousPos.push_back({ sx, sy });
-
-							if (!firstPixel || sx > right)
-							{
-								firstPixel = true;
-								right = sx;
-							}
-							if (!firstPixel || sy > bottom)
-							{
-								firstPixel = true;
-								bottom = sy;
-							}
-							if (!firstPixel || sx < left)
-							{
-								firstPixel = true;
-								left = sx;
-							}
-							if (!firstPixel || sy < top)
-							{
-								firstPixel = true;
-								top = sy;
-							}
-
-							pixelN.create(1, 1, imageMarioSheet.getPixel(sx, sy));
-							texturePixel.loadFromImage(pixelN);
-							spritePixel.setTexture(texturePixel);
-							spritePixel.setPosition(sx, sy);
-							spriteRenderTexture->draw(spritePixel);
-							imageMarioSheet.setPixel(sx, sy, sf::Color(0, 0, 0, 0));
-
-							//std::cout << "Nouveau pixel trouvé. : (" << sx << ";" << sy << ")" << std::endl;
 							foundPixel = true;
-						}
-					}
-					if (!foundPixel)
-					{
-						previousPos.pop_back();
-						if (previousPos.empty())
-						{
+							y += i;
 							break;
 						}
-						auto prev = previousPos.back();
-						sx = prev[0];
-						sy = prev[1];
 					}
-				}
-				spriteRenderTexture->display();
-				sf::Sprite characterSprite;
-				characterSprite.setTexture(spriteRenderTexture->getTexture());
-
-				spriteSize = bottom - top + 1;
-				sf::IntRect spriteBounds(left, top, right-left+1, spriteSize);
-				characterSprite.setTextureRect(spriteBounds);
-
-				spriteRenderTexture = new sf::RenderTexture();
-				spriteRenderTexture->create(spriteBounds.width, spriteBounds.height);
-				spriteRenderTexture->draw(characterSprite);
-				renderList.push_back(spriteRenderTexture);
-
-				nSprite++;
-				continue;
-			}
-			else
-			{
-				bool foundPixel = false;
-				for (size_t i = 0; i < 8; i++)
-				{
-					if (y + i < sheetSize.y && imageMarioSheet.getPixel(x, y + i).a != 0)
+					if (foundPixel)
 					{
-						foundPixel = true;
-						y += i;
 						break;
 					}
 				}
-				if (foundPixel)
-				{
-					break;
-				}
 			}
-		}
-		emptyLine++;
-		if (emptyLine > spriteSize / 3)
-		{
-			if(!renderList.empty())
+			emptyLine++;
+			if (emptyLine > spriteSize / 3)
 			{
-				for (size_t i = 0; i < renderList.size(); i++)
+				if (!renderList.empty())
 				{
-					renderList[i]->display();
-					sf::Texture marioTexture = renderList[i]->getTexture();
-					sf::Sprite spriteToDisplay;
-					spriteToDisplay.setTexture(marioTexture);
+					for (size_t i = 0; i < renderList.size(); i++)
+					{
+						renderList[i]->display();
+						sf::Texture marioTexture = renderList[i]->getTexture();
+						sf::Sprite spriteToDisplay;
+						spriteToDisplay.setTexture(marioTexture);
 
-					sf::Image image = marioTexture.copyToImage();
-					image.saveToFile("res/sprites/" + m_name + "/" + animName.back() + "-" + std::to_string(i) + ".png");
+						sf::Image image = marioTexture.copyToImage();
+						image.saveToFile("res/sprites/" + m_name + "/" + animName.back() + "-" + std::to_string(i) + ".png");
 
+					}
+					std::cout << renderList.size() << " : " << animName.back() << std::endl;
+					renderList.clear();
+					animName.pop_back();
 				}
-				std::cout << renderList.size() << " : " << animName.back() << std::endl;
-				renderList.clear();
-				animName.pop_back();
 			}
 		}
-	}
 
-	loadSprites();
-	loadAnimation();
+		loadSprites();
+		loadAnimation();
+	}
 
 	for (auto name : animationNames)
 	{
@@ -275,16 +287,14 @@ void Character::begin()
 	animationsFrame["guarding"] = 2;
 	animationsFrame["upaerial"] = 1;
 
-	b2BodyDef bodyDef{};
-	bodyDef.type = b2_dynamicBody;
-	bodyDef.position.Set(position.x, position.y);
-	bodyDef.fixedRotation = true;
-	body = Physics::world->CreateBody(&bodyDef);
-
+	createBody();
 	createShape(sf::Vector2f(0.5f, 0.5f));
 
-	sendPacket(true);
-	isLoading = false;
+	if(m_local)
+	{
+		sendPacket(true);
+		isLoading = false;
+	}
 }
 
 void Character::sendPacket(bool creation)
@@ -294,6 +304,7 @@ void Character::sendPacket(bool creation)
 	m_characterData.position = position;
 	m_characterData.size = size;
 	m_characterData.texture = textureToDraw;
+	/*m_characterData.player = this;*/
 	m_characterData.creation = creation;
 	m_characterData.loading = isLoading;
 

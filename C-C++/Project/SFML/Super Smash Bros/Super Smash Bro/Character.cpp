@@ -432,6 +432,7 @@ void Character::update(float deltaTime)
 				for (auto& action : actions)
 				{
 					action.second.pressed = m_actionsState[i];
+					i++;
 				}
 			}
 

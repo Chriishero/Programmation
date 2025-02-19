@@ -32,16 +32,16 @@ public:
 	virtual void onEndContact(b2Fixture* self, b2Fixture* other) override;
 
 	bool getm_local();
+	void setm_actionsState(std::vector<bool> state);
 
-	struct CharacterData
+	/*struct CharacterData
 	{
 		char name[32];
 		sf::Vector2f position;
 		sf::Texture texture;
 		sf::Vector2f size;
 		bool creation;
-		bool loading;
-	};/*
+	};
 	struct CharacterData
 	{
 		char name[32];
@@ -49,6 +49,21 @@ public:
 		bool creation;
 		bool loading;
 	};*/
+	struct CharacterData
+	{
+		char name[32];
+		//std::vector<uint32_t> actionsState;
+		sf::Texture texture;
+
+		bool smash;
+		bool tilt;
+		bool down;
+		bool guarding;
+		bool right;
+		bool left;
+		bool up;
+		bool attacks;
+	};
 
 	sf::Texture textureToDraw{};
 	sf::Vector2f position = sf::Vector2f(0.0f, -5.0f);
@@ -67,11 +82,28 @@ private:
 	CharacterData m_characterData;
 
 	std::vector<std::string> animationNames = { "stand", "jump", "running", "attacks", "upaerial", "downtilt",
-										"smash", "tilt", "aerial", "damage", "guarding", "win", "loose", "uptilt"};
+										"smash", "tilt", "aerial", "damage", "guarding", "win", "loose", "uptilt" };
 
 	std::map<std::string, Animation> animations{};
 	std::map<std::string, bool> animationsKeyPress{};
 	std::map<std::string, int> animationsFrame{};
+
+	struct ActionsState
+	{
+		sf::Keyboard::Key key;
+		bool pressed;
+	};
+
+	std::vector<bool> m_actionsState{};
+	std::map<std::string, ActionsState> actions{ {"smash", {sf::Keyboard::B, false}},
+												{"tilt", {sf::Keyboard::V, false}},
+												{"down", {sf::Keyboard::Down, false}},
+												{"guarding", {sf::Keyboard::X, false}},
+												{"right", {sf::Keyboard::Right, false}},
+												{"left", {sf::Keyboard::Left, false}},
+												{"up", {sf::Keyboard::Up, false}},
+												{"attacks", {sf::Keyboard::C, false}} };
+				
 
 	FixtureData fixtureData{};
 	b2Body* body{};

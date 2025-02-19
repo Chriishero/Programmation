@@ -95,6 +95,10 @@ void update(float deltaTime)
 			{
 				player.second->update(deltaTime);
 			}	
+			else
+			{
+				player.second->update(deltaTime);
+			}
 		}
 	}
 }
@@ -121,7 +125,6 @@ void render(Renderer& renderer)
 			}
 			else
 			{
-				std::cout << "draw d'un player" << std::endl;
 				player.second->draw(renderer);
 			}
 		}
@@ -168,9 +171,11 @@ void updateServer()
 				break;
 
 			case ENET_EVENT_TYPE_RECEIVE:
+				//std::cout << "serveur : ENET_EVENT_TYPE_RECEIVE" << std::endl;
 				playersAvailability[enetEvent.peer] = true;
 				memcpy(&characterData, enetEvent.packet->data, sizeof(Character::CharacterData));
 
+				//std::cout << "serveur : packet reçu de " << enetEvent.peer << std::endl;
 				// Envoie le packet à tous les clients
 				for (auto i = 0; i < server->peerCount; i++)
 				{
@@ -212,6 +217,7 @@ void updateClient()
 			{
 			case ENET_EVENT_TYPE_RECEIVE:
 				memcpy(&characterData, enetEvent.packet->data, sizeof(Character::CharacterData));
+				//std::cout << "paquet reçu" << std::endl;
 				
 				if (!playersCharacter.contains(enetEvent.peer))
 				{
@@ -222,15 +228,24 @@ void updateClient()
 				}
 				else
 				{
-					playersCharacter[enetEvent.peer]->position = characterData.position;
+					/*playersCharacter[enetEvent.peer]->position = characterData.position;
 					playersCharacter[enetEvent.peer]->size = characterData.size;
+					playersCharacter[enetEvent.peer]->textureToDraw = characterData.texture;*/
+
+					std::vector<bool> receivedActionsState{ characterData.attacks, characterData.down,
+															characterData.guarding,characterData.left,
+															characterData.right, characterData.smash,
+															characterData.tilt, characterData.up };
+					
+
+					playersCharacter[enetEvent.peer]->setm_actionsState(receivedActionsState);
 					playersCharacter[enetEvent.peer]->textureToDraw = characterData.texture;
 				}
 
 				/*playersCharacter[enetEvent.peer] = characterData.player;
 				std::cout << "playersCharacter[enetEvent.peer] mis à jour" << std::endl;*/
 
-				printf("Packet n%d : %s : (%f;%f)\n", iPacket, characterData.name, characterData.position.x, characterData.position.y);
+				printf("Packet n%d : %s = right : %d\n", iPacket, characterData.name, (int)characterData.right);
 				iPacket++;
 
 				enet_packet_destroy(enetEvent.packet);

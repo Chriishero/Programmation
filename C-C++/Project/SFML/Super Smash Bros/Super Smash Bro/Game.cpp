@@ -32,7 +32,371 @@ sf::Font font{};
 sf::RectangleShape backgroundShape(sf::Vector2f(1.0f, 1.0f));
 
 int iPacket = 0;
+
+std::vector<std::string> mapVector;
+std::vector<std::string> characterVector;
 	
+void loadMap(std::string name)
+{
+	// Vérifier si le dossier existe déjà
+	if (!std::filesystem::exists("./res/sprites/Map")) {
+		// Créer le dossier
+		if (std::filesystem::create_directory("./res/sprites/Map")) {
+			std::cout << "Dossier créé avec succès : map" << std::endl;
+		}
+		else {
+			std::cerr << "Erreur lors de la création du dossier." << std::endl;
+		}
+	}
+	else {
+		std::cout << "Le dossier existe déjà." << std::endl;
+	}
+	std::vector<sf::RenderTexture*> renderList;
+	sf::Texture mapSheet = Resources::textures["Sheet/" + name + ".png"];
+	sf::Image imageMapSheet = mapSheet.copyToImage();
+	sf::Vector2u sheetSize = imageMapSheet.getSize();
+
+	sf::RenderTexture* spriteRenderTexture;
+
+	int nSprite = 0;
+	int spriteSize = 0;
+	for (auto y = 0; y < sheetSize.y; y++)
+	{
+		for (auto x = 0; x < sheetSize.x; x++)
+		{
+			if (imageMapSheet.getPixel(x, y).a != 0)
+			{
+
+				sf::Image pixelN;
+				pixelN.create(1, 1, imageMapSheet.getPixel(x, y));
+
+				sf::Texture texturePixel;
+				texturePixel.loadFromImage(pixelN);
+
+				sf::Sprite spritePixel;
+				spritePixel.setTexture(texturePixel);
+				spritePixel.setPosition(x, y);
+
+				spriteRenderTexture = new sf::RenderTexture();
+				spriteRenderTexture->draw(spritePixel);
+				spriteRenderTexture->create(sheetSize.x, sheetSize.y);
+
+				imageMapSheet.setPixel(x, y, sf::Color(0, 0, 0, 0));
+
+				int sx = x;
+				int sy = y;
+
+				std::vector<std::vector<int>> previousPos;
+				previousPos.push_back({ sx, sy });
+
+				int left = x;
+				int top = y;
+				int right{};
+				int bottom{};
+
+				bool firstPixel = false;
+
+				const int offsets[8][2] = {
+					{0, 1}, {0, -1},
+					{1, 0}, {1, 1}, {1, -1},
+					{-1, 0}, {-1, 1}, {-1, -1}
+				};
+				while (1)
+				{
+					bool foundPixel = false;
+
+					for (auto offset : offsets)
+					{
+						int newSX = sx + offset[0];
+						int newSY = sy + offset[1];
+
+						if (imageMapSheet.getPixel(newSX, newSY).a != 0)
+						{
+							sx = newSX;
+							sy = newSY;
+							previousPos.push_back({ sx, sy });
+
+							if (!firstPixel || sx > right)
+							{
+								firstPixel = true;
+								right = sx;
+							}
+							if (!firstPixel || sy > bottom)
+							{
+								firstPixel = true;
+								bottom = sy;
+							}
+							if (!firstPixel || sx < left)
+							{
+								firstPixel = true;
+								left = sx;
+							}
+							if (!firstPixel || sy < top)
+							{
+								firstPixel = true;
+								top = sy;
+							}
+
+							pixelN.create(1, 1, imageMapSheet.getPixel(sx, sy));
+							texturePixel.loadFromImage(pixelN);
+							spritePixel.setTexture(texturePixel);
+							spritePixel.setPosition(sx, sy);
+							spriteRenderTexture->draw(spritePixel);
+							imageMapSheet.setPixel(sx, sy, sf::Color(0, 0, 0, 0));
+
+							//std::cout << "Nouveau pixel trouvé. : (" << sx << ";" << sy << ")" << std::endl;
+							foundPixel = true;
+						}
+					}
+					if (!foundPixel)
+					{
+						previousPos.pop_back();
+						if (previousPos.empty())
+						{
+							break;
+						}
+						auto prev = previousPos.back();
+						sx = prev[0];
+						sy = prev[1];
+					}
+				}
+				spriteRenderTexture->display();
+				sf::Sprite characterSprite;
+				characterSprite.setTexture(spriteRenderTexture->getTexture());
+
+				spriteSize = bottom - top + 1;
+				sf::IntRect spriteBounds(left, top, right - left + 1, spriteSize);
+				characterSprite.setTextureRect(spriteBounds);
+
+				spriteRenderTexture = new sf::RenderTexture();
+				spriteRenderTexture->create(spriteBounds.width, spriteBounds.height);
+				spriteRenderTexture->draw(characterSprite);
+				renderList.push_back(spriteRenderTexture);
+
+				spriteRenderTexture->display();
+				sf::Texture marioTexture = spriteRenderTexture->getTexture();
+				sf::Sprite spriteToDisplay;
+				spriteToDisplay.setTexture(marioTexture);
+
+				sf::Image image = marioTexture.copyToImage();
+				image.saveToFile("res/sprites/Map/" + name + "-" + std::to_string(nSprite) + ".png");
+
+				std::cout << name + "-" + std::to_string(nSprite) + ".png" << std::endl;
+				nSprite++;
+				continue;
+			}
+			else
+			{
+				bool foundPixel = false;
+				for (size_t i = 0; i < 8; i++)
+				{
+					if (y + i < sheetSize.y && imageMapSheet.getPixel(x, y + i).a != 0)
+					{
+						foundPixel = true;
+						y += i;
+						break;
+					}
+				}
+				if (foundPixel)
+				{
+					break;
+				}
+			}
+		}
+	}
+}
+
+void loadCharacter(std::string name)
+{
+	// Vérifier si le dossier existe déjà
+	if (!std::filesystem::exists("./res/sprites/" + name)) {
+		// Créer le dossier
+		if (std::filesystem::create_directory("./res/sprites/" + name)) {
+			std::cout << "Dossier créé avec succès : " << name << std::endl;
+		}
+		else {
+			std::cerr << "Erreur lors de la création du dossier." << std::endl;
+		}
+	}
+	else {
+		std::cout << "Le dossier existe déjà." << std::endl;
+	}
+
+	std::vector<std::string> animationNames = { "stand", "jump", "running", "attacks", "upaerial", "downtilt",
+										"smash", "tilt", "aerial", "damage", "guarding", "win", "loose", "uptilt" };
+
+	std::vector<sf::RenderTexture*> renderList;
+	sf::Texture marioSheet = Resources::textures["Sheet/" + name + ".png"];
+	sf::Image imageMarioSheet = marioSheet.copyToImage();
+	sf::Vector2u sheetSize = imageMarioSheet.getSize();
+
+	sf::RenderTexture* spriteRenderTexture;
+
+	std::vector<std::string> animName = animationNames;
+	std::reverse(animName.begin(), animName.end());
+
+	int emptyLine = 0;
+	int nSprite = 0;
+	int spriteSize = 0;
+	for (auto y = 0; y < sheetSize.y; y++)
+	{
+		for (auto x = 0; x < sheetSize.x; x++)
+		{
+			if (imageMarioSheet.getPixel(x, y).a != 0)
+			{
+				emptyLine = 0;
+
+				sf::Image pixelN;
+				pixelN.create(1, 1, imageMarioSheet.getPixel(x, y));
+
+				sf::Texture texturePixel;
+				texturePixel.loadFromImage(pixelN);
+
+				sf::Sprite spritePixel;
+				spritePixel.setTexture(texturePixel);
+				spritePixel.setPosition(x, y);
+
+				spriteRenderTexture = new sf::RenderTexture();
+				spriteRenderTexture->draw(spritePixel);
+				spriteRenderTexture->create(sheetSize.x, sheetSize.y);
+
+				imageMarioSheet.setPixel(x, y, sf::Color(0, 0, 0, 0));
+
+				int sx = x;
+				int sy = y;
+
+				std::vector<std::vector<int>> previousPos;
+				previousPos.push_back({ sx, sy });
+
+				int left = x;
+				int top = y;
+				int right{};
+				int bottom{};
+
+				bool firstPixel = false;
+
+				const int offsets[8][2] = {
+					{0, 1}, {0, -1},
+					{1, 0}, {1, 1}, {1, -1},
+					{-1, 0}, {-1, 1}, {-1, -1}
+				};
+				while (1)
+				{
+					bool foundPixel = false;
+
+					for (auto offset : offsets)
+					{
+						int newSX = sx + offset[0];
+						int newSY = sy + offset[1];
+
+						if (imageMarioSheet.getPixel(newSX, newSY).a != 0)
+						{
+							sx = newSX;
+							sy = newSY;
+							previousPos.push_back({ sx, sy });
+
+							if (!firstPixel || sx > right)
+							{
+								firstPixel = true;
+								right = sx;
+							}
+							if (!firstPixel || sy > bottom)
+							{
+								firstPixel = true;
+								bottom = sy;
+							}
+							if (!firstPixel || sx < left)
+							{
+								firstPixel = true;
+								left = sx;
+							}
+							if (!firstPixel || sy < top)
+							{
+								firstPixel = true;
+								top = sy;
+							}
+
+							pixelN.create(1, 1, imageMarioSheet.getPixel(sx, sy));
+							texturePixel.loadFromImage(pixelN);
+							spritePixel.setTexture(texturePixel);
+							spritePixel.setPosition(sx, sy);
+							spriteRenderTexture->draw(spritePixel);
+							imageMarioSheet.setPixel(sx, sy, sf::Color(0, 0, 0, 0));
+
+							//std::cout << "Nouveau pixel trouvé. : (" << sx << ";" << sy << ")" << std::endl;
+							foundPixel = true;
+						}
+					}
+					if (!foundPixel)
+					{
+						previousPos.pop_back();
+						if (previousPos.empty())
+						{
+							break;
+						}
+						auto prev = previousPos.back();
+						sx = prev[0];
+						sy = prev[1];
+					}
+				}
+				spriteRenderTexture->display();
+				sf::Sprite characterSprite;
+				characterSprite.setTexture(spriteRenderTexture->getTexture());
+
+				spriteSize = bottom - top + 1;
+				sf::IntRect spriteBounds(left, top, right - left + 1, spriteSize);
+				characterSprite.setTextureRect(spriteBounds);
+
+				spriteRenderTexture = new sf::RenderTexture();
+				spriteRenderTexture->create(spriteBounds.width, spriteBounds.height);
+				spriteRenderTexture->draw(characterSprite);
+				renderList.push_back(spriteRenderTexture);
+
+				nSprite++;
+				continue;
+			}
+			else
+			{
+				bool foundPixel = false;
+				for (size_t i = 0; i < 8; i++)
+				{
+					if (y + i < sheetSize.y && imageMarioSheet.getPixel(x, y + i).a != 0)
+					{
+						foundPixel = true;
+						y += i;
+						break;
+					}
+				}
+				if (foundPixel)
+				{
+					break;
+				}
+			}
+		}
+		emptyLine++;
+		if (emptyLine > spriteSize / 3)
+		{
+			if (!renderList.empty())
+			{
+				for (size_t i = 0; i < renderList.size(); i++)
+				{
+					renderList[i]->display();
+					sf::Texture marioTexture = renderList[i]->getTexture();
+					sf::Sprite spriteToDisplay;
+					spriteToDisplay.setTexture(marioTexture);
+
+					sf::Image image = marioTexture.copyToImage();
+					image.saveToFile("res/sprites/" + name + "/" + animName.back() + "-" + std::to_string(i) + ".png");
+
+				}
+				std::cout << renderList.size() << " : " << animName.back() << std::endl;
+				renderList.clear();
+				animName.pop_back();
+			}
+		}
+	}
+}
+
 void restart()
 {
 	Physics::init();
@@ -41,7 +405,16 @@ void restart()
 
 	menu.begin();
 
-	std::cout << "Load map : " << std::endl;
+	for (auto m : mapVector)
+	{
+		loadMap(m);
+	}
+	for (auto c : characterVector)
+	{
+		loadCharacter(c);
+	}
+
+	//std::cout << "Load map : " << std::endl;
 	map = Map("Final Destination");
 	map.begin();
 }
@@ -53,13 +426,39 @@ void begin()
 	{
 		if (directory.is_directory())
 		{
+			std::string directorStr = directory.path().filename().string();
 			for (auto& file : std::filesystem::directory_iterator("./res/sprites/" + directory.path().filename().string()))
 			{
 				if (file.is_regular_file() && (file.path().extension() == ".png" || file.path().extension() == ".jpg"))
 				{
 					Resources::textures[directory.path().filename().string() + "/" + file.path().filename().string()].loadFromFile(file.path().string());
 				}
+				if (directorStr.ends_with("Sheet"))
+				{
+					if(!file.path().filename().string().starts_with("Map-"))
+						characterVector.push_back(file.path().stem().filename().string());
+					else
+						mapVector.push_back(file.path().stem().filename().string());
+				}
 			}
+			std::vector<std::string> vector;
+			for (auto m : mapVector)
+			{
+				if (!directorStr.find(m))
+				{
+					vector.push_back(m);
+				}
+			}
+			mapVector = vector;
+			vector.clear();
+			for (auto c : characterVector)
+			{
+				if (!directorStr.find(c))
+				{
+					vector.push_back(c);
+				}
+			}
+			characterVector = vector;
 		}
 	}
 	for (auto sprite : Resources::textures)
@@ -240,6 +639,7 @@ void updateClient()
 
 					playersCharacter[enetEvent.peer]->setm_actionsState(receivedActionsState);
 					playersCharacter[enetEvent.peer]->textureToDraw = characterData.texture;
+					playersCharacter[enetEvent.peer]->position = characterData.position;
 				}
 
 				/*playersCharacter[enetEvent.peer] = characterData.player;

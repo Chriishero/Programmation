@@ -102,7 +102,8 @@ void Character::createShape(sf::Vector2f size)
 
 void Character::begin()
 {
-	if(m_local)
+	bool load = false;
+	if(load)
 	{
 		sf::Texture marioSheet = Resources::textures["Sheet/" + m_name + ".png"];
 		sf::Image imageMarioSheet = marioSheet.copyToImage();
@@ -274,6 +275,7 @@ void Character::begin()
 			}
 		}
 	}
+
 	loadSprites();
 	loadAnimation();
 
@@ -324,6 +326,7 @@ void Character::sendPacket(bool creation)
 	m_characterData.left = actions["left"].pressed;
 	m_characterData.up = actions["up"].pressed;
 	m_characterData.attacks = actions["attacks"].pressed;
+	m_characterData.position = position;
 
 	char data[sizeof(CharacterData)];
 	memcpy(data, &m_characterData, sizeof(CharacterData));
@@ -415,7 +418,7 @@ void Character::update(float deltaTime)
 				m_actionsState.clear();
 				for (auto& action : actions)
 				{
-					if (sf::Keyboard::isKeyPressed(action.second.key))
+					if (sf::Keyboard::isKeyPressed(action.second.key) && window.hasFocus())
 					{
 						action.second.pressed = true;
 					}
@@ -693,6 +696,9 @@ void Character::update(float deltaTime)
 		m_xDamageVelocity = m_baseXDamage;
 		m_yDamageVelocity = m_baseYDamage;
 	}
+
+	if (!m_local)
+		body->SetTransform(b2Vec2(position.x, position.y), body->GetAngle());
 
 	position = sf::Vector2f(body->GetPosition().x, body->GetPosition().y);
 	previousYPosition = body->GetPosition().y;

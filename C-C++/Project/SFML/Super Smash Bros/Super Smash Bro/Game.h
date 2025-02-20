@@ -20,6 +20,8 @@ extern ENetHost* client;
 extern ENetEvent enetEvent;
 extern ENetPeer* peer;
 
+void loadMap(std::string name);
+void loadCharacter(std::string name);
 void restart();
 void begin();
 void update(float deltaTime);

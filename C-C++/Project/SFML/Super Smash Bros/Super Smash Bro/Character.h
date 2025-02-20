@@ -63,6 +63,8 @@ public:
 		bool left;
 		bool up;
 		bool attacks;
+
+		sf::Vector2f position;
 	};
 
 	sf::Texture textureToDraw{};

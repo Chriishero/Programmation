@@ -2,7 +2,7 @@
 Toutes les opérations d'objet sont possible sur un axe spécifique
 A.sum() : fais la somme de tous les éléments 
 A.sum(axis=0) : fais la sommme de tous les éléments qui se suivent verticalement
-A.sum(axis=1 : fais la sommme de tous les éléments qui se suivent horizontalement
+A.sum(axis=1) : fais la sommme de tous les éléments qui se suivent horizontalement
 A.cumsum() : fais la somme cumulé de tous les éléments
 
 A.prod() : produit de tous les éléments

@@ -32,6 +32,7 @@ private:
 	std::map<std::string, sf::Vector2f> m_texturesSize{};
 	std::map<std::string, bool> m_to_display{};
 
+	bool m_inGameUI = false;
 	bool m_gameUI = false;
 	bool m_charactersUI = false;
 	bool m_multiplayerUI = false;
@@ -39,6 +40,8 @@ private:
 
 	sf::Texture titleBackground;
 	std::string m_hostPort;
+
+	sf::Vector2f m_lifeTextPosition;
 
     std::map<sf::Keyboard::Key, char> m_keyToString = {
         {sf::Keyboard::Numpad0, '0'},

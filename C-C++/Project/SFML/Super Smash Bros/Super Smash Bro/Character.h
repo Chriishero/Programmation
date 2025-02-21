@@ -33,6 +33,9 @@ public:
 
 	bool getm_local();
 	void setm_actionsState(std::vector<bool> state);
+	float getm_lifePourcentage();
+	void setm_lifePourcentage(float life);
+	std::string getm_name();
 
 	/*struct CharacterData
 	{
@@ -53,7 +56,7 @@ public:
 	{
 		char name[32];
 		//std::vector<uint32_t> actionsState;
-		sf::Texture texture;
+		//sf::Texture texture;
 
 		bool smash;
 		bool tilt;

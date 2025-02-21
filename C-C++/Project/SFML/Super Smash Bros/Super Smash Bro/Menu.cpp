@@ -1,5 +1,6 @@
 #include "Menu.h"
 #include <algorithm>
+#include <format>
 
 static char text[256] = "";
 sf::Text m_hostText("host:port", font);
@@ -72,6 +73,7 @@ void Menu::characterUI(sf::Event event)
 
 			resetTextureToDisplay();
 			menuState = false;
+			m_inGameUI = true;
 		}
 		else if (event.mouseButton.button == sf::Keyboard::L)
 		{
@@ -83,6 +85,7 @@ void Menu::characterUI(sf::Event event)
 
 			resetTextureToDisplay();
 			menuState = false;
+			m_inGameUI = true;
 		}
 	}
 }
@@ -184,7 +187,7 @@ void Menu::update(float deltaTime, sf::Event event, sf::Vector2f size, sf::Vecto
 
 		multiplayer(event);
 	}
-	else
+	else if (menuState)
 	{
 		sf::RenderTexture renderTexture;
 		renderTexture.create(size.x*2, size.y*2);
@@ -208,21 +211,44 @@ void Menu::update(float deltaTime, sf::Event event, sf::Vector2f size, sf::Vecto
 			resetTextureToDisplay();
 		}
 	}
+	else if (m_inGameUI)
+	{
+		m_lifeTextPosition = sf::Vector2f(position.x - 45, position.y + 55);
+	}
 }
 
 void Menu::draw(Renderer& renderer)
 {
-	renderer.draw(titleBackground, sf::Vector2f(0.0f, 0.0f), (sf::Vector2f)titleBackground.getSize());
-	for (auto const texture : m_texturesToDraw)
+	if(menuState)
 	{
-		std::string name = texture.first;
-		if (m_to_display[name])
+		renderer.draw(titleBackground, sf::Vector2f(0.0f, 0.0f), (sf::Vector2f)titleBackground.getSize());
+		for (auto const texture : m_texturesToDraw)
 		{
-			renderer.draw(texture.second, m_texturesPosition[name], m_texturesSize[name]);
+			std::string name = texture.first;
+			if (m_to_display[name])
+			{
+				renderer.draw(texture.second, m_texturesPosition[name], m_texturesSize[name]);
+			}
+		}
+		if (m_intputBox)
+		{
+			renderer.target.draw(m_hostText);
 		}
 	}
-	if (m_intputBox)
+	else if (m_inGameUI)
 	{
-		renderer.target.draw(m_hostText);
+		int i = 0;
+		for (auto const character : playersCharacter)
+		{
+			std::string life = std::format("{:.1f}", character.second->getm_lifePourcentage() * 100);
+			sf::Text lifeText(" " + character.second->getm_name() + " \n" + life + "%", font);
+			lifeText.setCharacterSize(45);
+			lifeText.setFillColor(sf::Color::White);
+			lifeText.setScale(0.1, 0.2);
+			lifeText.setPosition(sf::Vector2f(m_lifeTextPosition.x + 20 * i, m_lifeTextPosition.y));
+
+			renderer.target.draw(lifeText);
+			i++;
+		}
 	}
 }

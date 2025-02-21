@@ -317,7 +317,6 @@ void Character::sendPacket(bool creation)
 
 	strncpy_s(m_characterData.name, m_name.c_str(), sizeof(m_characterData.name) - 1);
 	m_characterData.name[sizeof(m_characterData.name) - 1] = '\0';
-	m_characterData.texture = textureToDraw;
 	m_characterData.smash = actions["smash"].pressed;
 	m_characterData.tilt = actions["tilt"].pressed;
 	m_characterData.down = actions["down"].pressed;
@@ -816,4 +815,19 @@ bool Character::getm_local()
 void Character::setm_actionsState(std::vector<bool> state)
 {
 	m_actionsState = state;
+}
+
+float Character::getm_lifePourcentage()
+{
+	return m_lifePourcentage;
+}
+
+void Character::setm_lifePourcentage(float life)
+{
+	m_lifePourcentage = life;
+}
+
+std::string Character::getm_name()
+{
+	return m_name;
 }

@@ -325,6 +325,9 @@ void Character::sendPacket(bool creation)
 	m_characterData.left = actions["left"].pressed;
 	m_characterData.up = actions["up"].pressed;
 	m_characterData.attacks = actions["attacks"].pressed;
+
+	//m_characterData.lifePourcentage = std::bit_cast<uint32_t>(m_lifePourcentage);
+	m_characterData.lifePourcentage = m_lifePourcentage;
 	m_characterData.position = position;
 
 	char data[sizeof(CharacterData)];
@@ -364,7 +367,7 @@ void Character::sendPacket(bool creation)
 
 void Character::update(float deltaTime)
 {
-	//std::cout << "update de " << m_name << std::endl;
+	std::cout << "update de " << m_name << std::endl;
 	float xSpeed = runVelocity;
 	float ySpeed = jumpVelocity;
 
@@ -435,6 +438,13 @@ void Character::update(float deltaTime)
 				{
 					action.second.pressed = m_actionsState[i];
 					i++;
+				}
+			}
+			for (auto& action : actions)
+			{
+				if (action.second.pressed)
+				{
+					std::cout << m_name << " : " << action.first << std::endl;
 				}
 			}
 
@@ -580,12 +590,13 @@ void Character::update(float deltaTime)
 							else
 								m_forceDemultiplication = 0.05f;
 						}
-						else if (!isGrounded && !upaerial && actions["up"].pressed)
+						else if (!isGrounded && !upaerial && actions["up"].pressed && upAerialUtilisation > 0)
 						{
 							velocity.y = -ySpeed;
 							aerial = false;
 							upaerial = true;
 							landing = false;
+							upAerialUtilisation = 0;
 						}
 						else if (!isGrounded && !upaerial)
 						{
@@ -756,6 +767,7 @@ void Character::onBeginContact(b2Fixture* self, b2Fixture* other)
 		upaerial = false;
 		landing = false;
 		aerial = false;
+		upAerialUtilisation = 1;
 	}
 	if (bodyFixture == self && data->type == FixtureDataType::Character && !characterContact)
 	{
@@ -776,6 +788,7 @@ void Character::onBeginContact(b2Fixture* self, b2Fixture* other)
 			float life = victim->m_lifePourcentage + m_attacksPoint * m_forceDemultiplication;
 
 			victim->takeDamage(xDamage, yDamage, life);
+			//printf("%s : %d/%d : %d", victim->m_name, xDamage, yDamage, life);
 
 			m_forceDemultiplication = 1.0f;
 			m_xKBScaling = 1.0f;

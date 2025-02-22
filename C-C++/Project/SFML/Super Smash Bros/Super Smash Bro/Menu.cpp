@@ -105,7 +105,7 @@ void Menu::multiplayer(sf::Event event)
 
 			resetTextureToDisplay();
 		}
-		else if (event.mouseButton.button == sf::Keyboard::J)
+		else if (event.mouseButton.button == sf::Keyboard::J && !m_hostPort.empty())
 		{
 			std::cout << "join party" << std::endl;
 			joinServer(m_hostPort);

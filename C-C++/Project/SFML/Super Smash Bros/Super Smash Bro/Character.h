@@ -67,6 +67,7 @@ public:
 		bool up;
 		bool attacks;
 
+		float lifePourcentage;
 		sf::Vector2f position;
 	};
 
@@ -129,6 +130,7 @@ private:
 	bool aerial = false;
 	bool upaerial = false;
 	bool run = false;
+	int upAerialUtilisation = 0;
 
 	bool attacks = false;
 	bool aerialattacks = false;

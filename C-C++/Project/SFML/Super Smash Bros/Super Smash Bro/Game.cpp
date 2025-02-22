@@ -489,16 +489,7 @@ void update(float deltaTime)
 		map.update(deltaTime);
 
 		for (auto const player : playersCharacter)
-		{
-			if(player.first == 0)
-			{
-				player.second->update(deltaTime);
-			}	
-			else
-			{
-				player.second->update(deltaTime);
-			}
-		}
+			player.second->update(deltaTime);
 	}
 }
 
@@ -514,16 +505,7 @@ void render(Renderer& renderer)
 		map.draw(renderer, camera.getm_position(), camera.getm_viewSize());
 		
 		for (auto const player : playersCharacter)
-		{
-			if (player.first == 0)
-			{
-				player.second->draw(renderer);
-			}
-			else
-			{
-				player.second->draw(renderer);
-			}
-		}
+			player.second->draw(renderer);
 
 		Physics::DebugDraw(renderer);
 	}
@@ -541,7 +523,7 @@ void updateServer()
 		bool host_service = true;
 		Character::CharacterData characterData;
 		/* Wait up to 0 milliseconds for an event. */
-		while (enet_host_service(server, &enetEvent, 10) > 0 && host_service)
+		while (enet_host_service(server, &enetEvent, 0) > 0 && host_service)
 		{
 			switch (enetEvent.type)
 			{
@@ -632,6 +614,10 @@ void updateClient()
 					
 
 					playersCharacter[enetEvent.peer]->setm_actionsState(receivedActionsState);
+
+					// FAIS CRASH LORSQU'UN CLIENT NON LOCAL FAJT L4ANIMATION DE PRISE DE DEGAT
+					playersCharacter[enetEvent.peer]->setm_lifePourcentage(characterData.lifePourcentage); 
+
 					playersCharacter[enetEvent.peer]->position = characterData.position;
 				}
 

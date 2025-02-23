@@ -367,7 +367,7 @@ void Character::sendPacket(bool creation)
 
 void Character::update(float deltaTime)
 {
-	std::cout << "update de " << m_name << std::endl;
+	//std::cout << "update de " << m_name << std::endl;
 	float xSpeed = runVelocity;
 	float ySpeed = jumpVelocity;
 
@@ -378,15 +378,22 @@ void Character::update(float deltaTime)
 	{
 		if (knockback)
 		{
-			for (auto animation : animations)
+			std::cout << "if (knockback)" << std::endl;
+			//std::cout << animations.size() << std::endl;
+			/*for (auto animation : animations)
 			{
 				if (animation.first != "damage")
 					animation.second.setm_time(0.0f);
-			}
+			}*/
+			std::cout << "for (auto animation : animations)" << std::endl;
+
 			animations["damage"].update(deltaTime);
+			std::cout << "animations[daùmage].update(deltaTime);" << std::endl;
 			textureToDraw = animations["damage"].getTexture();
+			std::cout << "textureToDraw" << std::endl;
 
 			auto frames = animations["damage"].getm_frames();
+			std::cout << "auto frames" << std::endl;
 			if (animations["damage"].getm_time() >= frames[0].time)
 			{
 				std::cout << std::string(m_name) << " : knockack off" << std::endl;
@@ -711,7 +718,16 @@ void Character::update(float deltaTime)
 		body->SetTransform(b2Vec2(position.x, position.y), body->GetAngle());
 
 	position = sf::Vector2f(body->GetPosition().x, body->GetPosition().y);
+	std::cout << position.y << std::endl;
 	previousYPosition = body->GetPosition().y;
+
+	if (position.x > camera.getm_viewSize().x / 10 || position.x < -camera.getm_viewSize().x / 10 ||
+		position.y > camera.getm_viewSize().y / 10 || position.y < -camera.getm_viewSize().y / 10)
+	{
+		m_lifePourcentage = 1.0;
+		position = sf::Vector2f(0, -2);
+		body->SetTransform(b2Vec2(position.x, position.y), body->GetAngle());
+	}
 
 	//if(m_name == "Mario")
 	if(m_local)

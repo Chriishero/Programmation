@@ -46,3 +46,8 @@ sf::Vector2f Camera::getm_position()
 {
 	return m_position;
 }
+
+void Camera::setm_position(sf::Vector2f pos)
+{
+	m_position = pos;
+}

@@ -293,7 +293,7 @@ void Map::draw(Renderer& renderer, sf::Vector2f position, sf::Vector2f size)
 	float xRatio = 0.02f;
 	float yRatio = 0.07f;
 
-	stagePosition = sf::Vector2f(position.x, position.y + 4);
+	stagePosition = sf::Vector2f(position.x, position.y + 6);
 	stageSize = sf::Vector2f(textureSize.x * xRatio, textureSize.y * yRatio);
 	if (stageSize != previousStageSize)
 	{
@@ -314,7 +314,7 @@ void Map::draw(Renderer& renderer, sf::Vector2f position, sf::Vector2f size)
 		createShape(sf::Vector2f(textureSize.x * xRatio, textureSize.y * yRatio), vertices);
 		previousStageSize = stageSize;
 	}
-	body->SetTransform(b2Vec2(stagePosition.x - stageSize.x / 2, stagePosition.y - stagePosition.y * 1.5), body->GetAngle());
+	body->SetTransform(b2Vec2(stagePosition.x - stageSize.x / 2, stagePosition.y - stageSize.y * 0.5), body->GetAngle());
 	renderer.draw(textureToDraw, stagePosition, stageSize);
 }
 

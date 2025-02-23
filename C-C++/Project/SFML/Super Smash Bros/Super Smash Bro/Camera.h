@@ -12,6 +12,7 @@ public:
 
 	float getm_zoomLevel();
 	sf::Vector2f getm_position();
+	void setm_position(sf::Vector2f pos);
 
 private:
 	float m_zoomLevel;

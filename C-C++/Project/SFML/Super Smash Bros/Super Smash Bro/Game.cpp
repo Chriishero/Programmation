@@ -7,6 +7,8 @@
 #include <filesystem>
 #include <algorithm>
 #include "Character.h"
+#include <chrono>
+#include <thread>
 
 ENetAddress address;
 ENetHost* server;
@@ -16,7 +18,7 @@ ENetPeer* peer;
 
 Menu menu(window);
 Map map("Final Destination");
-Camera camera(25.0f);
+Camera camera(30.0f);
 Character* character = new Character("Mario", true);
 
 std::map<Character*, bool> characters{};
@@ -523,7 +525,7 @@ void updateServer()
 		bool host_service = true;
 		Character::CharacterData characterData;
 		/* Wait up to 0 milliseconds for an event. */
-		while (enet_host_service(server, &enetEvent, 0) > 0 && host_service)
+		while (enet_host_service(server, &enetEvent, 10) > 0 && host_service)
 		{
 			switch (enetEvent.type)
 			{
@@ -546,11 +548,11 @@ void updateServer()
 				break;
 
 			case ENET_EVENT_TYPE_RECEIVE:
-				std::cout << "server : ENET_EVENT_TYPE_RECEIVE" << std::endl;
+				//std::cout << "server : ENET_EVENT_TYPE_RECEIVE" << std::endl;
 				playersAvailability[enetEvent.peer] = true;
 				memcpy(&characterData, enetEvent.packet->data, sizeof(Character::CharacterData));
 
-				std::cout << "server : packet reçu de " << enetEvent.peer << std::endl;
+				//std::cout << "server : packet reçu de " << enetEvent.peer << std::endl;
 				// Envoie le packet à tous les clients
 				for (auto i = 0; i < server->peerCount; i++)
 				{
@@ -562,11 +564,11 @@ void updateServer()
 				}
 				//enet_host_broadcast(server, 0, enetEvent.packet);
 				enet_host_flush(server);
-				std::cout << "server : enet_host_flush" << std::endl;
+				//std::cout << "server : enet_host_flush" << std::endl;
 
 				/* Clean up the packet now that we're done using it. */
 				enet_packet_destroy(enetEvent.packet);
-				std::cout << "server : enet_packet_destroy" << std::endl;
+				//std::cout << "server : enet_packet_destroy" << std::endl;
 
 				break;
 
@@ -614,10 +616,7 @@ void updateClient()
 					
 
 					playersCharacter[enetEvent.peer]->setm_actionsState(receivedActionsState);
-
-					// FAIS CRASH LORSQU'UN CLIENT NON LOCAL FAJT L4ANIMATION DE PRISE DE DEGAT
 					playersCharacter[enetEvent.peer]->setm_lifePourcentage(characterData.lifePourcentage); 
-
 					playersCharacter[enetEvent.peer]->position = characterData.position;
 				}
 

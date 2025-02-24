@@ -1,4 +1,4 @@
-#include "Menu.h"
+﻿#include "Menu.h"
 #include <algorithm>
 #include <format>
 
@@ -240,8 +240,9 @@ void Menu::draw(Renderer& renderer)
 		int i = 0;
 		for (auto const character : playersCharacter)
 		{
-			std::string life = std::format("{:.1f}", character.second->getm_lifePourcentage() * 100);
-			sf::Text lifeText(" " + character.second->getm_name() + " \n" + life + "%", font);
+			std::string lifePourcentage = std::format("{:.1f}", character.second->getm_lifePourcentage() * 100);
+			std::string life = std::to_string(character.second->getm_nLife()) + " life";
+			sf::Text lifeText(" " + character.second->getm_name() + " \n" + lifePourcentage + "%" + "\n" + life, font);
 			lifeText.setCharacterSize(45);
 			lifeText.setFillColor(sf::Color::White);
 			lifeText.setScale(0.1, 0.2);

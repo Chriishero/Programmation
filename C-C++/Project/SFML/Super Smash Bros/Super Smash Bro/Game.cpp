@@ -25,6 +25,7 @@ std::map<Character*, bool> characters{};
 
 std::map<ENetPeer*, Character*> playersCharacter{};
 std::map<ENetPeer*, bool> playersAvailability{};
+std::map<ENetPeer*, bool> playersGameState{};
 
 bool paused = false;
 bool menuState = true;
@@ -544,6 +545,7 @@ void updateServer()
 				// 50000 : temps maximum avant que le client soit déconnecté pour inactivité
 
 				playersAvailability[enetEvent.peer] = false;
+				playersGameState[enetEvent.peer] = true;
 
 				break;
 
@@ -618,6 +620,9 @@ void updateClient()
 					playersCharacter[enetEvent.peer]->setm_actionsState(receivedActionsState);
 					playersCharacter[enetEvent.peer]->setm_lifePourcentage(characterData.lifePourcentage); 
 					playersCharacter[enetEvent.peer]->position = characterData.position;
+					playersCharacter[enetEvent.peer]->setm_defeat(characterData.defeat);
+					playersCharacter[enetEvent.peer]->setm_dead(characterData.defeat ? true : false);
+					playersGameState[enetEvent.peer] = characterData.defeat ? false : true;
 				}
 
 				/*playersCharacter[enetEvent.peer] = characterData.player;

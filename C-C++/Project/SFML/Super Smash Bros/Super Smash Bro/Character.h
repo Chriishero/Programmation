@@ -35,6 +35,11 @@ public:
 	void setm_actionsState(std::vector<bool> state);
 	float getm_lifePourcentage();
 	void setm_lifePourcentage(float life);
+	int getm_nLife();
+	bool getm_defeat();
+	void setm_defeat(bool state);
+	bool getm_dead();
+	void setm_dead(bool state);
 	std::string getm_name();
 
 	/*struct CharacterData
@@ -69,6 +74,8 @@ public:
 
 		float lifePourcentage;
 		sf::Vector2f position;
+
+		bool defeat;
 	};
 
 	sf::Texture textureToDraw{};
@@ -135,8 +142,11 @@ private:
 	bool attacks = false;
 	bool aerialattacks = false;
 	
-	bool win = false;
+	bool m_win = false;
+	bool m_defeat = false;
+	bool m_dead = false;
 
+	int m_nLife = 4;
 	float m_lifePourcentage = 1.0f;
 	float m_prevLife = m_lifePourcentage;
 	float m_attacksPoint = 0.05f;

@@ -325,6 +325,7 @@ void Character::sendPacket(bool creation)
 	m_characterData.left = actions["left"].pressed;
 	m_characterData.up = actions["up"].pressed;
 	m_characterData.attacks = actions["attacks"].pressed;
+	m_characterData.defeat = m_defeat;
 
 	//m_characterData.lifePourcentage = std::bit_cast<uint32_t>(m_lifePourcentage);
 	m_characterData.lifePourcentage = m_lifePourcentage;
@@ -367,6 +368,8 @@ void Character::sendPacket(bool creation)
 
 void Character::update(float deltaTime)
 {
+	if (m_dead)
+		return;
 	//std::cout << "update de " << m_name << std::endl;
 	float xSpeed = runVelocity;
 	float ySpeed = jumpVelocity;
@@ -527,10 +530,15 @@ void Character::update(float deltaTime)
 					updateReleasedFrames("guarding");
 			}
 
-			else if (win)
+			else if (m_win)
 			{
 				animations["win"].update(deltaTime);
 				textureToDraw = animations["win"].getTexture();
+			}
+			else if (m_defeat)
+			{
+				animations["loose"].update(deltaTime);
+				textureToDraw = animations["loose"].getTexture();
 			}
 			else
 			{
@@ -724,9 +732,17 @@ void Character::update(float deltaTime)
 	if (position.x > camera.getm_viewSize().x / 10 || position.x < -camera.getm_viewSize().x / 10 ||
 		position.y > camera.getm_viewSize().y / 10 || position.y < -camera.getm_viewSize().y / 10)
 	{
-		m_lifePourcentage = 1.0;
-		position = sf::Vector2f(0, -2);
-		body->SetTransform(b2Vec2(position.x, position.y), body->GetAngle());
+		m_nLife--;
+		if(m_nLife > 0)
+		{
+			m_lifePourcentage = 1.0;
+			position = sf::Vector2f(0, -2);
+			body->SetTransform(b2Vec2(position.x, position.y), body->GetAngle());
+		}
+		else
+		{
+			defeat = true;
+		}
 	}
 
 	//if(m_name == "Mario")
@@ -736,6 +752,8 @@ void Character::update(float deltaTime)
 
 void Character::draw(Renderer& renderer)
 {
+	if (m_dead)
+		return;
 	//std::cout << "draw de " << m_name << std::endl;
 	//renderer.draw(textureToDraw, position, sf::Vector2f(facingLeft ? -0.75f : 0.75f, 4.0f));
 	auto textureSize = textureToDraw.getSize();
@@ -854,6 +872,30 @@ float Character::getm_lifePourcentage()
 void Character::setm_lifePourcentage(float life)
 {
 	m_lifePourcentage = life;
+}
+
+int Character::getm_nLife()
+{
+	return m_nLife;
+}
+
+bool Character::getm_defeat()
+{
+	return m_defeat;
+}
+
+void Character::setm_defeat(bool state)
+{
+	m_defeat = state;
+}
+
+bool Character::getm_dead()
+{
+	return m_dead;
+}
+void Character::setm_dead(bool state)
+{
+	m_dead = state;
 }
 
 std::string Character::getm_name()

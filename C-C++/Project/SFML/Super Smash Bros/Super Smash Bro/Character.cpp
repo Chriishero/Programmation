@@ -329,6 +329,7 @@ void Character::sendPacket(bool creation)
 
 	//m_characterData.lifePourcentage = std::bit_cast<uint32_t>(m_lifePourcentage);
 	m_characterData.lifePourcentage = m_lifePourcentage;
+	m_characterData.nLife = m_nLife;
 	m_characterData.position = position;
 
 	char data[sizeof(CharacterData)];
@@ -370,6 +371,30 @@ void Character::update(float deltaTime)
 {
 	if (m_dead)
 		return;
+	else if (m_defeat)
+	{
+		if (nGameOverUpdate < 1)
+		{
+			nGameOverUpdate++;
+			position.y = -2;
+		}
+		position.x = resultPlace;
+		body->SetTransform(b2Vec2(position.x, position.y), body->GetAngle());
+		animations["loose"].update(deltaTime);
+		textureToDraw = animations["loose"].getTexture();
+	}
+	else if (gameOver)
+	{
+		if (nGameOverUpdate < 1)
+		{
+			nGameOverUpdate++;
+			position = sf::Vector2f(0, -2);
+			body->SetTransform(b2Vec2(position.x, position.y), body->GetAngle());
+		}
+		animations["win"].update(deltaTime);
+		textureToDraw = animations["win"].getTexture();
+	}
+
 	//std::cout << "update de " << m_name << std::endl;
 	float xSpeed = runVelocity;
 	float ySpeed = jumpVelocity;
@@ -377,7 +402,7 @@ void Character::update(float deltaTime)
 	b2Vec2 velocity = body->GetLinearVelocity();
 	velocity.x = 0.0f;
 
-	if (!damaged)
+	if (!damaged && !m_win && !m_defeat)
 	{
 		if (knockback)
 		{
@@ -528,17 +553,6 @@ void Character::update(float deltaTime)
 			{
 				if (!landing)
 					updateReleasedFrames("guarding");
-			}
-
-			else if (m_win)
-			{
-				animations["win"].update(deltaTime);
-				textureToDraw = animations["win"].getTexture();
-			}
-			else if (m_defeat)
-			{
-				animations["loose"].update(deltaTime);
-				textureToDraw = animations["loose"].getTexture();
 			}
 			else
 			{
@@ -741,7 +755,8 @@ void Character::update(float deltaTime)
 		}
 		else
 		{
-			defeat = true;
+			m_dead = true;
+			m_defeat = true;
 		}
 	}
 
@@ -896,6 +911,16 @@ bool Character::getm_dead()
 void Character::setm_dead(bool state)
 {
 	m_dead = state;
+}
+
+void Character::setm_win(bool state)
+{
+	m_win = state;
+}
+
+void Character::setm_nLife(int n)
+{
+	m_nLife = n;
 }
 
 std::string Character::getm_name()

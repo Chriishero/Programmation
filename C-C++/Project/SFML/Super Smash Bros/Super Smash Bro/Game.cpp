@@ -29,6 +29,8 @@ std::map<ENetPeer*, bool> playersGameState{};
 
 bool paused = false;
 bool menuState = true;
+bool gameOver = false;
+int resultPlace = 0;
 
 sf::Font font{};
 
@@ -492,7 +494,13 @@ void update(float deltaTime)
 		map.update(deltaTime);
 
 		for (auto const player : playersCharacter)
+		{
+			if (!player.second->getm_defeat())
+				resultPlace = 0;
+			else
+				resultPlace *= -1 + 1;
 			player.second->update(deltaTime);
+		}
 	}
 }
 
@@ -619,6 +627,7 @@ void updateClient()
 
 					playersCharacter[enetEvent.peer]->setm_actionsState(receivedActionsState);
 					playersCharacter[enetEvent.peer]->setm_lifePourcentage(characterData.lifePourcentage); 
+					playersCharacter[enetEvent.peer]->setm_nLife(characterData.nLife);
 					playersCharacter[enetEvent.peer]->position = characterData.position;
 					playersCharacter[enetEvent.peer]->setm_defeat(characterData.defeat);
 					playersCharacter[enetEvent.peer]->setm_dead(characterData.defeat ? true : false);
@@ -627,6 +636,22 @@ void updateClient()
 
 				/*playersCharacter[enetEvent.peer] = characterData.player;
 				std::cout << "playersCharacter[enetEvent.peer] mis à jour" << std::endl;*/
+
+				int count = 0;
+				for (auto const player : playersCharacter)
+				{
+					if (player.second->getm_defeat())
+						count++;
+				}
+				if (count == playersCharacter.size()-1)
+				{
+					gameOver = true;
+					for (auto const player : playersCharacter)
+					{
+						playersCharacter[enetEvent.peer]->setm_win(playersCharacter[enetEvent.peer]->getm_dead() ? false : true);
+						playersCharacter[enetEvent.peer]->setm_dead(false);
+					}
+				}
 
 				//printf("Packet n%d : %s = right : %d\n", iPacket, characterData.name, (int)characterData.right);
 				iPacket++;

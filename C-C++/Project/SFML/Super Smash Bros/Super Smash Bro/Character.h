@@ -31,6 +31,7 @@ public:
 	virtual void onBeginContact(b2Fixture* self, b2Fixture* other) override;
 	virtual void onEndContact(b2Fixture* self, b2Fixture* other) override;
 
+	std::string getm_name();
 	bool getm_local();
 	void setm_actionsState(std::vector<bool> state);
 	float getm_lifePourcentage();
@@ -40,7 +41,8 @@ public:
 	void setm_defeat(bool state);
 	bool getm_dead();
 	void setm_dead(bool state);
-	std::string getm_name();
+	void setm_win(bool state);
+	void setm_nLife(int n);
 
 	/*struct CharacterData
 	{
@@ -73,6 +75,7 @@ public:
 		bool attacks;
 
 		float lifePourcentage;
+		int nLife;
 		sf::Vector2f position;
 
 		bool defeat;
@@ -160,5 +163,6 @@ private:
 	float m_xKBScaling = 1.0f;
 	float m_yKBScaling = 1.0f;
 
+	int nGameOverUpdate = 0;
 };
 

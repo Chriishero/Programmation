@@ -13,6 +13,8 @@ extern bool paused;
 extern bool menuState;
 extern sf::Font font;
 extern sf::RenderWindow window;
+extern bool gameOver;
+extern int resultPlace;
 
 extern ENetAddress address;
 extern ENetHost* server;

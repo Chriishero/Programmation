@@ -736,7 +736,7 @@ void Character::update(float deltaTime)
 		m_yDamageVelocity = m_baseYDamage;
 	}
 
-	if (!m_local)
+	if (!m_local && !gameOver)
 		body->SetTransform(b2Vec2(position.x, position.y), body->GetAngle());
 
 	position = sf::Vector2f(body->GetPosition().x, body->GetPosition().y);

@@ -648,6 +648,7 @@ void updateClient()
 					gameOver = true;
 					for (auto const player : playersCharacter)
 					{
+						playersGameState[enetEvent.peer] = true;
 						playersCharacter[enetEvent.peer]->setm_win(playersCharacter[enetEvent.peer]->getm_dead() ? false : true);
 						playersCharacter[enetEvent.peer]->setm_dead(false);
 					}

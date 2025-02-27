@@ -143,6 +143,10 @@ void Menu::multiplayer(sf::Event event)
 
 void Menu::update(float deltaTime, sf::Event event, sf::Vector2f size, sf::Vector2f position)
 {
+	if (gameOver)
+	{
+		m_inGameUI = false;
+	}
 	if (m_gameUI)
 	{
 		m_texturesSize["menu/game-button-1.png"] = sf::Vector2f(size.x * 0.5, size.y * 0.2);

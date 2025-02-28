@@ -7,6 +7,7 @@
 
 extern Camera camera;
 extern Character* character;
+extern Map map;
 extern std::map<Character*, bool> characters;
 extern std::map<ENetPeer*, Character*> playersCharacter;
 extern bool paused;

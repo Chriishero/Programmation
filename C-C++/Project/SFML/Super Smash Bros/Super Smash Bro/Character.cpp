@@ -371,28 +371,31 @@ void Character::update(float deltaTime)
 {
 	if (m_dead)
 		return;
-	else if (m_defeat)
+	if(gameOver)
 	{
-		if (nGameOverUpdate < 1)
+		if (m_defeat)
 		{
-			nGameOverUpdate++;
-			position.y = -2;
-		}
-		position.x = resultPlace;
-		body->SetTransform(b2Vec2(position.x, position.y), body->GetAngle());
-		animations["loose"].update(deltaTime);
-		textureToDraw = animations["loose"].getTexture();
-	}
-	else if (gameOver)
-	{
-		if (nGameOverUpdate < 1)
-		{
-			nGameOverUpdate++;
-			position = sf::Vector2f(0, -2);
+			if (nGameOverUpdate < 1)
+			{
+				nGameOverUpdate++;
+				position.y = -2;
+			}
+			position.x = resultPlace;
 			body->SetTransform(b2Vec2(position.x, position.y), body->GetAngle());
+			animations["loose"].update(deltaTime);
+			textureToDraw = animations["loose"].getTexture();
 		}
-		animations["win"].update(deltaTime);
-		textureToDraw = animations["win"].getTexture();
+		else
+		{
+			if (nGameOverUpdate < 1)
+			{
+				nGameOverUpdate++;
+				position = sf::Vector2f(0, -2);
+				body->SetTransform(b2Vec2(position.x, position.y), body->GetAngle());
+			}
+			animations["win"].update(deltaTime);
+			textureToDraw = animations["win"].getTexture();
+		}
 	}
 
 	//std::cout << "update de " << m_name << std::endl;
@@ -402,7 +405,7 @@ void Character::update(float deltaTime)
 	b2Vec2 velocity = body->GetLinearVelocity();
 	velocity.x = 0.0f;
 
-	if (!damaged && !m_win && !m_defeat)
+	else if (!damaged && !m_win && !m_defeat)
 	{
 		if (knockback)
 		{
@@ -911,6 +914,11 @@ bool Character::getm_dead()
 void Character::setm_dead(bool state)
 {
 	m_dead = state;
+}
+
+bool Character::getm_win()
+{
+	return m_win;
 }
 
 void Character::setm_win(bool state)

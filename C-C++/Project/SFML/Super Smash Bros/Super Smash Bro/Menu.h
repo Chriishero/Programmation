@@ -5,6 +5,7 @@
 #include "Renderer.h"
 #include "Resources.h"
 #include "Character.h"
+#include "Map.h"
 #include "Game.h"
 #include <vector>
 #include <string>
@@ -19,8 +20,10 @@ public:
 	void resetTextureToDisplay();
 	void createInputBox();
 	void selectGame(sf::Event event);
+	void mapUI(sf::Event event);
 	void characterUI(sf::Event event);
 	void multiplayer(sf::Event event);
+	void gameResultUI(sf::Event event);
 	void update(float deltaTime, sf::Event event, sf::Vector2f size, sf::Vector2f position);
 	void draw(Renderer& renderer);
 
@@ -32,11 +35,14 @@ private:
 	std::map<std::string, sf::Vector2f> m_texturesSize{};
 	std::map<std::string, bool> m_to_display{};
 
-	bool m_inGameUI = false;
 	bool m_gameUI = false;
-	bool m_charactersUI = false;
 	bool m_multiplayerUI = false;
 	bool m_intputBox = false;
+	bool m_mapUI = false;
+	bool m_charactersUI = false;
+	bool m_inGameUI = false;
+	bool m_gameResultUI = false;
+	bool m_restartButton = false;
 
 	sf::Texture titleBackground;
 	std::string m_hostPort;

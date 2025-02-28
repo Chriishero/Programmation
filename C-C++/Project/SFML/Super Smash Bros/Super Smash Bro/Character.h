@@ -41,6 +41,7 @@ public:
 	void setm_defeat(bool state);
 	bool getm_dead();
 	void setm_dead(bool state);
+	bool getm_win();
 	void setm_win(bool state);
 	void setm_nLife(int n);
 
@@ -145,7 +146,7 @@ private:
 	bool attacks = false;
 	bool aerialattacks = false;
 	
-	bool m_win = false;
+	bool m_win = true;
 	bool m_defeat = false;
 	bool m_dead = false;
 

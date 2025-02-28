@@ -420,8 +420,6 @@ void restart()
 	}
 
 	//std::cout << "Load map : " << std::endl;
-	map = Map("Final Destination");
-	map.begin();
 }
 
 
@@ -631,6 +629,7 @@ void updateClient()
 					playersCharacter[enetEvent.peer]->position = characterData.position;
 					playersCharacter[enetEvent.peer]->setm_defeat(characterData.defeat);
 					playersCharacter[enetEvent.peer]->setm_dead(characterData.defeat ? true : false);
+					playersCharacter[enetEvent.peer]->setm_win(characterData.defeat ? false : true);
 					playersGameState[enetEvent.peer] = characterData.defeat ? false : true;
 				}
 
@@ -640,16 +639,16 @@ void updateClient()
 				int count = 0;
 				for (auto const player : playersCharacter)
 				{
-					if (player.second->getm_defeat())
+					if (player.second->getm_win())
 						count++;
 				}
-				if (count == playersCharacter.size()-1)
+				if (count == 1)
 				{
 					gameOver = true;
 					for (auto const player : playersCharacter)
 					{
 						playersGameState[enetEvent.peer] = true;
-						playersCharacter[enetEvent.peer]->setm_win(playersCharacter[enetEvent.peer]->getm_dead() ? false : true);
+						//playersCharacter[enetEvent.peer]->setm_win(playersCharacter[enetEvent.peer]->getm_dead() ? false : true);
 						playersCharacter[enetEvent.peer]->setm_dead(false);
 					}
 				}
@@ -679,6 +678,7 @@ void initializeServer()
 								2      /* allow up to 2 channels to be used, 0 and 1 */,
 								0      /* assume any amount of incoming bandwidth */,
 								0      /* assume any amount of outgoing bandwidth */);
+
 	if (server) 
 	{
 		std::cout << "Serveur lancé avec succès sur le port " << address.port << std::endl;

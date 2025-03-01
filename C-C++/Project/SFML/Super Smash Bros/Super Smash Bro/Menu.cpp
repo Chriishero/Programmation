@@ -67,26 +67,23 @@ void Menu::selectGame(sf::Event event)
 
 void Menu::mapUI(sf::Event event)
 {
-	if (server == NULL)
-	{
-		m_mapUI = false;
-		m_charactersUI = true;
-	}
 	if (event.type == sf::Event::KeyReleased)
 	{
 		if (event.mouseButton.button == sf::Keyboard::D)
 		{
-			map = Map("Final Destination");
-			map.begin();
+			mapStr = "Final Destination";
+			map = new Map(mapStr);
+			map->begin();
 			m_mapUI = false;
 			m_charactersUI = true;
+			mapState = true;
 
 			resetTextureToDisplay();
 		}
 		else if (event.key.code == sf::Keyboard::Escape)
 		{
 			m_mapUI = false;
-			multiplayer = true;
+			m_multiplayerUI = true;
 			resetTextureToDisplay();
 		}
 	}
@@ -138,7 +135,7 @@ void Menu::multiplayer(sf::Event event)
 			std::cout << "create party" << std::endl;
 			initializeServer();
 
-			m_charactersUI = true;
+			m_mapUI = true;
 			m_multiplayerUI = false; 
 			m_intputBox = false;
 
@@ -149,7 +146,7 @@ void Menu::multiplayer(sf::Event event)
 			std::cout << "join party" << std::endl;
 			joinServer(m_hostPort);
 
-			m_charactersUI = true;
+			m_mapUI = true;
 			m_multiplayerUI = false;
 			m_intputBox = false;
 
@@ -191,25 +188,30 @@ void Menu::gameResultUI(sf::Event event)
 {
 	if (event.type == sf::Event::KeyPressed)
 	{
-		m_restartButton = true;
+		if(!m_restartButton)
+		{
+			m_restartButton = true;
+			resetTextureToDisplay();
+		}
 		if (event.key.code == sf::Keyboard::Y)
 		{
 			m_gameResultUI = false;
+			m_restartButton = false;
 			m_mapUI = true;
 			gameOver = false;
+			restart();
 		}
 		else if (event.key.code == sf::Keyboard::N)
 		{
 			m_gameResultUI = false;
+			m_restartButton = false;
 			m_multiplayerUI = true;
 			gameOver = false;
 			if (server != NULL)
 				enet_host_destroy(server);
-			else
-			{
-				enet_peer_disconnect(peer, 0);
-				enet_host_destroy(client);
-			}
+
+			enet_peer_disconnect(peer, 0);
+			enet_host_destroy(client);
 		}
 	}
 }
@@ -220,12 +222,13 @@ void Menu::update(float deltaTime, sf::Event event, sf::Vector2f size, sf::Vecto
 	{
 		m_inGameUI = false;
 		m_gameResultUI = true;
+		gameResultUI(event);
 
 		if (m_restartButton)
 		{
-			m_texturesSize["menu/result-button-1.png"] = sf::Vector2f(size.x * 0.6, size.y * 0.8);
-			m_texturesPosition["menu/result-button-1.png"] = sf::Vector2f(position.x, position.y);
-			m_to_display["menu/result-button-1.png"] = true;
+			m_texturesSize["menu/restart-button-1.png"] = sf::Vector2f(size.x * 0.5, size.y * 0.7);
+			m_texturesPosition["menu/restart-button-1.png"] = sf::Vector2f(position.x, position.y);
+			m_to_display["menu/restart-button-1.png"] = true;
 		}
 	}
 	else if (m_gameUI)
@@ -238,6 +241,16 @@ void Menu::update(float deltaTime, sf::Event event, sf::Vector2f size, sf::Vecto
 	}
 	else if (m_mapUI)
 	{
+		if (server == NULL)
+		{
+			m_mapUI = false;
+			m_charactersUI = true;
+			return;
+		}
+		m_texturesSize["menu/map-1.png"] = sf::Vector2f(size.x * 0.6, size.y * 0.8);
+		m_texturesPosition["menu/map-1.png"] = sf::Vector2f(position.x, position.y);
+		m_to_display["menu/map-1.png"] = true;
+
 		mapUI(event);
 	}
 	else if (m_charactersUI)

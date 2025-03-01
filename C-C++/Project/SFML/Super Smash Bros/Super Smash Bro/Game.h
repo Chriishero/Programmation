@@ -4,10 +4,11 @@
 #include "Camera.h"
 #include "Character.h"
 #include <iostream>
+#include <string>
 
 extern Camera camera;
 extern Character* character;
-extern Map map;
+extern Map* map;
 extern std::map<Character*, bool> characters;
 extern std::map<ENetPeer*, Character*> playersCharacter;
 extern bool paused;
@@ -16,6 +17,8 @@ extern sf::Font font;
 extern sf::RenderWindow window;
 extern bool gameOver;
 extern int resultPlace;
+extern bool mapState;
+extern std::string mapStr;
 
 extern ENetAddress address;
 extern ENetHost* server;

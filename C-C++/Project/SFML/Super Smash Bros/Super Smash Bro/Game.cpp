@@ -17,7 +17,8 @@ ENetEvent enetEvent;
 ENetPeer* peer;
 
 Menu menu(window);
-Map map("Final Destination");
+std::string mapStr = "Final Destination";
+Map* map = new Map(mapStr);
 Camera camera(30.0f);
 Character* character = new Character("Mario", true);
 
@@ -25,12 +26,15 @@ std::map<Character*, bool> characters{};
 
 std::map<ENetPeer*, Character*> playersCharacter{};
 std::map<ENetPeer*, bool> playersAvailability{};
+std::map<ENetPeer*, bool> playersMap{};
 std::map<ENetPeer*, bool> playersGameState{};
 
 bool paused = false;
 bool menuState = true;
 bool gameOver = false;
 int resultPlace = 0;
+bool mapState = false;
+bool firstClient = false;
 
 sf::Font font{};
 
@@ -406,6 +410,18 @@ void restart()
 {
 	Physics::init();
 
+	characters.clear();
+
+	playersCharacter.clear();
+	playersAvailability.clear();
+	playersMap.clear();
+	playersGameState.clear();
+
+	paused = false;
+	menuState = true;
+	gameOver = false;
+	resultPlace = 0;
+	mapState = false;
 	paused = false;
 
 	menu.begin();
@@ -489,14 +505,15 @@ void update(float deltaTime)
 	if(!menuState)
 	{
 		Physics::update(deltaTime);
-		map.update(deltaTime);
+		map->update(deltaTime);
 
 		for (auto const player : playersCharacter)
 		{
-			if (!player.second->getm_defeat())
+			if (player.second->getm_win())
 				resultPlace = 0;
 			else
-				resultPlace *= -1 + 1;
+				resultPlace += 1 * -1;
+				
 			player.second->update(deltaTime);
 		}
 	}
@@ -511,7 +528,7 @@ void render(Renderer& renderer)
 {
 	if (!menuState)
 	{
-		map.draw(renderer, camera.getm_position(), camera.getm_viewSize());
+		map->draw(renderer, camera.getm_position(), camera.getm_viewSize());
 		
 		for (auto const player : playersCharacter)
 			player.second->draw(renderer);
@@ -531,6 +548,7 @@ void updateServer()
 	{
 		bool host_service = true;
 		Character::CharacterData characterData;
+		char data[64];
 		/* Wait up to 0 milliseconds for an event. */
 		while (enet_host_service(server, &enetEvent, 10) > 0 && host_service)
 		{
@@ -551,6 +569,7 @@ void updateServer()
 				// 50000 : temps maximum avant que le client soit déconnecté pour inactivité
 
 				playersAvailability[enetEvent.peer] = false;
+				playersMap[enetEvent.peer] = true;
 				playersGameState[enetEvent.peer] = true;
 
 				break;
@@ -564,10 +583,11 @@ void updateServer()
 				// Envoie le packet à tous les clients
 				for (auto i = 0; i < server->peerCount; i++)
 				{
-					if (playersAvailability[&server->peers[i]] && enetEvent.peer != &server->peers[i])
+					if ((playersAvailability[&server->peers[i]] || playersMap[&server->peers[i]]) && enetEvent.peer != &server->peers[i])
 					{
 						//std::cout << "enet_peer_send(server->peers)" << std::endl;
 						enet_peer_send(&server->peers[i], 0, enetEvent.packet);
+						playersMap[&server->peers[i]] = false;
 					}
 				}
 				//enet_host_broadcast(server, 0, enetEvent.packet);
@@ -602,59 +622,72 @@ void updateClient()
 			{
 			case ENET_EVENT_TYPE_RECEIVE:
 				memcpy(&characterData, enetEvent.packet->data, sizeof(Character::CharacterData));
-				//std::cout << "paquet reçu" << std::endl;
-				
-				if (!playersCharacter.contains(enetEvent.peer))
+				if(mapState)
 				{
-					std::cout << "nouveau joueur" << std::endl;
-					Character* player = new Character(characterData.name, false);
-					player->begin();
-					playersCharacter[enetEvent.peer] = player;
+					//std::cout << "paquet reçu" << std::endl;
+
+					if (!playersCharacter.contains(enetEvent.peer))
+					{
+						std::cout << "nouveau joueur" << std::endl;
+						Character* player = new Character(characterData.name, false);
+						player->begin();
+						playersCharacter[enetEvent.peer] = player;
+					}
+					else
+					{
+						/*playersCharacter[enetEvent.peer]->position = characterData.position;
+						playersCharacter[enetEvent.peer]->size = characterData.size;
+						playersCharacter[enetEvent.peer]->textureToDraw = characterData.texture;*/
+
+						std::vector<bool> receivedActionsState{ characterData.attacks, characterData.down,
+																characterData.guarding,characterData.left,
+																characterData.right, characterData.smash,
+																characterData.tilt, characterData.up };
+
+
+						playersCharacter[enetEvent.peer]->setm_actionsState(receivedActionsState);
+						playersCharacter[enetEvent.peer]->setm_lifePourcentage(characterData.lifePourcentage);
+						playersCharacter[enetEvent.peer]->setm_nLife(characterData.nLife);
+						playersCharacter[enetEvent.peer]->position = characterData.position;
+						playersCharacter[enetEvent.peer]->setm_defeat(characterData.defeat);
+						playersCharacter[enetEvent.peer]->setm_dead(characterData.defeat ? true : false);
+						playersCharacter[enetEvent.peer]->setm_win(characterData.defeat ? false : true);
+						playersGameState[enetEvent.peer] = characterData.defeat ? false : true;
+					}
+
+					/*playersCharacter[enetEvent.peer] = characterData.player;
+					std::cout << "playersCharacter[enetEvent.peer] mis à jour" << std::endl;*/
+
+					int count = 0;
+					for (auto const player : playersCharacter)
+					{
+						if (player.second->getm_win())
+							count++;
+					}
+					//std::cout << "nombre de victorieux : " << count << std::endl;
+					if (count == 1)
+					{
+						gameOver = true;
+						for (auto const player : playersCharacter)
+						{
+							playersGameState[enetEvent.peer] = true;
+							//playersCharacter[enetEvent.peer]->setm_win(playersCharacter[enetEvent.peer]->getm_dead() ? false : true);
+							playersCharacter[enetEvent.peer]->setm_dead(false);
+						}
+					}
+
+					printf("Packet n%d : %s = right : %d\n", iPacket, characterData.name, (int)characterData.right);
+					iPacket++;
 				}
 				else
 				{
-					/*playersCharacter[enetEvent.peer]->position = characterData.position;
-					playersCharacter[enetEvent.peer]->size = characterData.size;
-					playersCharacter[enetEvent.peer]->textureToDraw = characterData.texture;*/
+					std::cout << "map reçu" << characterData.mapName << std::endl;
 
-					std::vector<bool> receivedActionsState{ characterData.attacks, characterData.down,
-															characterData.guarding,characterData.left,
-															characterData.right, characterData.smash,
-															characterData.tilt, characterData.up };
-					
+					map = new Map(characterData.mapName);
+					map->begin();
 
-					playersCharacter[enetEvent.peer]->setm_actionsState(receivedActionsState);
-					playersCharacter[enetEvent.peer]->setm_lifePourcentage(characterData.lifePourcentage); 
-					playersCharacter[enetEvent.peer]->setm_nLife(characterData.nLife);
-					playersCharacter[enetEvent.peer]->position = characterData.position;
-					playersCharacter[enetEvent.peer]->setm_defeat(characterData.defeat);
-					playersCharacter[enetEvent.peer]->setm_dead(characterData.defeat ? true : false);
-					playersCharacter[enetEvent.peer]->setm_win(characterData.defeat ? false : true);
-					playersGameState[enetEvent.peer] = characterData.defeat ? false : true;
+					mapState = true;
 				}
-
-				/*playersCharacter[enetEvent.peer] = characterData.player;
-				std::cout << "playersCharacter[enetEvent.peer] mis à jour" << std::endl;*/
-
-				int count = 0;
-				for (auto const player : playersCharacter)
-				{
-					if (player.second->getm_win())
-						count++;
-				}
-				if (count == 1)
-				{
-					gameOver = true;
-					for (auto const player : playersCharacter)
-					{
-						playersGameState[enetEvent.peer] = true;
-						//playersCharacter[enetEvent.peer]->setm_win(playersCharacter[enetEvent.peer]->getm_dead() ? false : true);
-						playersCharacter[enetEvent.peer]->setm_dead(false);
-					}
-				}
-
-				//printf("Packet n%d : %s = right : %d\n", iPacket, characterData.name, (int)characterData.right);
-				iPacket++;
 
 				enet_packet_destroy(enetEvent.packet);
 				break;

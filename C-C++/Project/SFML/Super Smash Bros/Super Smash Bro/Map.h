@@ -24,6 +24,8 @@ public:
 	// Hérité via ContactListener
 	virtual void onBeginContact(b2Fixture* self, b2Fixture* other) override;
 	virtual void onEndContact(b2Fixture* self, b2Fixture* other) override;
+
+	std::string getm_name();
 	
 	sf::Vector2f stagePosition; 
 	sf::Vector2f stageSize = sf::Vector2f(10.0f, 10.0f);

@@ -63,6 +63,7 @@ public:
 	struct CharacterData
 	{
 		char name[32];
+		char mapName[64];
 		//std::vector<uint32_t> actionsState;
 		//sf::Texture texture;
 
@@ -78,6 +79,7 @@ public:
 		float lifePourcentage;
 		int nLife;
 		sf::Vector2f position;
+
 
 		bool defeat;
 	};

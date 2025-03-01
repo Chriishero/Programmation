@@ -325,3 +325,8 @@ void Map::onBeginContact(b2Fixture* self, b2Fixture* other)
 void Map::onEndContact(b2Fixture* self, b2Fixture* other)
 {
 }
+
+std::string Map::getm_name()
+{
+	return m_name;
+}

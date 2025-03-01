@@ -316,7 +316,9 @@ void Character::sendPacket(bool creation)
 	*/
 
 	strncpy_s(m_characterData.name, m_name.c_str(), sizeof(m_characterData.name) - 1);
+	strncpy_s(m_characterData.mapName, mapStr.c_str(), sizeof(m_characterData.mapName) - 1);
 	m_characterData.name[sizeof(m_characterData.name) - 1] = '\0';
+	m_characterData.mapName[sizeof(m_characterData.mapName) - 1] = '\0';
 	m_characterData.smash = actions["smash"].pressed;
 	m_characterData.tilt = actions["tilt"].pressed;
 	m_characterData.down = actions["down"].pressed;
@@ -369,43 +371,38 @@ void Character::sendPacket(bool creation)
 
 void Character::update(float deltaTime)
 {
-	if (m_dead)
-		return;
-	if(gameOver)
-	{
-		if (m_defeat)
-		{
-			if (nGameOverUpdate < 1)
-			{
-				nGameOverUpdate++;
-				position.y = -2;
-			}
-			position.x = resultPlace;
-			body->SetTransform(b2Vec2(position.x, position.y), body->GetAngle());
-			animations["loose"].update(deltaTime);
-			textureToDraw = animations["loose"].getTexture();
-		}
-		else
-		{
-			if (nGameOverUpdate < 1)
-			{
-				nGameOverUpdate++;
-				position = sf::Vector2f(0, -2);
-				body->SetTransform(b2Vec2(position.x, position.y), body->GetAngle());
-			}
-			animations["win"].update(deltaTime);
-			textureToDraw = animations["win"].getTexture();
-		}
-	}
-
 	//std::cout << "update de " << m_name << std::endl;
 	float xSpeed = runVelocity;
 	float ySpeed = jumpVelocity;
 
 	b2Vec2 velocity = body->GetLinearVelocity();
 	velocity.x = 0.0f;
-
-	else if (!damaged && !m_win && !m_defeat)
+	if(gameOver)
+	{
+		m_dead = false;
+		//std::cout << "game over : " << m_name << std::endl;
+		if (nGameOverUpdate < 1)
+		{
+			nGameOverUpdate++;
+			position.y = -2;
+			body->SetTransform(b2Vec2(position.x, position.y), body->GetAngle());
+		}
+		position.x = resultPlace;
+		body->SetTransform(b2Vec2(position.x, body->GetPosition().y), body->GetAngle());
+		if (m_defeat)
+		{
+			animations["loose"].update(deltaTime);
+			textureToDraw = animations["loose"].getTexture();
+		}
+		else
+		{
+			animations["win"].update(deltaTime);
+			textureToDraw = animations["win"].getTexture();
+		}
+	}
+	else if (m_dead)
+		return;
+	else if (!damaged)
 	{
 		if (knockback)
 		{
@@ -743,7 +740,7 @@ void Character::update(float deltaTime)
 		body->SetTransform(b2Vec2(position.x, position.y), body->GetAngle());
 
 	position = sf::Vector2f(body->GetPosition().x, body->GetPosition().y);
-	std::cout << position.y << std::endl;
+	//std::cout << position.y << std::endl;
 	previousYPosition = body->GetPosition().y;
 
 	if (position.x > camera.getm_viewSize().x / 10 || position.x < -camera.getm_viewSize().x / 10 ||
@@ -760,6 +757,7 @@ void Character::update(float deltaTime)
 		{
 			m_dead = true;
 			m_defeat = true;
+			m_win = false;
 		}
 	}
 

@@ -410,8 +410,21 @@ void restart()
 {
 	Physics::init();
 
-	characters.clear();
+	if (server != NULL) {
+		std::cout << "destroy server" << std::endl;
+		enet_host_destroy(server);
+		server = NULL;  // Pour éviter une double destruction
+	}
 
+	if (client != NULL) {
+		std::cout << "disconnect" << std::endl;
+		enet_peer_disconnect(peer, 0);
+		std::cout << "destroy client" << std::endl;
+		enet_host_destroy(client);
+		client = NULL;  // Même logique ici
+	}
+
+	characters.clear();
 	playersCharacter.clear();
 	playersAvailability.clear();
 	playersMap.clear();
@@ -727,7 +740,7 @@ void initializeServer()
 	joinServer("127.0.0.1:" + std::to_string(address.port));
 }
 
-void joinServer(std::string hostPort)
+bool joinServer(std::string hostPort)
 {
 	std::cout << "joinServer" << std::endl;
 	std::string hostStr;
@@ -789,6 +802,7 @@ void joinServer(std::string hostPort)
 		std::cout << "Connexion Succeeded" << std::endl;
 		std::cout << "Server host : " << address.host << std::endl;
 		std::cout << "Server port : " << address.port << std::endl;
+		return true;
 	}
 	else
 	{
@@ -800,5 +814,7 @@ void joinServer(std::string hostPort)
 		std::cout << "Connexion Failed" << std::endl;
 		std::cout << "Server host : " << address.host << std::endl;
 		std::cout << "Server port : " << address.port << std::endl;
+		return false;
 	}
+	return false;
 }

@@ -37,4 +37,4 @@ void renderUI(Renderer& renderer);
 void updateServer();
 void updateClient();
 void initializeServer();
-void joinServer(std::string hostPort);
+bool joinServer(std::string hostPort);

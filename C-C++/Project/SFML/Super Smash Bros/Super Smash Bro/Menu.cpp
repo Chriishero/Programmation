@@ -144,13 +144,22 @@ void Menu::multiplayer(sf::Event event)
 		else if (event.mouseButton.button == sf::Keyboard::J && !m_hostPort.empty())
 		{
 			std::cout << "join party" << std::endl;
-			joinServer(m_hostPort);
+			bool joinServerState = joinServer(m_hostPort);
 
-			m_mapUI = true;
-			m_multiplayerUI = false;
-			m_intputBox = false;
+			if(joinServerState)
+			{
+				m_mapUI = true;
+				m_multiplayerUI = false;
+				m_intputBox = false;
 
-			resetTextureToDisplay();
+				resetTextureToDisplay();
+			}
+			else
+			{
+				m_hostPort.clear();
+				m_hostText.setString("host:port");
+				m_intputBox = false;
+			}
 		}
 		else if (event.mouseButton.button == sf::Keyboard::I)
 		{
@@ -188,17 +197,13 @@ void Menu::gameResultUI(sf::Event event)
 {
 	if (event.type == sf::Event::KeyPressed)
 	{
-		if(!m_restartButton)
-		{
-			m_restartButton = true;
-			resetTextureToDisplay();
-		}
 		if (event.key.code == sf::Keyboard::Y)
 		{
 			m_gameResultUI = false;
 			m_restartButton = false;
 			m_mapUI = true;
 			gameOver = false;
+			resetTextureToDisplay();
 			restart();
 		}
 		else if (event.key.code == sf::Keyboard::N)
@@ -207,11 +212,9 @@ void Menu::gameResultUI(sf::Event event)
 			m_restartButton = false;
 			m_multiplayerUI = true;
 			gameOver = false;
-			if (server != NULL)
-				enet_host_destroy(server);
-
-			enet_peer_disconnect(peer, 0);
-			enet_host_destroy(client);
+			m_hostText.setString("host:port");
+			resetTextureToDisplay();
+			restart();
 		}
 	}
 }
@@ -222,14 +225,12 @@ void Menu::update(float deltaTime, sf::Event event, sf::Vector2f size, sf::Vecto
 	{
 		m_inGameUI = false;
 		m_gameResultUI = true;
-		gameResultUI(event);
 
-		if (m_restartButton)
-		{
-			m_texturesSize["menu/restart-button-1.png"] = sf::Vector2f(size.x * 0.5, size.y * 0.7);
-			m_texturesPosition["menu/restart-button-1.png"] = sf::Vector2f(position.x, position.y);
-			m_to_display["menu/restart-button-1.png"] = true;
-		}
+		m_texturesSize["menu/restart-button-1.png"] = sf::Vector2f(size.x * 0.20, size.y * 0.25);
+		m_texturesPosition["menu/restart-button-1.png"] = sf::Vector2f(position.x, position.y+20);
+		m_to_display["menu/restart-button-1.png"] = true;
+
+		gameResultUI(event);
 	}
 	else if (m_gameUI)
 	{
@@ -321,9 +322,10 @@ void Menu::update(float deltaTime, sf::Event event, sf::Vector2f size, sf::Vecto
 
 void Menu::draw(Renderer& renderer)
 {
-	if(menuState)
+	if(menuState || m_gameResultUI)
 	{
-		renderer.draw(titleBackground, sf::Vector2f(0.0f, 0.0f), (sf::Vector2f)titleBackground.getSize());
+		if(menuState)
+			renderer.draw(titleBackground, sf::Vector2f(0.0f, 0.0f), (sf::Vector2f)titleBackground.getSize());
 		for (auto const texture : m_texturesToDraw)
 		{
 			std::string name = texture.first;

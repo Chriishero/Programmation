@@ -2,7 +2,7 @@
 
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
-#include <box2d/b2_body.h>
+#include <box2d/box2d.h>
 #include "Animation.h"
 #include "Renderer.h"
 #include "Physics.h"

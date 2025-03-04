@@ -763,58 +763,61 @@ bool joinServer(std::string hostPort)
 			}
 		}
 	}
-	std::cout << "création var port : " << portStr << std::endl;
-	port = std::stoi(portStr);
-	std::cout << "création var host : " << hostStr << std::endl;
-	const char* host = hostStr.c_str();
-
-	std::cout << "Création du client" << std::endl;
-	client = enet_host_create(NULL /* create a client host */,
-								1 /* only allow 1 outgoing connection */,
-								2 /* allow up 2 channels to be used, 0 and 1 */,
-								0 /* assume any amount of incoming bandwidth */,
-								0 /* assume any amount of outgoing bandwidth */);
-	if (client == NULL)
+	if(!portStr.empty() && !hostStr.empty())
 	{
-		std::cerr << "An error occured while trying to create an ENet client host." << std::endl;
-	}
+		std::cout << "création var port : " << portStr << std::endl;
+		port = std::stoi(portStr);
+		std::cout << "création var host : " << hostStr << std::endl;
+		const char* host = hostStr.c_str();
 
-	std::cout << "Connexion au serveur" << std::endl;
-	if (enet_address_set_host(&address, host) != 0)
-	{
-		std::cerr << "erreur lors du set_host" << std::endl;
-	}
-	address.port = port;
+		std::cout << "Création du client" << std::endl;
+		client = enet_host_create(NULL /* create a client host */,
+			1 /* only allow 1 outgoing connection */,
+			2 /* allow up 2 channels to be used, 0 and 1 */,
+			0 /* assume any amount of incoming bandwidth */,
+			0 /* assume any amount of outgoing bandwidth */);
+		if (client == NULL)
+		{
+			std::cerr << "An error occured while trying to create an ENet client host." << std::endl;
+		}
 
-	std::cout << "initialisation de la connexion" << std::endl;
-	peer = enet_host_connect(client, &address, 2, 0);
-	enet_host_flush(client);
+		std::cout << "Connexion au serveur" << std::endl;
+		if (enet_address_set_host(&address, host) != 0)
+		{
+			std::cerr << "erreur lors du set_host" << std::endl;
+		}
+		address.port = port;
 
-	if (peer == NULL)
-	{
-		fprintf(stderr, "No available peers for initiating an ENet connection.\n");
-	}
+		std::cout << "initialisation de la connexion" << std::endl;
+		peer = enet_host_connect(client, &address, 2, 0);
+		enet_host_flush(client);
 
-	/* Wait up to 5 seconds for the connection attempt to succeed. */
-	if (enet_host_service(client, &enetEvent, 5000) > 0 &&
-		enetEvent.type == ENET_EVENT_TYPE_CONNECT)
-	{
-		std::cout << "Connexion Succeeded" << std::endl;
-		std::cout << "Server host : " << address.host << std::endl;
-		std::cout << "Server port : " << address.port << std::endl;
-		return true;
-	}
-	else
-	{
-		/* Either the 5 seconds are up or a disconnect event was */
-		/* received. Reset the peer in the event the 5 seconds   */
-		/* had run out without any significant event.            */
-		//enet_peer_reset(peer);
+		if (peer == NULL)
+		{
+			fprintf(stderr, "No available peers for initiating an ENet connection.\n");
+		}
 
-		std::cout << "Connexion Failed" << std::endl;
-		std::cout << "Server host : " << address.host << std::endl;
-		std::cout << "Server port : " << address.port << std::endl;
-		return false;
+		/* Wait up to 5 seconds for the connection attempt to succeed. */
+		if (enet_host_service(client, &enetEvent, 5000) > 0 &&
+			enetEvent.type == ENET_EVENT_TYPE_CONNECT)
+		{
+			std::cout << "Connexion Succeeded" << std::endl;
+			std::cout << "Server host : " << address.host << std::endl;
+			std::cout << "Server port : " << address.port << std::endl;
+			return true;
+		}
+		else
+		{
+			/* Either the 5 seconds are up or a disconnect event was */
+			/* received. Reset the peer in the event the 5 seconds   */
+			/* had run out without any significant event.            */
+			//enet_peer_reset(peer);
+
+			std::cout << "Connexion Failed" << std::endl;
+			std::cout << "Server host : " << address.host << std::endl;
+			std::cout << "Server port : " << address.port << std::endl;
+			return false;
+		}
 	}
 	return false;
 }

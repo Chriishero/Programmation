@@ -85,6 +85,7 @@ void Menu::mapUI(sf::Event event)
 			m_mapUI = false;
 			m_multiplayerUI = true;
 			resetTextureToDisplay();
+			restart();
 		}
 	}
 }
@@ -122,6 +123,7 @@ void Menu::characterUI(sf::Event event)
 			m_charactersUI = false;
 			m_mapUI = true;
 			resetTextureToDisplay();
+			restart();
 		}
 	}
 }

@@ -416,7 +416,7 @@ void Character::update(float deltaTime)
 			std::cout << "for (auto animation : animations)" << std::endl;
 
 			animations["damage"].update(deltaTime);
-			std::cout << "animations[daùmage].update(deltaTime);" << std::endl;
+			std::cout << "animations[damage].update(deltaTime);" << std::endl;
 			textureToDraw = animations["damage"].getTexture();
 			std::cout << "textureToDraw" << std::endl;
 
@@ -485,6 +485,10 @@ void Character::update(float deltaTime)
 
 			bool keyPress = false;
 			sf::Keyboard::Key key;
+			if (guarding < 5.0f)
+			{
+				guarding += 0.5f;
+			}
 			if (actions["smash"].pressed)
 			{
 				if (!landing)
@@ -551,8 +555,17 @@ void Character::update(float deltaTime)
 
 			else if (actions["guarding"].pressed)
 			{
-				if (!landing)
-					updateReleasedFrames("guarding");
+				if(guarding > 0)
+				{
+					if (!landing)
+						updateReleasedFrames("guarding");
+					guardingState = true;
+					guarding -= 0.05;
+				}
+				else
+				{
+					guardingState = false;
+				}
 			}
 			else
 			{
@@ -722,7 +735,7 @@ void Character::update(float deltaTime)
 		}
 	}
 
-	else if (damaged)
+	else if (damaged && !guardingState)
 	{
 		std::cout << std::string(m_name) << " : damaged + impulse" << std::endl;
 		body->ApplyLinearImpulseToCenter(b2Vec2(m_xDamageVelocity * pow(m_lifePourcentage, 2.5), m_yDamageVelocity * pow(m_lifePourcentage, 2.5)), true);

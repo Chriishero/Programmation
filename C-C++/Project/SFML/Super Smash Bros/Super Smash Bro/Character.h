@@ -138,6 +138,8 @@ private:
 
 	bool damaged = false;
 	bool knockback = false;
+	bool guardingState = false;
+	float guarding = 5.0f;
 
 	bool landing = false;
 	bool aerial = false;

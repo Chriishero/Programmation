@@ -11,6 +11,8 @@ void Map::loadAnimation()
 {
 	std::vector<sf::Texture> textures{};
 	std::cout << m_name << " : " << std::endl;
+
+
 	for (auto texture : Resources::textures)
 	{
 		std::string stardWith = "Map/" + m_name;

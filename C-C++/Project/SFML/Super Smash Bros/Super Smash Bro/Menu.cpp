@@ -13,6 +13,15 @@ void Menu::begin()
 {
 	menuState = true;
 
+	gamesPage.name = "games";
+	multiplayerPage.name = "multiplayer";
+	mapsPage.name = "maps";
+	charactersPage.name = "character";
+	restartPage.name = "restart";
+
+	Button *button;
+
+
 	for (auto const texture : Resources::textures)
 	{
 		std::string path = texture.first;

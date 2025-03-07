@@ -35,6 +35,27 @@ private:
 	std::map<std::string, sf::Vector2f> m_texturesSize{};
 	std::map<std::string, bool> m_to_display{};
 
+	struct Button {
+		std::string path;
+		sf::Texture texture;
+		sf::Vector2f position;
+		sf::Vector2f size;
+	};
+	struct MenuPage {
+		std::string name;
+		std::vector<Button> buttons{};
+		bool displayable = false;
+	};
+
+	MenuPage gamesPage;
+	MenuPage multiplayerPage;
+	MenuPage mapsPage;
+	MenuPage charactersPage;
+	MenuPage restartPage;
+
+	std::vector<MenuPage> menuPages{gamesPage, multiplayerPage, mapsPage, charactersPage, restartPage};
+
+
 	bool m_gameUI = false;
 	bool m_multiplayerUI = false;
 	bool m_intputBox = false;

@@ -21,8 +21,8 @@ class Softmax:
         predicted_probability = self.softmax(X, theta)
         true_probability = predicted_probability[range(m), y]
 
-        epsilon = 1e-10
-        return -np.sum(np.log(true_probability + epsilon )) / m  # Moyenne de l'entropie croisée
+        epsilon = 1e-15
+        return -np.sum(np.log(true_probability + epsilon)) / m  # Moyenne de l'entropie croisée
 
     def gradient(self, X, y, theta):
         m = len(y)
@@ -39,7 +39,7 @@ class Softmax:
 
         for i in range(self.n_iteration):
             gradient = self.gradient(X, y, self.theta)
-            self.theta -= self.learning_rate * gradient
+            self.theta  = self.theta - self.learning_rate * gradient
             cost_history[i] = self.cross_entropy(X, y, self.theta)
 
         return cost_history

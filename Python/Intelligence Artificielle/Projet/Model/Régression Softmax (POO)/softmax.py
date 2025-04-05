@@ -45,8 +45,8 @@ class Softmax:
         return cost_history
 
     def fit(self, X, y):
-        y = np.array(y)
         X = np.array(X)
+        y = np.array(y)
         self.gradient_descent(X, y)
 
     def predict(self, X):

@@ -7,7 +7,7 @@ X = np.hstack((x, np.ones((x.shape[0], 1))))
 y = y.reshape((y.shape[0], 1))
 
 class LogisticRegression:
-    def __init__(self, n_iteration=100, learning_rate=0.1, method="gradien descent"):
+    def __init__(self, n_iteration=100, learning_rate=0.1, method="gradient descent"):
         self.n_iteration = n_iteration
         self.learning_rate = learning_rate
         self.method = method

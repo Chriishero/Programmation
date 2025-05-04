@@ -38,7 +38,7 @@ class DecisionTree:
         m, n = X.shape
         best_gain = float("-inf")
         best_split = None
-
+        
         for feature_index in range(n):
             thresholds = np.unique(X[:, feature_index])
             for threshold in thresholds:
@@ -46,9 +46,9 @@ class DecisionTree:
                 right_mask = ~left_mask
                 y_left, y_right = y[left_mask], y[right_mask]
 
-                if len(y_left) < self.min_sample_leaf or len(y_right) < self.min_sample_leaf:
+                if len(y) < self.min_sample_leaf or len(y) < self.min_sample_leaf:
                     continue
-                if len(y_left) < self.min_sample_split or len(y_right) < self.min_sample_split:
+                if len(y) < self.min_sample_split or len(y) < self.min_sample_split:
                     continue
 
                 gain = self._gain_function(y, y_left, y_right)
@@ -57,11 +57,34 @@ class DecisionTree:
                     best_split = (feature_index, threshold)
 
         return best_split
-    
+     
     def _build_tree(self, X, y, depth=0):
         if len(set(y)) == 1:
             return TreeNode(value=y[0])
-    
+        
+        if self.max_depth is not None and depth >= self.max_depth:
+            majority_class = np.bincount(y).argmax(y)
+            return TreeNode(value=majority_class)
+        
+        best_split = self._best_split(X, y)
+
+        if best_split is None:
+            majority_class = np.bincount(y).argmax(y)
+            return TreeNode(value=majority_class)
+        
+        feature, threshold = best_split
+        left_mask = X[:, feature] < threshold
+        right_mask = ~left_mask
+
+        if len(y[left_mask]) == 0 or len(y[right_mask]) == 0:
+            majority_class = np.bincount(y).argmax(y)
+            return TreeNode(value=majority_class)
+        
+        left_tree = self._build_tree(X[left_mask], y[left_mask], depth+1)
+        right_tree = self._build_tree(X[right_mask], y[right_mask], depth+1)
+
+        return TreeNode(feature_index=feature, threshold=threshold, left=left_tree, right=right_tree)
+
 model = DecisionTree()
 model.fit(X, y)
 y_pred = model.predict(X)

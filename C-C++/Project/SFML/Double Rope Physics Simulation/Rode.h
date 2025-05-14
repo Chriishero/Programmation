@@ -5,7 +5,7 @@
 class Rode
 {
 public:
-	Rode(sf::Vector2f size, sf::Vector2f position, sf::Vector2f velocity, float weight);
+	Rode(sf::Vector2f size, sf::Vector2f position, float angle, sf::Vector2f velocity, float weight);
 
 	void motion();
 	void update(float deltaTime);
@@ -29,6 +29,7 @@ private:
 
 	sf::Vector2f m_size;
 	sf::Vector2f m_position;
+	float m_angle;
 	sf::Vector2f m_velocity;
 	sf::Vector2f m_massSize;
 	sf::Vector2f m_massPosition;

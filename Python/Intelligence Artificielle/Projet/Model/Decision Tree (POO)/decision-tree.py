@@ -85,7 +85,7 @@ class DecisionTree:
         feature, threshold = best_split  # Meilleur split trouvé
 
         # Split binaire
-        left_idx = X[:, feature] <= threshold
+        left_idx = X[:, feature] < threshold
         right_idx = ~left_idx
 
         # Vérification si les sous-ensembles gauche ou droit sont vides
@@ -102,7 +102,7 @@ class DecisionTree:
     def _predict_sample(self, x, tree):
         if tree.value is not None:  # Si c'est une feuille
             return tree.value
-        if x[tree.feature_index] <= tree.threshold:  # Si l'échantillon va à gauche
+        if x[tree.feature_index] < tree.threshold:  # Si l'échantillon va à gauche
             return self._predict_sample(x, tree.left)
         else:  # Sinon, il va à droite
             return self._predict_sample(x, tree.right)

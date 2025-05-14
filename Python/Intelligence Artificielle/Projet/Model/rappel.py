@@ -1,93 +1,80 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import make_classification
-from sklearn.metrics import accuracy_score, r2_score
+from sklearn.metrics import accuracy_score
 
-X, y = make_classification(n_samples=500, n_features=10, n_informative=8, n_classes=4, random_state=0)
+X, y = make_classification(n_samples=500, n_features=10, n_informative=2, n_classes=2, random_state=0)
+y = y * 2 - 1
 
-class TreeNode:
-    def __init__(self, feature_index=None, threshold=None, left=None, right=None, value=None):
-        self.feature_index = feature_index
-        self.threshold = threshold
-        self.left = left
-        self.right = right
-        self.value = value
+class SVM:
+    def __init__(self, n_iteration=25, kernel='RBF', regularization=1, gamma=0.5, polynomial_constant=1, polynom_degree=2):
+        self.n_iteration = n_iteration
+        self.kernel = kernel
+        self.C = regularization
+        self.gamma = gamma
+        self.polynomial_constant = polynomial_constant
+        self.polynom_degree = polynom_degree
+        self.X_train = None
+        self.y_train = None
+        self.K, self.alpha = None, None
+        self.b = 0
+        self.cost_history = np.zeros(n_iteration)
 
-class DecisionTree:
-    def __init__(self, max_depth=None, min_sample_leaf=10, min_sample_split=5):
-        self.max_depth = max_depth
-        self.min_sample_leaf = min_sample_leaf
-        self.min_sample_split = min_sample_split
-        self.tree = None
-
-    def _entropy(self, y):
-        m = len(y)
-        _, counts = np.unique(y, return_counts=True)
-        probabilities = 1/m * counts
-        return np.sum(probabilities * np.log2(probabilities + 1e-15))
+    def kernel_function(self, X, Z):
+        if self.kernel == "linear":
+            return X.T @ Z
+        if self.kernel == "polynomial":
+            return (X.T @ Z + self.polynomial_constant)**self.polynom_degree
+        if self.kernel == "RBF":
+            return np.exp(-self.gamma * np.linalg.norm(X[:, np.newaxis, :] - Z, axis=2)**2)
+        
+    def dual_objective_function(self, y):
+        return np.sum(self.alpha) - 1/2 * self.alpha @ ((np.outer(y, y) * self.K) @ self.alpha)
     
-    def _gain_function(self, y, y_left, y_right):
-        m = len(y)
-        entropy_left = self._entropy(y_left)
-        entropy_right = self._entropy(y_right)
-        entropy_set = self._entropy(y)
-
-        return entropy_set - (len(y_left) / m * entropy_left + len(y_right) / m * entropy_right)
-    
-    def _best_split(self, X, y):
+    def sequential_minimal_optimization(self, X, y):
         m, n = X.shape
-        best_gain = float("-inf")
-        best_split = None
-        
-        for feature_index in range(n):
-            thresholds = np.unique(X[:, feature_index])
-            for threshold in thresholds:
-                left_mask = X[:, feature_index] < threshold
-                right_mask = ~left_mask
-                y_left, y_right = y[left_mask], y[right_mask]
+        self.alpha = np.zeros(m)
+        for iteration in range(self.n_iteration):
+            for i in range(m):
+                j = np.random.choice([k for k in range(m) if k != i])
 
-                if len(y) < self.min_sample_leaf or len(y) < self.min_sample_leaf:
-                    continue
-                if len(y) < self.min_sample_split or len(y) < self.min_sample_split:
-                    continue
+                old_alpha_i = self.alpha[i]
+                old_alpha_j = self.alpha[j]
 
-                gain = self._gain_function(y, y_left, y_right)
-                if gain > best_gain:
-                    best_gain = gain
-                    best_split = (feature_index, threshold)
+                zeta = old_alpha_i * y[i] + old_alpha_j * y[j]
+                self.alpha[j] = (1 - y[i] * self.K[i, j] * zeta) / (self.K[j, j] - self.K[i, j])
+                self.alpha[j] = np.clip(self.alpha[j], 0, self.C)
 
-        return best_split
-     
-    def _build_tree(self, X, y, depth=0):
-        if len(set(y)) == 1:
-            return TreeNode(value=y[0])
-        
-        if self.max_depth is not None and depth >= self.max_depth:
-            majority_class = np.bincount(y).argmax(y)
-            return TreeNode(value=majority_class)
-        
-        best_split = self._best_split(X, y)
+                self.alpha[i] = old_alpha_i + y[i] * y[j] * (old_alpha_j - self.alpha[j])
+                self.alpha[i] = np.clip(self.alpha[i], 0, self.C)
 
-        if best_split is None:
-            majority_class = np.bincount(y).argmax(y)
-            return TreeNode(value=majority_class)
-        
-        feature, threshold = best_split
-        left_mask = X[:, feature] < threshold
-        right_mask = ~left_mask
+                E_i = np.sum(self.alpha[i] * y.ravel() * self.K[i, :]) + self.b - y[i]
+                E_j = np.sum(self.alpha[j] * y.ravel() * self.K[j, :]) + self.b - y[j]
+                b1 = self.b - E_i - y[i] * (self.alpha[i] - old_alpha_i) * self.K[i, j] - y[j] * (self.alpha[j] - old_alpha_j) * self.K[i, j]
+                b2 = self.b - E_j - y[j] * (self.alpha[i] - old_alpha_i) * self.K[i, j] - y[j] * (self.alpha[j] - old_alpha_j) * self.K[j, j]
+                self.b = (b1 + b2) / 2
 
-        if len(y[left_mask]) == 0 or len(y[right_mask]) == 0:
-            majority_class = np.bincount(y).argmax(y)
-            return TreeNode(value=majority_class)
-        
-        left_tree = self._build_tree(X[left_mask], y[left_mask], depth+1)
-        right_tree = self._build_tree(X[right_mask], y[right_mask], depth+1)
+            self.cost_history[iteration] = self.dual_objective_function(y)
 
-        return TreeNode(feature_index=feature, threshold=threshold, left=left_tree, right=right_tree)
+    def fit(self, X, y):
+        self.X_train = X = np.array(X)
+        self.y_train = y =  np.array(y)
+        self.K = self.kernel_function(X, X)
+        self.sequential_minimal_optimization(X, y)
 
-model = DecisionTree()
+    def predict(self, X):
+        X = np.array(X)
+        K = self.kernel_function(X, self.X_train)
+        return np.sign(np.sum(self.alpha * self.y_train * K, axis=1) + self.b)
+    
+model = SVM()
 model.fit(X, y)
 y_pred = model.predict(X)
+
+from sklearn.metrics import accuracy_score
+
+plt.figure()
+plt.plot(range(model.n_iteration), model.cost_history)
 
 plt.figure()
 plt.scatter(X[:, 0], y)

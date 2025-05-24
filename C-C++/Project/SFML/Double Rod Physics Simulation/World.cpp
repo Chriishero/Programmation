@@ -20,8 +20,15 @@ void World::create()
 
 void World::update(float deltaTime)
 {
-	for (auto rod : m_vecRod) {
-		rod->update(deltaTime);
+	for (int i = 0; i < m_vecRod.size(); i++) {
+		if (i > 0) {
+			auto prevRod = m_vecRod[i - 1];
+			sf::Vector2f prevMassPosition(prevRod->getm_massPosition().x - prevRod->getm_massOrigin().x + prevRod->getm_size().x,
+										  prevRod->getm_massPosition().y - prevRod->getm_massOrigin().y + prevRod->getm_size().x);
+			m_vecRod[i]->setm_jointPosition(prevMassPosition);
+			m_vecRod[i]->setm_angle(m_vecRod[i]->getm_angle() + 5.0f);
+		}
+		m_vecRod[i]->update(deltaTime);
 	}
 }
 

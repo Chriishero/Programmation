@@ -14,12 +14,15 @@ public:
 	sf::Vector2f getm_position();
 	sf::Vector2f getm_size();
 	sf::Vector2f getm_massPosition();
+	sf::Vector2f getm_massOrigin();
 	sf::Vector2f getm_massSize();
+	float getm_angle();
 
 	void setm_position(sf::Vector2f position);
 	void setm_massPosition(sf::Vector2f position);
 	void setm_jointOrigin(sf::Vector2f origin);
 	void setm_jointPosition(sf::Vector2f position);
+	void setm_angle(float angle);
 
 private:
 	sf::RenderTexture m_renderJointToDraw{};

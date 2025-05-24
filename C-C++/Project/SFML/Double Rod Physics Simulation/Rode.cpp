@@ -19,6 +19,7 @@ Rode::Rode(sf::Vector2f size, sf::Vector2f position, float angle, sf::Vector2f v
 
     // Joint
     setCircleToDraw(m_jointShape, m_renderJointToDraw, m_jointToDraw);
+    m_jointPosition = sf::Vector2f(m_position.x, m_position.y - m_size.y / 2.0f);
 
     // Rod
     m_rodeShape.setSize(size);
@@ -39,23 +40,20 @@ Rode::Rode(sf::Vector2f size, sf::Vector2f position, float angle, sf::Vector2f v
     //m_massPosition = sf::Vector2f(m_size.y * sin(m_angle), -m_size.y * cos(m_angle));
 }
 
-
-
 void Rode::motion()
 {
 }
 
 void Rode::update(float deltaTime)
 {
-    m_massOrigin = sf::Vector2f(-m_position.x + m_jointShape.getRadius() * 0.75f, -m_position.y + m_size.y / 2.0f + m_jointShape.getRadius() * 0.75f);
-    m_angle += 10.0f;
+    m_massOrigin = sf::Vector2f(-m_jointPosition.x + m_jointShape.getRadius() * 0.75f, -m_jointPosition.y + m_jointShape.getRadius() * 0.75f);
+    m_angle += 5.0f;
     m_massPosition = sf::Vector2f(-m_size.y * sin(m_angle * (3.14f / 180)),m_size.y * cos(m_angle * (3.14f / 180)));
 }
 
 void Rode::draw(Renderer& renderer) {
-    std::cout << m_angle << std::endl;
-    renderer.draw(m_jointToDraw, sf::Vector2f(m_position.x, m_position.y - m_size.y / 2.0f), sf::Vector2f(m_jointShape.getRadius() * 1.5f, m_jointShape.getRadius() * 1.5f));
-    renderer.draw(m_rodToDraw, sf::Vector2f(m_position.x, m_position.y - m_size.y / 2.0f), (sf::Vector2f)m_rodToDraw.getSize(), m_rodOrigin, m_angle);
+    renderer.draw(m_jointToDraw, m_jointPosition, sf::Vector2f(m_jointShape.getRadius() * 1.5f, m_jointShape.getRadius() * 1.5f));
+    renderer.draw(m_rodToDraw, m_jointPosition, (sf::Vector2f)m_rodToDraw.getSize(), m_rodOrigin, m_angle);
     renderer.draw(m_MassToDraw, m_massPosition, sf::Vector2f(m_size.x * 2, m_size.x * 2), m_massOrigin);
 }
 
@@ -73,9 +71,19 @@ sf::Vector2f Rode::getm_massPosition()
     return m_massPosition;
 }
 
+sf::Vector2f Rode::getm_massOrigin()
+{
+    return m_massOrigin;
+}
+
 sf::Vector2f Rode::getm_massSize()
 {
     return m_massSize;
+}
+
+float Rode::getm_angle()
+{
+    return m_angle;
 }
 
 void Rode::setm_position(sf::Vector2f position)
@@ -96,4 +104,9 @@ void Rode::setm_jointOrigin(sf::Vector2f origin)
 void Rode::setm_jointPosition(sf::Vector2f position)
 {
     m_jointPosition = position;
+}
+
+void Rode::setm_angle(float angle)
+{
+    m_angle = angle;
 }

@@ -22,12 +22,12 @@ int main()
             if (event.type == sf::Event::Closed) {
                 window.close();
             }
-            window.clear(sf::Color::Black);
-            
-            world.render(renderer);
-            world.update(deltaTime);
-
-            window.display();
         }
+        window.clear(sf::Color::Black);
+
+        world.render(renderer);
+        world.update(deltaTime);
+
+        window.display();
     }
 }

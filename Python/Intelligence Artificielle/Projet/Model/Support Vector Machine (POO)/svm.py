@@ -63,7 +63,7 @@ class SVM:
                 # Mise à jour du biais b
                 E_i = np.sum(self.alpha * y.ravel() * self.K[i, :]) + self.b - y[i]
                 E_j = np.sum(self.alpha * y.ravel() * self.K[j, :]) + self.b - y[j]
-                b1 = self.b - E_i - y[i] * (self.alpha[i] - alpha_old_i) * self.K[i, i] - y[j] * (self.alpha[j] - alpha_old_j) * self.K[i, j]
+                b1 = self.b - E_i - y[i] * (self.alpha[i] - alpha_old_i) * self.K[i, j] - y[j] * (self.alpha[j] - alpha_old_j) * self.K[i, j]
                 b2 = self.b - E_j - y[i] * (self.alpha[i] - alpha_old_i) * self.K[i, j] - y[j] * (self.alpha[j] - alpha_old_j) * self.K[j, j]
                 
                 # Calcul final du biais b

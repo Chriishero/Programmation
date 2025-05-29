@@ -1,83 +1,92 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.datasets import make_classification
-from sklearn.metrics import accuracy_score
+from sklearn.datasets import make_regression
+from sklearn.metrics import r2_score
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeRegressor
 
-X, y = make_classification(n_samples=500, n_features=10, n_informative=2, n_classes=2, random_state=0)
-y = y * 2 - 1
+X, y = make_regression(n_samples=500, n_features=10, noise=10, random_state=0)
 
-class SVM:
-    def __init__(self, n_iteration=25, kernel='RBF', regularization=1, gamma=0.5, polynomial_constant=1, polynom_degree=2):
+class GradientBoostingRegressor:
+    def __init__(self, n_iteration=200, learning_rate=0.1, loss='squared_error', subsample=0.6, early_stopping_rounds=10, validation_fraction=0.1):
         self.n_iteration = n_iteration
-        self.kernel = kernel
-        self.C = regularization
-        self.gamma = gamma
-        self.polynomial_constant = polynomial_constant
-        self.polynom_degree = polynom_degree
-        self.X_train = None
-        self.y_train = None
-        self.K, self.alpha = None, None
-        self.b = 0
-        self.cost_history = np.zeros(n_iteration)
+        self.learning_rate = learning_rate
+        self.loss = loss
+        self.subsample = subsample
+        self.early_stopping_rounds = early_stopping_rounds
+        self.validation_fraction = validation_fraction
 
-    def kernel_function(self, X, Z):
-        if self.kernel == "linear":
-            return X.T @ Z
-        if self.kernel == "polynomial":
-            return (X.T @ Z + self.polynomial_constant)**self.polynom_degree
-        if self.kernel == "RBF":
-            return np.exp(-self.gamma * np.linalg.norm(X[:, np.newaxis, :] - Z, axis=2)**2)
-        
-    def dual_objective_function(self, y):
-        return np.sum(self.alpha) - 1/2 * self.alpha @ ((np.outer(y, y) * self.K) @ self.alpha)
-    
-    def sequential_minimal_optimization(self, X, y):
+        self.initial_prediction = None
+        self.model_list = []
+
+    def _gradient(self, y, y_pred):
+        if self.loss == "squared_error":
+            return (y - y_pred)
+
+    def _subsamble(self, X, gradient):
         m, n = X.shape
-        self.alpha = np.zeros(m)
-        for iteration in range(self.n_iteration):
-            for i in range(m):
-                j = np.random.choice([k for k in range(m) if k != i])
+        random_index = np.random.choice(len(X), int(m * self.subsample), replace=True)
+        return X[random_index], gradient[random_index]
 
-                old_alpha_i = self.alpha[i]
-                old_alpha_j = self.alpha[j]
+    def _gradient_descent(self, X, y):
+        if self.validation_fraction and self.early_stopping_rounds:
+            X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=self.validation_fraction, random_state=0)
+        else:
+            X_train, y_train = X, y
+            X_val = y_val = None
 
-                zeta = old_alpha_i * y[i] + old_alpha_j * y[j]
-                self.alpha[j] = (1 - y[i] * self.K[i, j] * zeta) / (self.K[j, j] - self.K[i, j])
-                self.alpha[j] = np.clip(self.alpha[j], 0, self.C)
+        m, n = X_train.shape
+        self.initial_prediction = 1/m * np.sum(y_train)
+        y_pred = np.full(m, self.initial_prediction)
+        gradient = self._gradient(y_train, y_pred)
 
-                self.alpha[i] = old_alpha_i + y[i] * y[j] * (old_alpha_j - self.alpha[j])
-                self.alpha[i] = np.clip(self.alpha[i], 0, self.C)
+        if X_val is not None:
+            y_val_pred = np.full(X_val.shape[0], self.initial_prediction)
+            best_val_score = float("-inf")
+            best_iteration = 0
 
-                E_i = np.sum(self.alpha[i] * y.ravel() * self.K[i, :]) + self.b - y[i]
-                E_j = np.sum(self.alpha[j] * y.ravel() * self.K[j, :]) + self.b - y[j]
-                b1 = self.b - E_i - y[i] * (self.alpha[i] - old_alpha_i) * self.K[i, j] - y[j] * (self.alpha[j] - old_alpha_j) * self.K[i, j]
-                b2 = self.b - E_j - y[j] * (self.alpha[i] - old_alpha_i) * self.K[i, j] - y[j] * (self.alpha[j] - old_alpha_j) * self.K[j, j]
-                self.b = (b1 + b2) / 2
+        for i in range(self.n_iteration):
+            if self.subsample < 1.0:
+                X_sub, gradient_sub = self._subsamble(X_train, gradient)
+            else:
+                X_sub, gradient_sub = X_train, gradient
 
-            self.cost_history[iteration] = self.dual_objective_function(y)
+            model = DecisionTreeRegressor(max_depth=3)
+            model.fit(X_sub, gradient_sub)
+            self.model_list.append(model)
 
+            y_pred += self.learning_rate * model.predict(X_train)
+            gradient = self._gradient(y_train, y_pred)
+
+            if X_val is not None:
+                y_val_pred = model.predict(X_val)
+                score = r2_score(y_val, y_val_pred)
+
+                if score > best_val_score:
+                    best_val_score = score
+                    best_iteration = i
+                elif i - best_iteration >= self.early_stopping_rounds:
+                    print(f"Early stopping at iteration {i}")
+                    
     def fit(self, X, y):
-        self.X_train = X = np.array(X)
-        self.y_train = y =  np.array(y)
-        self.K = self.kernel_function(X, X)
-        self.sequential_minimal_optimization(X, y)
+        X = np.array(X)
+        y = np.array(y)
+
+        self._gradient_descent(X, y)
 
     def predict(self, X):
         X = np.array(X)
-        K = self.kernel_function(X, self.X_train)
-        return np.sign(np.sum(self.alpha * self.y_train * K, axis=1) + self.b)
-    
-model = SVM()
+        y_pred = np.full(X.shape[0], self.initial_prediction)
+        for model in self.model_list:
+            y_pred += self.learning_rate * model.predict(X)
+        return y_pred
+
+model = GradientBoostingRegressor()
 model.fit(X, y)
 y_pred = model.predict(X)
-
-from sklearn.metrics import accuracy_score
-
-plt.figure()
-plt.plot(range(model.n_iteration), model.cost_history)
 
 plt.figure()
 plt.scatter(X[:, 0], y)
 plt.plot(X[:, 0], y_pred, c='r')
-plt.title(f"{accuracy_score(y, y_pred)}")
+plt.title(f'{r2_score(y, y_pred)}')
 plt.show()

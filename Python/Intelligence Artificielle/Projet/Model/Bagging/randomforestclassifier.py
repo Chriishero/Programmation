@@ -14,7 +14,7 @@ class TreeNode:
         self.right = right                  # sous-arbre droit (xj >= theta)
         self.value = value                  # prédiction w_j si feuille
 
-class DecisionTree:
+class DecisionTreeClassifier:
     def __init__(self, max_features="sqrt", max_depth=None, min_samples_leaf=10, min_samples_split=5, verbosity=0):
         self.max_features = max_features
         self.max_depth = max_depth
@@ -143,9 +143,9 @@ class DecisionTree:
         X = np.array(X)
         return np.array([self._predict_sample(x, self.tree) for x in X])
 
-class RandomForest:
+class RandomForestClassifier:
     def __init__(self, n_estimators=10, max_features="sqrt", max_depth=None, min_samples_leaf=10, min_samples_split=5, verbosity=0):
-        self.model = DecisionTree(max_features, max_depth, min_samples_leaf, min_samples_split, verbosity)
+        self.model = DecisionTreeClassifier(max_features, max_depth, min_samples_leaf, min_samples_split, verbosity)
         self.n_estimators = n_estimators
         self.verbosity = verbosity
         self.model_list = []
@@ -182,7 +182,7 @@ class RandomForest:
 
         return np.array(majority_votes)
 
-model = RandomForest(n_estimators=100)
+model = RandomForestClassifier(n_estimators=100)
 model.fit(X, y)
 y_pred = model.predict(X)
 

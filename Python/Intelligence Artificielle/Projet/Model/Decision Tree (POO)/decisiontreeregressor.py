@@ -1,10 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.datasets import make_classification
-from sklearn.metrics import accuracy_score
+from sklearn.datasets import make_regression
+from sklearn.metrics import r2_score
 
 # Générer un dataset avec plusieurs classes
-X, y = make_classification(n_features=10, n_samples=500, n_informative=2, n_clusters_per_class=1, n_classes=4, random_state=0)
+X, y = make_regression(n_features=10, n_samples=500, noise=30, random_state=0)
 
 class TreeNode:
     def __init__(self, feature_index=None, threshold=None, left=None, right=None, value=None):
@@ -14,26 +14,25 @@ class TreeNode:
         self.right = right                  # sous-arbre droit (xj >= theta)
         self.value = value                  # prédiction w_j si feuille
 
-class DecisionTree:
+class DecisionTreeRegressor:
     def __init__(self, max_depth=None, min_samples_split=2, min_samples_leaf=1):
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
         self.tree = None # racine de l'arbre
 
-    def _entropy(self, y):
+    def _mean_squared_error(self, y):
         m = len(y)
-        _, counts = np.unique(y, return_counts=True)  # Comptage des occurrences pour chaque classe
-        probabilities = 1/m * counts  # Probabilités de chaque classe
-        return -np.sum(probabilities * np.log2(probabilities + 1e-15))  # Entropie
+        mean = 1/m * np.sum(y)
+        return 1/m * np.sum((y - mean)**2)
     
     def _gain_function(self, y, left_y, right_y):
         m = len(y)
-        entropy_left = self._entropy(left_y) # C(L)
-        entropy_right = self._entropy(right_y) # C(R)
-        entropy_set = self._entropy(y) # C(S)
+        loss_left = self._mean_squared_error(left_y) # C(L)
+        loss_right = self._mean_squared_error(right_y) # C(R)
+        loss_set = self._mean_squared_error(y) # C(S)
         
-        return entropy_set - (len(left_y) / m * entropy_left + len(right_y) / m * entropy_right)
+        return loss_set - (len(left_y) / m * loss_left + len(right_y) / m * loss_right)
         # G(j, theta) : C(S) - (|L| / |S| * C(L) + |R| / |S| * C(R))
 
     def _best_split(self, X, y):
@@ -66,21 +65,18 @@ class DecisionTree:
         return best_split
 
     def _build_tree(self, X, y, depth=0):
-        # Si tous les exemples ont la même classe
-        if len(set(y)) == 1:
-            return TreeNode(value=y[0])
+        def _mean():
+            return TreeNode(value=1/len(y) * np.sum(y))
 
         # Si la profondeur maximale est atteinte
         if self.max_depth is not None and depth >= self.max_depth:
-            majority_class = np.bincount(y).argmax()  # Classe majoritaire
-            return TreeNode(value=majority_class)
+            return _mean()
 
         best_split = self._best_split(X, y)
         
         # Si aucun split n'a été trouvé, on retourne une feuille avec la classe majoritaire
         if best_split is None:
-            majority_class = np.bincount(y).argmax()  # Classe majoritaire
-            return TreeNode(value=majority_class)
+            return _mean()
 
         feature, threshold = best_split  # Meilleur split trouvé
 
@@ -90,8 +86,7 @@ class DecisionTree:
 
         # Vérification si les sous-ensembles gauche ou droit sont vides
         if len(y[left_idx]) == 0 or len(y[right_idx]) == 0:
-            majority_class = np.bincount(y).argmax()  # Classe majoritaire
-            return TreeNode(value=majority_class)
+            return _mean()
 
         # Construction des sous-arbres
         left_tree = self._build_tree(X[left_idx], y[left_idx], depth + 1)
@@ -117,7 +112,7 @@ class DecisionTree:
         X = np.array(X)
         return np.array([self._predict_sample(x, self.tree) for x in X])
 
-model = DecisionTree(max_depth=5, min_samples_split=5, min_samples_leaf=10)
+model = DecisionTreeRegressor(max_depth=5, min_samples_split=5, min_samples_leaf=10)
 model.fit(X, y)
 
 y_pred = model.predict(X)
@@ -125,6 +120,6 @@ y_pred = model.predict(X)
 plt.figure()
 plt.scatter(X[:, 0], y)
 plt.plot(X[:, 0], y_pred, c="r")
-plt.title(f"Accuracy : {accuracy_score(y, y_pred)}")
+plt.title(f"Accuracy : {r2_score(y, y_pred)}")
 plt.legend()
 plt.show()

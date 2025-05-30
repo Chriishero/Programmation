@@ -18,6 +18,8 @@ public:
 	sf::Vector2f getm_massOrigin();
 	sf::Vector2f getm_massSize();
 	float getm_angle();
+	float getm_angularVelocity();
+	float getm_angularAcceleration();
 	float getm_weight();
 
 	void setm_position(sf::Vector2f position);
@@ -45,8 +47,8 @@ private:
 	sf::Vector2f m_size;
 	sf::Vector2f m_position;
 	float m_angle;
-	float m_angularVelocity = 0.0f;
-	float m_angularAcceleration = 0.0f;
+	float m_angularVelocity = 1.0f;
+	float m_angularAcceleration = 1.0f;
 
 	sf::Vector2f m_jointPosition;
 	sf::Vector2f m_jointOrigin;

@@ -1,9 +1,15 @@
 #include "Rode.h"
 #include <iostream>
+#include <cmath>
+
+#ifndef M_PI
+    #define M_PI 3.14159265358979323846
+#endif
 
 Rode::Rode(sf::Vector2f size, sf::Vector2f position, float angle, sf::Vector2f velocity, float weight)
     : m_size(size), m_position(position), m_angle(angle), m_velocity(velocity), m_weight(weight)
 {
+    m_angle = m_angle * (M_PI / 180.0f);
     auto setCircleToDraw = [&](sf::CircleShape& shape, sf::RenderTexture& render, sf::Texture& texture) {
         shape.setRadius(size.x);
         shape.setFillColor(sf::Color::White);
@@ -45,20 +51,24 @@ void Rode::motion()
 	m_kineticEnergy = 0.5f * m_weight * (m_velocity.x * m_velocity.x + m_velocity.y * m_velocity.y);
     m_potentialEnergy = m_weight * 9.81f * float(m_velocity.y);
     m_energy = m_kineticEnergy + m_potentialEnergy;
+    m_angularVelocity += m_angularAcceleration;
+    m_angle = m_angle * (180.0f / M_PI);
+    m_angle += sqrt(m_velocity.y * m_velocity.y + m_velocity.x * m_velocity.x) / m_size.y;
+    m_angle = m_angle * (M_PI / 180.0f);
+    //m_angle += m_angularVelocity;
+    std::cout << "velocity : " << m_angularVelocity << std::endl;
 }
 
 void Rode::update(float deltaTime)
 {
     motion();
     m_massOrigin = sf::Vector2f(-m_jointPosition.x + m_jointShape.getRadius() * 0.75f, -m_jointPosition.y + m_jointShape.getRadius() * 0.75f);
-    m_angle += sqrt(m_velocity.y * m_velocity.y + m_velocity.x * m_velocity.x) / m_size.y;
-	std::cout << "Velocity : " << m_velocity.x << " " << m_velocity.y << std::endl;
-    m_massPosition = sf::Vector2f(-m_size.y * sin(m_angle * (3.14f / 180)),m_size.y * cos(m_angle * (3.14f / 180)));
+    m_massPosition = sf::Vector2f(-m_size.y * sin(m_angle),m_size.y * cos(m_angle));
 }
 
 void Rode::draw(Renderer& renderer) {
     renderer.draw(m_jointToDraw, m_jointPosition, sf::Vector2f(m_jointShape.getRadius() * 1.5f, m_jointShape.getRadius() * 1.5f));
-    renderer.draw(m_rodToDraw, m_jointPosition, (sf::Vector2f)m_rodToDraw.getSize(), m_rodOrigin, m_angle);
+    renderer.draw(m_rodToDraw, m_jointPosition, (sf::Vector2f)m_rodToDraw.getSize(), m_rodOrigin, m_angle * (180.0f / M_PI));
     renderer.draw(m_MassToDraw, m_massPosition, sf::Vector2f(m_size.x * 2, m_size.x * 2), m_massOrigin);
 }
 
@@ -94,6 +104,16 @@ sf::Vector2f Rode::getm_massSize()
 float Rode::getm_angle()
 {
     return m_angle;
+}
+
+float Rode::getm_angularVelocity()
+{
+    return m_angularVelocity;
+}
+
+float Rode::getm_angularAcceleration()
+{
+    return m_angularAcceleration;
 }
 
 float Rode::getm_weight()

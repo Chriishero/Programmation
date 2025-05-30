@@ -1,5 +1,6 @@
 #include "World.h"
 #include <iostream>
+#include <cmath>
 
 World::World(int nRod, float gravity) : m_nRod(nRod), m_gravity(gravity)
 {
@@ -22,10 +23,23 @@ void World::create()
 void World::motion() {
 	float theta1 = m_vecRod[0]->getm_angle();
 	float theta2 = m_vecRod[1]->getm_angle();
+	float dtheta1 = m_vecRod[0]->getm_angularVelocity();
+	float dtheta2 = m_vecRod[1]->getm_angularVelocity();
 	float m1 = m_vecRod[0]->getm_weight();
 	float m2 = m_vecRod[1]->getm_weight();
 	float l1 = m_vecRod[0]->getm_size().y;
 	float l2 = m_vecRod[1]->getm_size().y;
+
+	float ddtheta1 = ((-m2 * dtheta1 * l1 * dtheta2 * sin(theta1 - theta2) - (m1 + m2) * m_gravity * l1 * sin(theta1))
+		- m2 * l1 * l2 * dtheta1 * l1 * dtheta2 * sin(theta1 - theta2) -
+		(m2 * l1 * l2) * (m2 * l1 * l2) * dtheta1 * sin(theta1 - theta2) * (dtheta1 - dtheta2) +
+		(m2 * l1 * l2) * m2 * m_gravity * sin(theta2)) /
+		((m1 + m2) * l1 * l1) - (m2 * l1 * l2) * (m2 * l1 * l2) * cos(theta1 - theta2);
+	m_vecRod[0]->setm_angularAcceleration(ddtheta1);
+
+	float ddtheta2 = dtheta1 * l1 * dtheta2 * sin(theta1 - theta2) - m2 * m_gravity * l2 * sin(theta2) -
+		m2 * l1 * l2 * (ddtheta1 * cos(theta1 - theta2) + dtheta1 * sin(theta1 - theta2) * (dtheta1 - dtheta2));
+	m_vecRod[1]->setm_angularAcceleration(ddtheta2);
 }
 
 void World::update(float deltaTime)

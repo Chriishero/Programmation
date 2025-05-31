@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split
 X, y = make_regression(n_samples=500, n_features=10, noise=10, random_state=0)
 
 class GradientBoostingRegressor:
-    def __init__(self, n_iterations=200, learning_rate=0.1, loss='squared_error', subsample=1.0, early_stopping_rounds=20, validation_fraction=0.1):
+    def __init__(self, n_iterations=100, learning_rate=0.2, loss='squared_error', subsample=0.9, early_stopping_rounds=20, validation_fraction=0.1):
         self.n_iterations = n_iterations
         self.learning_rate = learning_rate
         self.loss = loss
@@ -89,7 +89,7 @@ model.fit(X, y)
 y_pred = model.predict(X)
 
 plt.figure()
-plt.scatter(X[:, 0], y)
-plt.plot(X[:, 0], y_pred, c="r")
+plt.scatter(y, y_pred)
+plt.plot([y.min(), y.max()], [y.min(), y.max()], 'r--')
 plt.title(f'{r2_score(y, y_pred)}')
 plt.show()

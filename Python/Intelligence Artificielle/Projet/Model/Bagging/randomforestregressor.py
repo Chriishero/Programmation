@@ -1,10 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.datasets import make_classification
-from sklearn.metrics import accuracy_score
+from sklearn.datasets import make_regression
+from sklearn.metrics import r2_score
 
 # Générer un dataset avec plusieurs classes
-X, y = make_classification(n_features=10, n_samples=500, n_informative=2, n_clusters_per_class=1, n_classes=4, random_state=0)
+X, y = make_regression(n_features=10, n_samples=500, noise=30, random_state=0)
 
 class TreeNode:
     def __init__(self, feature_index=None, threshold=None, left=None, right=None, value=None):
@@ -14,7 +14,7 @@ class TreeNode:
         self.right = right                  # sous-arbre droit (xj >= theta)
         self.value = value                  # prédiction w_j si feuille
 
-class DecisionTreeClassifier:
+class DecisionTreeRegressor:
     def __init__(self, max_features="sqrt", max_depth=None, min_samples_leaf=10, min_samples_split=5, verbosity=0):
         self.max_features = max_features
         self.max_depth = max_depth
@@ -23,19 +23,18 @@ class DecisionTreeClassifier:
         self.verbosity = verbosity
         self.tree = None
 
-    def _entropy(self, y):
+    def _mean_squared_error(self, y):
         m = len(y)
-        _, counts = np.unique(y, return_counts=True)  # Comptage des occurrences pour chaque classe
-        probabilities = 1/m * counts  # Probabilités de chaque classe
-        return -np.sum(probabilities * np.log2(probabilities + 1e-15))  # Entropie
+        means = 1/m * np.sum(y) # moyenne des prédictions
+        return 1/m * np.sum((y - means)**2)
     
     def _gain(self, y, left_y, right_y):
         m = len(y)
-        entropy_left = self._entropy(left_y) # C(L)
-        entropy_right = self._entropy(right_y) # C(R)
-        entropy_set = self._entropy(y) # C(S)
+        error_left = self._mean_squared_error(left_y) # C(L)
+        error_right = self._mean_squared_error(right_y) # C(R)
+        error_set = self._mean_squared_error(y) # C(S)
         
-        return entropy_set - (len(left_y) / m * entropy_left + len(right_y) / m * entropy_right)
+        return error_set - (len(left_y) / m * error_left + len(right_y) / m * error_right)
         # G(j, theta) : C(S) - (|L| / |S| * C(L) + |R| / |S| * C(R))
     
     def _split_function(self, X, y):
@@ -86,23 +85,18 @@ class DecisionTreeClassifier:
 
     
     def _build_tree(self, X, y, depth=0):
-        # Si tous les exemples ont la même classe
-        if len(set(y)) == 1:
-            return TreeNode(value=y[0])
-
-        def _majority_class(y):
-            majority_class = np.bincount(y).argmax() # Classe majoritaire
-            return TreeNode(value=majority_class) 
+        def _mean(y):
+            return TreeNode(value=1/X.shape[0] * np.sum(y)) # moyenne des prédictions
         
         # Si la profondeur maximale est atteinte
         if self.max_depth is not None and depth >= self.max_depth:
-            return _majority_class(y)
+            return _mean(y)
 
         best_split = self._split_function(X, y)
         
         # Si aucun split n'a été trouvé, on retourne une feuille avec la classe majoritaire
         if best_split is None:
-            return _majority_class(y)
+            return _mean(y)
 
         feature, threshold = best_split  # Meilleur split trouvé
 
@@ -112,7 +106,7 @@ class DecisionTreeClassifier:
 
         # Vérification si les sous-ensembles gauche ou droit sont vides
         if len(y[left_idx]) == 0 or len(y[right_idx]) == 0:
-            return _majority_class(y)
+            return _mean(y)
 
         if self.verbosity > 0:
             print(f"Decision Tree; build_tree; depth : {depth}/{self.max_depth}")
@@ -143,8 +137,8 @@ class DecisionTreeClassifier:
         X = np.array(X)
         return np.array([self._predict_sample(x, self.tree) for x in X])
 
-class RandomForestClassifier:
-    def __init__(self, n_estimators=100, max_features="sqrt", max_depth=None, min_samples_leaf=10, min_samples_split=5, verbosity=0):
+class RandomForestRegressor:
+    def __init__(self, n_estimators=100, max_features="sqrt", max_depth=5, min_samples_leaf=10, min_samples_split=5, verbosity=0):
         self.n_estimators = n_estimators
         self.max_features = max_features
         self.max_depth = max_depth
@@ -162,7 +156,7 @@ class RandomForestClassifier:
             if self.verbosity > -1:
                 print(f"Random Forest; train_estimator; iteration : {i}")
             X_boostrap, y_bootstrap = self._bootstrap_samples(X, y)
-            model = DecisionTreeClassifier(self.max_features, self.max_depth, self.min_samples_leaf, self.min_samples_split)
+            model = DecisionTreeRegressor(self.max_features, self.max_depth, self.min_samples_leaf, self.min_samples_split)
             model.fit(X_boostrap, y_bootstrap)
             self.model_list.append(model)
 
@@ -175,22 +169,14 @@ class RandomForestClassifier:
     def predict(self, X):
         X = np.array(X)
         predictions_list = np.array([model.predict(X) for model in self.model_list])
+        return predictions_list.mean(axis=0) # moyenne des prédictions pour chaque échantillons de X
 
-        n_samples = predictions_list.shape[1]
-        majority_votes = []
-        for i in range(n_samples):
-            values, counts = np.unique(predictions_list[:, i], return_counts=True)
-            majority_vote = values[np.argmax(counts)]
-            majority_votes.append(majority_vote)
-
-        return np.array(majority_votes)
-
-model = RandomForestClassifier()
+model = RandomForestRegressor()
 model.fit(X, y)
 y_pred = model.predict(X)
 
 plt.figure()
-plt.scatter(X[:, 0], y)
-plt.plot(X[:, 0], y_pred, c='r')
-plt.title(f"{accuracy_score(y, y_pred)}")
+plt.scatter(y, y_pred)
+plt.plot([y.min(), y.max()], [y.min(), y.max()], 'r--')
+plt.title(f"{r2_score(y, y_pred)}")
 plt.show()

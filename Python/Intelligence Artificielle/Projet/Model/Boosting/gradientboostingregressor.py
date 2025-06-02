@@ -27,7 +27,7 @@ class GradientBoostingRegressor:
         
     def _subsample(self, X, gradient):
         m, n = X.shape
-        random_index = np.random.choice(len(X), int(m * self.subsample), replace=True)
+        random_index = np.random.choice(m, int(m * self.subsample), replace=True)
         return X[random_index], gradient[random_index]
 
     def _gradient_descent(self, X, y):

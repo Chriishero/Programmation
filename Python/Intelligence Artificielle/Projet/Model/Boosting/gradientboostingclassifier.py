@@ -71,7 +71,7 @@ class GradientBoostingClassifier:
             if X_val is not None: # s'il y a early_stopping_rounds
                 for k in range(self.n_classes): # pour chaque classe
                     val_logits[:, k] += self.learning_rate * self.model_list[k][-1].predict(X_val) # fi := fi-1 + alpha * Fi
-                    # self.model_list[k][-1] : dernier arbre de la classe k
+                    # self.model_list[k][-1] : dernier modèle de la classe k
                     # val_logits[:, k] : logits de la classe k
 
                 val_pred = np.argmax(self._softmax(val_logits), axis=1) # classe qui maximise le softmax

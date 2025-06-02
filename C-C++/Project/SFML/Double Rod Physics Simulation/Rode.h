@@ -5,9 +5,9 @@
 class Rode
 {
 public:
-	Rode(sf::Vector2f size, sf::Vector2f position, float angle, sf::Vector2f velocity, float weight);
+	Rode(sf::Vector2f size, sf::Vector2f position, float angle, float angularVelocity, float weight);
 
-	void motion();
+	void motion(float deltaTime);
 	void update(float deltaTime);
 	void draw(Renderer& renderer);
 
@@ -18,8 +18,8 @@ public:
 	sf::Vector2f getm_massOrigin();
 	sf::Vector2f getm_massSize();
 	float getm_angle();
-	float getm_angularVelocity();
-	float getm_angularAcceleration();
+	double getm_angularVelocity();
+	double getm_angularAcceleration();
 	float getm_weight();
 
 	void setm_position(sf::Vector2f position);
@@ -27,8 +27,8 @@ public:
 	void setm_jointOrigin(sf::Vector2f origin);
 	void setm_jointPosition(sf::Vector2f position);
 	void setm_angle(float angle);
-	void setm_angularVelocity(float angularVelocity);
-	void setm_angularAcceleration(float angularAcceleration);
+	void setm_angularVelocity(double angularVelocity);
+	void setm_angularAcceleration(double angularAcceleration);
 private:
 	float m_potentialEnergy = 0.0f;
 	float m_kineticEnergy = 0.0f;
@@ -47,8 +47,8 @@ private:
 	sf::Vector2f m_size;
 	sf::Vector2f m_position;
 	float m_angle;
-	float m_angularVelocity = 1.0f;
-	float m_angularAcceleration = 1.0f;
+	double m_angularVelocity;
+	double m_angularAcceleration = 1.0f;
 
 	sf::Vector2f m_jointPosition;
 	sf::Vector2f m_jointOrigin;

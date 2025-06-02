@@ -6,8 +6,8 @@
     #define M_PI 3.14159265358979323846
 #endif
 
-Rode::Rode(sf::Vector2f size, sf::Vector2f position, float angle, sf::Vector2f velocity, float weight)
-    : m_size(size), m_position(position), m_angle(angle), m_velocity(velocity), m_weight(weight)
+Rode::Rode(sf::Vector2f size, sf::Vector2f position, float angle, float angularVelocity, float weight)
+    : m_size(size), m_position(position), m_angle(angle), m_angularVelocity(angularVelocity), m_weight(weight)
 {
     m_angle = m_angle * (M_PI / 180.0f);
     auto setCircleToDraw = [&](sf::CircleShape& shape, sf::RenderTexture& render, sf::Texture& texture) {
@@ -46,22 +46,23 @@ Rode::Rode(sf::Vector2f size, sf::Vector2f position, float angle, sf::Vector2f v
     //m_massPosition = sf::Vector2f(m_size.y * sin(m_angle), -m_size.y * cos(m_angle));
 }
 
-void Rode::motion()
+void Rode::motion(float deltaTime)
 {
-	m_kineticEnergy = 0.5f * m_weight * (m_velocity.x * m_velocity.x + m_velocity.y * m_velocity.y);
-    m_potentialEnergy = m_weight * 9.81f * float(m_velocity.y);
+	m_kineticEnergy = 0.5f * m_weight * m_angularVelocity;
+    m_potentialEnergy = m_weight * 9.81f * m_position.y;
     m_energy = m_kineticEnergy + m_potentialEnergy;
+
+    std::cout << m_angularAcceleration << " et " << deltaTime << std::endl;
     m_angularVelocity += m_angularAcceleration;
-    m_angle = m_angle * (180.0f / M_PI);
-    m_angle += sqrt(m_velocity.y * m_velocity.y + m_velocity.x * m_velocity.x) / m_size.y;
-    m_angle = m_angle * (M_PI / 180.0f);
-    //m_angle += m_angularVelocity;
-    std::cout << "velocity : " << m_angularVelocity << std::endl;
+	m_angle += m_angularVelocity;
+
+    while (m_angle >= 2 * M_PI) m_angle -= 2 * M_PI;
+    while(m_angle < 0) m_angle += 2 * M_PI;
 }
 
 void Rode::update(float deltaTime)
 {
-    motion();
+    motion(deltaTime);
     m_massOrigin = sf::Vector2f(-m_jointPosition.x + m_jointShape.getRadius() * 0.75f, -m_jointPosition.y + m_jointShape.getRadius() * 0.75f);
     m_massPosition = sf::Vector2f(-m_size.y * sin(m_angle),m_size.y * cos(m_angle));
 }
@@ -106,12 +107,12 @@ float Rode::getm_angle()
     return m_angle;
 }
 
-float Rode::getm_angularVelocity()
+double Rode::getm_angularVelocity()
 {
     return m_angularVelocity;
 }
 
-float Rode::getm_angularAcceleration()
+double Rode::getm_angularAcceleration()
 {
     return m_angularAcceleration;
 }
@@ -146,12 +147,12 @@ void Rode::setm_angle(float angle)
     m_angle = angle;
 }
 
-void Rode::setm_angularVelocity(float angularVelocity)
+void Rode::setm_angularVelocity(double angularVelocity)
 {
     m_angularVelocity = angularVelocity;
 }
 
-void Rode::setm_angularAcceleration(float angularAcceleration)
+void Rode::setm_angularAcceleration(double angularAcceleration)
 {
     m_angularAcceleration = angularAcceleration;
 }

@@ -10,11 +10,11 @@ void World::create()
 {
 	for (int i = 0; i < 2; i++) {
 		if(m_vecRod.empty())
-			m_rod = new Rode(sf::Vector2f(20, 250), sf::Vector2f(920 / 2, 920 / 2), 30, sf::Vector2f(1000, 1000), 50);
+			m_rod = new Rode(sf::Vector2f(20, 250), sf::Vector2f(920 / 2, 920 / 2), 30, 0, 1);
 		else {
 			auto prevPos = m_vecRod[i - 1]->getm_position();
 			auto prevSize = m_vecRod[i - 1]->getm_size();
-			m_rod = new Rode(prevSize, sf::Vector2f(prevPos.x, prevPos.y + prevSize.y), 0, sf::Vector2f(1500, 1500), 50);
+			m_rod = new Rode(prevSize, sf::Vector2f(prevPos.x, prevPos.y + prevSize.y), 30, 0, 1);
 		}
 		m_vecRod.push_back(m_rod);
 	}
@@ -23,22 +23,26 @@ void World::create()
 void World::motion() {
 	float theta1 = m_vecRod[0]->getm_angle();
 	float theta2 = m_vecRod[1]->getm_angle();
-	float dtheta1 = m_vecRod[0]->getm_angularVelocity();
-	float dtheta2 = m_vecRod[1]->getm_angularVelocity();
+	double dtheta1 = m_vecRod[0]->getm_angularVelocity();
+	double dtheta2 = m_vecRod[1]->getm_angularVelocity();
 	float m1 = m_vecRod[0]->getm_weight();
 	float m2 = m_vecRod[1]->getm_weight();
 	float l1 = m_vecRod[0]->getm_size().y;
 	float l2 = m_vecRod[1]->getm_size().y;
 
-	float ddtheta1 = ((-m2 * dtheta1 * l1 * dtheta2 * sin(theta1 - theta2) - (m1 + m2) * m_gravity * l1 * sin(theta1))
-		- m2 * l1 * l2 * dtheta1 * l1 * dtheta2 * sin(theta1 - theta2) -
-		(m2 * l1 * l2) * (m2 * l1 * l2) * dtheta1 * sin(theta1 - theta2) * (dtheta1 - dtheta2) +
-		(m2 * l1 * l2) * m2 * m_gravity * sin(theta2)) /
-		((m1 + m2) * l1 * l1) - (m2 * l1 * l2) * (m2 * l1 * l2) * cos(theta1 - theta2);
+	float a = (m1 + m2) * l1 * l1;
+	float b = m2 * l2 * l2 * cos(theta1 - theta2);
+	float c = m2 * l1 * l2 * cos(theta1 - theta2);
+	float d = m2 * l2 * l2;
+	float f = m2 * dtheta1 * l1 * dtheta2 * l2 * sin(theta1 - theta2) - (m1 + m2) * m_gravity * l1 * sin(theta1) +
+		m1 * l1 * l2 * dtheta2 * sin(theta1 - theta2) * (dtheta1 - dtheta2);
+	float g = m2 * dtheta1 * l1 * dtheta2 * l2 * sin(theta1 - theta2) - m2 * m_gravity * l2 * sin(theta2) - m2 * l1 * l2 *
+		dtheta1 * sin(theta1 - theta2) * (dtheta1 - dtheta2);
+
+	double ddtheta1 = (f * d - g * b) / (a * d - b * c);
 	m_vecRod[0]->setm_angularAcceleration(ddtheta1);
 
-	float ddtheta2 = dtheta1 * l1 * dtheta2 * sin(theta1 - theta2) - m2 * m_gravity * l2 * sin(theta2) -
-		m2 * l1 * l2 * (ddtheta1 * cos(theta1 - theta2) + dtheta1 * sin(theta1 - theta2) * (dtheta1 - dtheta2));
+	double ddtheta2 = (g * a - f * c) / (a * d - b * c);
 	m_vecRod[1]->setm_angularAcceleration(ddtheta2);
 }
 
@@ -57,7 +61,7 @@ void World::update(float deltaTime)
 		m_vecRod[i]->update(deltaTime);
 		m_energy += m_vecRod[i]->getm_energy();
 	}
-	std::cout << "Energy: " << m_energy << std::endl;
+	//std::cout << "Energy: " << m_energy << std::endl;
 }
 
 void World::render(Renderer& renderer)

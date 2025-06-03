@@ -48,13 +48,10 @@ Rode::Rode(sf::Vector2f size, sf::Vector2f position, float angle, float angularV
 
 void Rode::motion(float deltaTime)
 {
-	m_kineticEnergy = 0.5f * m_weight * m_angularVelocity;
-    m_potentialEnergy = m_weight * 9.81f * m_position.y;
     m_energy = m_kineticEnergy + m_potentialEnergy;
 
-    std::cout << m_angularAcceleration << " et " << deltaTime << std::endl;
-    m_angularVelocity += m_angularAcceleration;
-	m_angle += m_angularVelocity;
+    m_angularVelocity += m_angularAcceleration * deltaTime;
+	m_angle += m_angularVelocity * deltaTime;
 
     while (m_angle >= 2 * M_PI) m_angle -= 2 * M_PI;
     while(m_angle < 0) m_angle += 2 * M_PI;
@@ -120,6 +117,21 @@ double Rode::getm_angularAcceleration()
 float Rode::getm_weight()
 {
 	return m_weight;
+}
+
+void Rode::setm_energy(float energy)
+{
+    m_energy = energy;
+}
+
+void Rode::setm_kineticEnergy(float kineticEnergy)
+{
+	m_kineticEnergy = kineticEnergy;    
+}
+
+void Rode::setm_potentialEnergy(float potentialEnergy)
+{
+	m_potentialEnergy = potentialEnergy;
 }
 
 void Rode::setm_position(sf::Vector2f position)

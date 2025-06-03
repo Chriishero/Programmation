@@ -22,5 +22,7 @@ private:
 	float m_energy = 0.0f;
 	Rode* m_rod;
 	std::vector<Rode*> m_vecRod{};
+
+	float m_speedFactor = 1.0f;
 };
 

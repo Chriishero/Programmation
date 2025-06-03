@@ -10,11 +10,11 @@ void World::create()
 {
 	for (int i = 0; i < 2; i++) {
 		if(m_vecRod.empty())
-			m_rod = new Rode(sf::Vector2f(20, 250), sf::Vector2f(920 / 2, 920 / 2), 30, 0, 1);
+			m_rod = new Rode(sf::Vector2f(20, 250), sf::Vector2f(920 / 2, 920 / 2), 110, 4, 1);
 		else {
 			auto prevPos = m_vecRod[i - 1]->getm_position();
 			auto prevSize = m_vecRod[i - 1]->getm_size();
-			m_rod = new Rode(prevSize, sf::Vector2f(prevPos.x, prevPos.y + prevSize.y), 30, 0, 1);
+			m_rod = new Rode(prevSize, sf::Vector2f(prevPos.x, prevPos.y + prevSize.y), 0, 1, 1);
 		}
 		m_vecRod.push_back(m_rod);
 	}
@@ -27,8 +27,20 @@ void World::motion() {
 	double dtheta2 = m_vecRod[1]->getm_angularVelocity();
 	float m1 = m_vecRod[0]->getm_weight();
 	float m2 = m_vecRod[1]->getm_weight();
-	float l1 = m_vecRod[0]->getm_size().y;
-	float l2 = m_vecRod[1]->getm_size().y;
+	float l1 = m_vecRod[0]->getm_size().y / 100.0f; // normalisation des longueurs : 250 pixels = 2.5 m
+	float l2 = m_vecRod[1]->getm_size().y / 100.0f; // normalisation des longueurs : 250 pixels = 2.5 m
+
+	float kineticEnergy1 = 1 / 2  * m1 * dtheta1 * dtheta1 * l1 * l1;
+	m_vecRod[0]->setm_kineticEnergy(kineticEnergy1);
+	float potentialEnergy1 = -m1 * m_gravity * l1 * cos(theta1);
+	m_vecRod[0]->setm_potentialEnergy(potentialEnergy1);
+
+	float kineticEnergy2 = 1 / 2 * m2 * (dtheta1 * dtheta1 * l1 * l1 + 2 * dtheta1 * l1 * dtheta2 * l2 * cos(theta1 - theta2)
+							+ dtheta2 * dtheta2 * l2 * l2);
+	m_vecRod[1]->setm_kineticEnergy(kineticEnergy2);
+	float potentialEnergy2 = -m2 * m_gravity * (l1 * cos(theta1) + l2 * cos(theta2));
+
+	m_energy = kineticEnergy1 + kineticEnergy2 + potentialEnergy1 + potentialEnergy2;
 
 	float a = (m1 + m2) * l1 * l1;
 	float b = m2 * l2 * l2 * cos(theta1 - theta2);
@@ -48,7 +60,6 @@ void World::motion() {
 
 void World::update(float deltaTime)
 {
-	m_energy = 0.0f;
 	motion();
 	for (int i = 0; i < m_vecRod.size(); i++) {
 		if (i > 0) {
@@ -56,12 +67,10 @@ void World::update(float deltaTime)
 			sf::Vector2f prevMassPosition(prevRod->getm_massPosition().x - prevRod->getm_massOrigin().x + prevRod->getm_size().x,
 										  prevRod->getm_massPosition().y - prevRod->getm_massOrigin().y + prevRod->getm_size().x);
 			m_vecRod[i]->setm_jointPosition(prevMassPosition);
-			//m_vecRod[i]->setm_angle(m_vecRod[i]->getm_angle() + 5.0f); // pour tester la différence de vitesse entre les 2 pendules
 		}
-		m_vecRod[i]->update(deltaTime);
-		m_energy += m_vecRod[i]->getm_energy();
+		m_vecRod[i]->update(deltaTime * m_speedFactor);
 	}
-	//std::cout << "Energy: " << m_energy << std::endl;
+	std::cout << "Energy: " << m_energy << std::endl;
 }
 
 void World::render(Renderer& renderer)

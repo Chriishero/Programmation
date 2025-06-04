@@ -10,11 +10,11 @@ void World::create()
 {
 	for (int i = 0; i < 2; i++) {
 		if(m_vecRod.empty())
-			m_rod = new Rode(sf::Vector2f(20, 250), sf::Vector2f(920 / 2, 920 / 2), 110, 4, 1);
+			m_rod = new Rode(sf::Vector2f(20, 250), sf::Vector2f(920 / 2, 920 / 2), 90, 0, 1);
 		else {
 			auto prevPos = m_vecRod[i - 1]->getm_position();
 			auto prevSize = m_vecRod[i - 1]->getm_size();
-			m_rod = new Rode(prevSize, sf::Vector2f(prevPos.x, prevPos.y + prevSize.y), 0, 1, 1);
+			m_rod = new Rode(prevSize, sf::Vector2f(prevPos.x, prevPos.y + prevSize.y), 90, 0.5, 1);
 		}
 		m_vecRod.push_back(m_rod);
 	}
@@ -30,12 +30,12 @@ void World::motion() {
 	float l1 = m_vecRod[0]->getm_size().y / 100.0f; // normalisation des longueurs : 250 pixels = 2.5 m
 	float l2 = m_vecRod[1]->getm_size().y / 100.0f; // normalisation des longueurs : 250 pixels = 2.5 m
 
-	float kineticEnergy1 = 1 / 2  * m1 * dtheta1 * dtheta1 * l1 * l1;
+	float kineticEnergy1 = 0.5f  * m1 * dtheta1 * dtheta1 * l1 * l1;
 	m_vecRod[0]->setm_kineticEnergy(kineticEnergy1);
 	float potentialEnergy1 = -m1 * m_gravity * l1 * cos(theta1);
 	m_vecRod[0]->setm_potentialEnergy(potentialEnergy1);
 
-	float kineticEnergy2 = 1 / 2 * m2 * (dtheta1 * dtheta1 * l1 * l1 + 2 * dtheta1 * l1 * dtheta2 * l2 * cos(theta1 - theta2)
+	float kineticEnergy2 = 0.5f * m2 * (dtheta1 * dtheta1 * l1 * l1 + 2 * dtheta1 * l1 * dtheta2 * l2 * cos(theta1 - theta2)
 							+ dtheta2 * dtheta2 * l2 * l2);
 	m_vecRod[1]->setm_kineticEnergy(kineticEnergy2);
 	float potentialEnergy2 = -m2 * m_gravity * (l1 * cos(theta1) + l2 * cos(theta2));
@@ -44,9 +44,9 @@ void World::motion() {
 
 	float a = (m1 + m2) * l1 * l1;
 	float b = m2 * l2 * l2 * cos(theta1 - theta2);
-	float c = m2 * l1 * l2 * cos(theta1 - theta2);
+	float c = b;
 	float d = m2 * l2 * l2;
-	float f = m2 * dtheta1 * l1 * dtheta2 * l2 * sin(theta1 - theta2) - (m1 + m2) * m_gravity * l1 * sin(theta1) +
+	float f = -m2 * dtheta1 * l1 * dtheta2 * l2 * sin(theta1 - theta2) - (m1 + m2) * m_gravity * l1 * sin(theta1) +
 		m1 * l1 * l2 * dtheta2 * sin(theta1 - theta2) * (dtheta1 - dtheta2);
 	float g = m2 * dtheta1 * l1 * dtheta2 * l2 * sin(theta1 - theta2) - m2 * m_gravity * l2 * sin(theta2) - m2 * l1 * l2 *
 		dtheta1 * sin(theta1 - theta2) * (dtheta1 - dtheta2);

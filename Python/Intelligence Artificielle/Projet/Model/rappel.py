@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import make_classification, make_regression
-from sklearn.metrics import accuracy_score, r2_score
+from sklearn.metrics import r2_score, accuracy_score
 from sklearn.model_selection import train_test_split
 
 class TreeNode:
@@ -13,7 +13,7 @@ class TreeNode:
         self.value = value
 
 class DecisionTreeRegressor:
-    def __init__(self, max_features, max_depth, min_samples_leaf, min_samples_split):
+    def __init__(self, max_features=None, max_depth=None, min_samples_leaf=None, min_samples_split=None):
         self.max_features = max_features
         self.max_depth = max_depth
         self.min_samples_leaf = min_samples_leaf
@@ -40,9 +40,12 @@ class DecisionTreeRegressor:
         feature_indices = np.arange(n)
 
         if isinstance(self.max_features, int):
-            features_indices = np.random.choice(n, self.max_depth, replace=False)
-        if self.max_depth == 'sqrt':
-            feature_indices = np.random.choice(n, int(np.sqrt(self.max_features)), replace=False)
+            feature_indices = np.random.choice(n, self.max_features, replace=False)
+        elif self.max_features == "sqrt":
+            feature_indices = np.random.choice(n, int(np.sqrt(n)), replace=False)
+        elif self.max_features == 'log2':
+            feature_indices = np.random.choice(n, int(np.log2(n)), replace=False)
+            
         for feature_index in feature_indices:
             thresholds = np.unique(X[:, feature_index])
             for threshold in thresholds:
@@ -93,20 +96,16 @@ class DecisionTreeRegressor:
             return self._predict_samples(x, tree.right)
         
     def fit(self, X, y):
-        X = np.array(X)
-        y = np.array(y)
-
-        self.tree = self._tree(X, y)
+        self.tree = self._tree(np.array(X), np.array(y))
 
     def predict(self, X):
         X = np.array(X)
         return np.array([self._predict_samples(x, self.tree) for x in X])
     
 class GradientBoostingClassifier:
-    def __init__(self, n_estimators=200, learning_rate=0.1, max_features='sqrt', max_depth=5, min_samples_leaf=10, min_samples_split=5, subsample=0.9, loss='log_loss', early_stopping_rounds=20, validation_fraction=0.1):
+    def __init__(self, n_estimators=200, learning_rate=0.1, max_depth=3, min_samples_leaf=10, min_samples_split=5, subsample=0.9, loss='log_loss', early_stopping_rounds=20, validation_fraction=0.1):
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
-        self.max_features = max_features
         self.max_depth = max_depth
         self.min_samples_leaf = min_samples_leaf
         self.min_samples_split = min_samples_split
@@ -121,7 +120,7 @@ class GradientBoostingClassifier:
     def _softmax(self, logits):
         exp = np.exp(logits - np.max(logits, axis=1, keepdims=True))
         return exp / np.sum(exp, axis=1, keepdims=True)
-
+    
     def _gradient(self, y_onehot, proba):
         if self.loss == 'log_loss':
             return proba - y_onehot
@@ -130,10 +129,10 @@ class GradientBoostingClassifier:
         m, n = X.shape
         random_index = np.random.choice(m, int(m * self.subsample), replace=True)
         return X[random_index], gradient[random_index]
-    
+
     def _gradient_descent(self, X, y):
-        if self.early_stopping_rounds and self.validation_fraction:
-            X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.1, random_state=0)
+        if self.early_stopping_rounds or self.validation_fraction:
+            X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=self.validation_fraction, random_state=0)
         else:
             X_train, y_train = X, y
             X_val = y_val = None
@@ -152,18 +151,17 @@ class GradientBoostingClassifier:
         for i in range(self.n_estimators):
             proba = self._softmax(logits)
             gradient = self._gradient(y_onehot, proba)
-
             for k in range(self.n_classes):
                 if self.subsample < 1.0:
                     X_sub, gradient_sub = self._subsample(X_train, gradient[:, k])
                 else:
-                    X_sub, gradient_sub = X_train, gradient
+                    X_sub, gradient_sub = X_train, gradient[:, k]
 
-                model = DecisionTreeRegressor(self.max_features, self.max_depth, self.min_samples_leaf, self.min_samples_split)
+                model = DecisionTreeRegressor(max_depth=self.max_depth, min_samples_leaf=self.min_samples_leaf, min_samples_split=self.min_samples_split)
                 model.fit(X_sub, -gradient_sub)
                 self.model_list[k].append(model)
-
                 logits[:, k] += self.learning_rate * model.predict(X_train)
+            
             if X_val is not None:
                 for k in range(self.n_classes):
                     val_logits[:, k] += self.learning_rate * self.model_list[k][-1].predict(X_val)
@@ -173,12 +171,12 @@ class GradientBoostingClassifier:
                     best_score = score
                     best_iter = i
                 elif i - best_iter >= self.early_stopping_rounds:
-                    print(f'break at {i}')
+                    print(f'early stop at {i}')
                     break
 
     def fit(self, X, y):
         self._gradient_descent(np.array(X), np.array(y))
-    
+
     def predict(self, X):
         X = np.array(X)
         logits = np.zeros((len(X), self.n_classes))
@@ -187,15 +185,16 @@ class GradientBoostingClassifier:
                 logits[:, k] += self.learning_rate * model.predict(X)
 
         return np.argmax(self._softmax(logits), axis=1)
-
+    
 X, y = make_classification(n_samples=500, n_features=10, n_informative=2, n_clusters_per_class=1, n_classes=4, random_state=0)
-#X, y = make_regression(n_samples=500, n_features=10, noise=30, random_state=0)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=0)
+
 model = GradientBoostingClassifier()
-model.fit(X, y)
-y_pred = model.predict(X)
+model.fit(X_train, y_train)
+y_pred = model.predict(X_test)
 
 plt.figure()
-plt.scatter(X[:, 0], y)
-plt.plot(X[:, 0], y_pred, c='r')
-plt.title(f'{accuracy_score(y, y_pred)}')
+plt.scatter(X_test[:, 0], y_test)
+plt.plot(X_test[:, 0], y_pred, color='r')
+plt.title(f'{accuracy_score(y_test, y_pred)}')
 plt.show()

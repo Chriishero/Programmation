@@ -120,7 +120,7 @@ class DecisionTreeRegressor:
         return np.array([self._predict_sample(x, self.tree) for x in X])
 
 class XGBoostClassifier:
-    def __init__(self, n_estimators=100, learning_rate=0.2, max_features='sqrt', max_depth=3, min_samples_leaf=10, min_samples_split=5, reg_lambda=1.0, reg_gamma=0.0, loss='log_loss', subsample=0.9, early_stopping_rounds=20, validation_fraction=0.1):
+    def __init__(self, n_estimators=100, learning_rate=0.2, max_features='sqrt', max_depth=3, min_samples_leaf=1, min_samples_split=2, reg_lambda=1.0, reg_gamma=0.0, loss='log_loss', subsample=1.0, early_stopping_rounds=20, validation_fraction=0.1):
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
         self.max_features = max_features
@@ -141,13 +141,12 @@ class XGBoostClassifier:
         exp_logits = np.exp(logits - np.max(logits, axis=1, keepdims=True))
         return exp_logits / np.sum(exp_logits, axis=1, keepdims=True)
 
-    def _gradient(self, y_onehot, proba):
+    def _gradient_hessian(self, y_onehot, proba):
         if self.loss == "log_loss":
             # Gradient = p_k - y_k
-            return proba - y_onehot
-    def _hessian(self, proba):
-        if self.loss == 'log_loss':
-            return proba * (1 - proba)
+            gradient = proba - y_onehot
+            hessian = proba * (1 - proba)
+            return gradient, hessian
 
     def _subsample(self, X, gradient, hessian):
         m = X.shape[0]
@@ -176,19 +175,18 @@ class XGBoostClassifier:
 
         for i in range(self.n_estimators):
             proba = self._softmax(logits) # transforme les logits en probabilités
-            gradient = self._gradient(y_onehot, proba) 
-            hessians = self._hessian(proba)
+            gradient, hessian = self._gradient_hessian(y_onehot, proba) 
 
             for k in range(self.n_classes): # pour chaque classe
                 if self.subsample < 1.0:
-                    X_sub, grad_sub, hess_sub = self._subsample(X_train, gradient[:, k], hessians[:, k])
+                    X_sub, grad_sub, hess_sub = self._subsample(X_train, gradient[:, k], hessian[:, k])
                 else:
-                    X_sub, grad_sub, hess_sub = X_train, gradient[:, k], hessians[:, k]
+                    X_sub, grad_sub, hess_sub = X_train, gradient[:, k], hessian[:, k]
 
                 tree = DecisionTreeRegressor(max_features=self.max_features, max_depth=self.max_depth, 
                                              min_samples_leaf=self.min_samples_leaf, min_samples_split=self.min_samples_split,
                                              reg_lambda=self.reg_lambda, reg_gamma=self.reg_gamma)
-                tree.fit(X_sub, -grad_sub, hess_sub)  # Descente de gradient : on apprend sur -∇L
+                tree.fit(X_sub, grad_sub, hess_sub)  # Descente de gradient : on apprend sur -∇L
                 self.model_list[k].append(tree)
 
                 logits[:, k] += self.learning_rate * tree.predict(X_train) # fi := fi-1 + alpha * Fi

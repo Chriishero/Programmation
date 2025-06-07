@@ -10,11 +10,11 @@ void World::create()
 {
 	for (int i = 0; i < 2; i++) {
 		if(m_vecRod.empty())
-			m_rod = new Rode(sf::Vector2f(20, 250), sf::Vector2f(920 / 2, 920 / 2), 90, 0, 1);
+			m_rod = new Rode(sf::Vector2f(20, 250), sf::Vector2f(920 / 2, 920 / 2), 40, 4, 1);
 		else {
 			auto prevPos = m_vecRod[i - 1]->getm_position();
 			auto prevSize = m_vecRod[i - 1]->getm_size();
-			m_rod = new Rode(prevSize, sf::Vector2f(prevPos.x, prevPos.y + prevSize.y), 90, 0.5, 1);
+			m_rod = new Rode(prevSize, sf::Vector2f(prevPos.x, prevPos.y + prevSize.y), 30, 0, 1);
 		}
 		m_vecRod.push_back(m_rod);
 	}
@@ -27,8 +27,8 @@ void World::motion() {
 	double dtheta2 = m_vecRod[1]->getm_angularVelocity();
 	float m1 = m_vecRod[0]->getm_weight();
 	float m2 = m_vecRod[1]->getm_weight();
-	float l1 = m_vecRod[0]->getm_size().y / 100.0f; // normalisation des longueurs : 250 pixels = 2.5 m
-	float l2 = m_vecRod[1]->getm_size().y / 100.0f; // normalisation des longueurs : 250 pixels = 2.5 m
+	float l1 = m_vecRod[0]->getm_size().y / 250.0f; // normalisation des longueurs : 250 pixels = 2.5 m
+	float l2 = m_vecRod[1]->getm_size().y / 250.0f; // normalisation des longueurs : 250 pixels = 2.5 m
 	float g = m_gravity;
 
 	float kineticEnergy1 = 0.5f  * m1 * dtheta1 * dtheta1 * l1 * l1;
@@ -49,7 +49,6 @@ void World::motion() {
 	float d = m2 * l2 * l2;
 	float e = -(m1 + m2) * g * l1 * sin(theta1) - m2 * l1 * l2 * dtheta2 * dtheta2 * sin(theta1 - theta2);
 	float f = -m2 * g * l2 * sin(theta2) + m2 * l1 * l2 * dtheta1 * dtheta1 * sin(theta1 - theta2);
-
 
 	double ddtheta1 = (e * d - f * b) / (a * d - b * c);
 	m_vecRod[0]->setm_angularAcceleration(ddtheta1);

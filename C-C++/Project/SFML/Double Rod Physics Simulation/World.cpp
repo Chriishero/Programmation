@@ -47,8 +47,8 @@ void World::motion() {
 	float b = m2 * l1 * l2 * cos(theta1 - theta2);
 	float c = b;
 	float d = m2 * l2 * l2;
-	float e = -(m1 + m2) * g * l1 * sin(theta1) - m2 * l1 * l2 * dtheta2 * dtheta2 * sin(theta1 - theta2);
-	float f = -m2 * g * l2 * sin(theta2) + m2 * l1 * l2 * dtheta1 * dtheta1 * sin(theta1 - theta2);
+	float e = - (m1 + m2) * g * l1 * sin(theta1) - m2 * l1 * l2 * dtheta2 * dtheta2 * sin(theta1 - theta2);
+	float f = - m2 * g * l2 * sin(theta2) + m2 * l1 * l2 * dtheta1 * dtheta1 * sin(theta1 - theta2);
 
 	double ddtheta1 = (e * d - f * b) / (a * d - b * c);
 	m_vecRod[0]->setm_angularAcceleration(ddtheta1);

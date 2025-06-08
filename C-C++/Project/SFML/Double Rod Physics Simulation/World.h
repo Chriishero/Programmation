@@ -6,7 +6,7 @@
 class World
 {
 public:
-	World(int nRod, float gravity);
+	World(float gravity, float friction);
 
 	void create();
 	void motion();
@@ -14,8 +14,8 @@ public:
 	void render(Renderer& renderer);
 
 private:
-	int m_nRod;
 	float m_gravity;
+	float m_friction;
 
 	float m_kineticEnergy = 0.0f;
 	float m_potentialEnergy = 0.0f;

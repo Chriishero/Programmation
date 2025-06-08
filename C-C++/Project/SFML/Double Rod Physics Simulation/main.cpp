@@ -2,7 +2,9 @@
 #include "SFML/Graphics.hpp"
 #include "main.h"
 #include "World.h"
-
+#include <ImGui/imgui.h>
+#include <ImGui/imgui-SFML.h>
+ 
 sf::RenderWindow window;
 
 int main()
@@ -12,7 +14,7 @@ int main()
     sf::Clock deltaClock;
     Renderer renderer(window);
 
-    World world(2, 9.81f);
+    World world(9.81f, 0.0f);
     world.create();
 
     while (window.isOpen()) {
@@ -30,4 +32,5 @@ int main()
 
         window.display();
     }
+    return 0;
 }

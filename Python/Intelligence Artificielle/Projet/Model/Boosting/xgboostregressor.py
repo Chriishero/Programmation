@@ -6,100 +6,118 @@ from sklearn.model_selection import train_test_split
 
 class TreeNode:
     def __init__(self, feature_index=None, threshold=None, left=None, right=None, value=None):
-        self.feature_index = feature_index
-        self.threshold = threshold
-        self.left = left
-        self.right = right
-        self.value = value
+        self.feature_index = feature_index  # j
+        self.threshold = threshold          # theta
+        self.left = left                    # sous-arbre gauche (xj < theta)
+        self.right = right                  # sous-arbre droit (xj >= theta)
+        self.value = value                  # prédiction w_j si feuille
 
 class DecisionTreeRegressor:
-    def __init__(self, max_features, max_depth, min_samples_leaf, min_samples_split, reg_lambda, reg_gamma):
-        self.max_features = max_features
+    def __init__(self, max_features='sqrt', max_depth=None, min_samples_split=None, min_samples_leaf=None, reg_lambda=1.0, reg_gamma=0.0,):
         self.max_depth = max_depth
-        self.min_samples_leaf = min_samples_leaf
+        self.max_features = max_features
         self.min_samples_split = min_samples_split
+        self.min_samples_leaf = min_samples_leaf
         self.reg_lambda = reg_lambda
         self.reg_gamma = reg_gamma
 
-        self.tree = None
-
-    def _gain_function(self, G_left, G_right, H_left, H_right):
-        return 1/2 * (G_left**2 / (H_left + self.reg_lambda) + G_right**2 / (H_right + self.reg_lambda) 
-                      - (G_left + G_right)**2 / (H_left + H_right + self.reg_lambda)) - self.reg_gamma
+        self.tree = None # racine de l'arbre
     
-    def _split_function(self, X, gradient, hessian):
+    def _gain_function(self, G_left, G_right, H_left, H_right):
+        return 1/2 * (G_left**2 / (H_left + self.reg_lambda) + G_right**2 / (H_right + self.reg_lambda)
+                      - (G_left + G_right)**2 / (H_left + H_right + self.reg_lambda)) - self.reg_gamma
+
+    def _best_split(self, X, gradients, hessians):
         m, n = X.shape
+        best_gain = float("-inf")
         best_split = None
-        best_gain = float('-inf')
         feature_indices = np.arange(n)
 
         if isinstance(self.max_features, int):
-            feature_indices = np.random.choice(n, self.max_features, replace=False)
+           feature_indices = np.random.choice(n, self.max_features, replace=False)
         elif self.max_features == 'sqrt':
             feature_indices = np.random.choice(n, int(np.sqrt(n)), replace=False)
+        elif self.max_features == 'log2':
+            feature_indices = np.random.choice(n, int(np.log2(n)), replace=False)
 
         for feature_index in feature_indices:
-            thresholds = np.unique(X[:, feature_index])
-            for threshold in thresholds:
-                left_mask = X[:, feature_index] < threshold
-                right_mask = ~left_mask
+            thresholds = np.unique(X[:, feature_index])  # valeurs uniques de cette feature
+            for threshold in thresholds:  # chaque seuil unique
+                left_mask = X[:, feature_index] < threshold  # sous-ensemble L
+                right_mask = ~left_mask  # sous-ensemble R
+                left_gradients, right_gradients = gradients[left_mask], gradients[right_mask]  # targets correspondantes
 
-                if len(gradient[left_mask]) < self.min_samples_leaf or len(gradient[right_mask]) < self.min_samples_leaf:
-                    continue
-                if len(gradient[left_mask]) < self.min_samples_split or len(gradient[right_mask]) < self.min_samples_split:
+                # Si un des sous-ensembles contient moins de données que le min_samples_leaf, on l'ignore
+                if len(left_gradients) < self.min_samples_leaf or len(right_gradients) < self.min_samples_leaf:
                     continue
 
-                G_left = np.sum(gradient[left_mask])
-                G_right = np.sum(gradient[right_mask])
-                H_left = np.sum(hessian[left_mask])
-                H_right = np.sum(hessian[right_mask])
+                # Si le nombre d'échantillons dans un sous-ensemble est inférieur au min_samples_split, on l'ignore
+                if len(left_gradients) < self.min_samples_split or len(right_gradients) < self.min_samples_split:
+                    continue
+
+                # Calcul du gain (à maximiser)
+                G_left = np.sum(left_gradients)
+                G_right = np.sum(right_gradients)
+                H_left = np.sum(hessians[left_mask])
+                H_right = np.sum(hessians[right_mask])
                 gain = self._gain_function(G_left, G_right, H_left, H_right)
 
-                if gain > best_gain:
+                if gain > best_gain:  # Si ce split est meilleur
                     best_gain = gain
-                    best_split = feature_index, threshold
+                    best_split = (feature_index, threshold)  # Meilleur index de feature et seuil
 
         return best_split
-    
-    def _tree_function(self, X, gradient, hessian, depth=0):
+
+    def _build_tree(self, X, gradients, hessians, depth=0):
         def _leaf_values():
-            G = np.sum(gradient)
-            H = np.sum(hessian)
+            G = np.sum(gradients)
+            H = np.sum(hessians)
             return TreeNode(value=-G / (H + self.reg_lambda))
-        
-        if self.max_depth is not None and self.max_depth <= depth:
-            return _leaf_values()
-        
-        split = self._split_function(X, gradient, hessian)
-        if split is None:
-            return _leaf_values()
-        
-        feature_index, threshold = split
-        left_mask = X[:, feature_index] < threshold
-        right_mask = ~left_mask
 
-        if len(gradient[left_mask]) == 0 or len(gradient[right_mask]) == 0:
+        # Si la profondeur maximale est atteinte
+        if self.max_depth is not None and depth >= self.max_depth:
             return _leaf_values()
-        
-        left_tree = self._tree_function(X[left_mask], gradient[left_mask], hessian[left_mask], depth+1)
-        right_tree = self._tree_function(X[right_mask], gradient[right_mask], hessian[right_mask], depth+1)
 
-        return TreeNode(feature_index, threshold, left_tree, right_tree)
-    
-    def _predict_samples(self, x, tree):
-        if tree.value is not None:
+        best_split = self._best_split(X, gradients, hessians)
+        
+        # Si aucun split n'a été trouvé, on retourne une feuille avec la classe majoritaire
+        if best_split is None:
+            return _leaf_values()
+
+        feature, threshold = best_split  # Meilleur split trouvé
+
+        # Split binaire
+        left_idx = X[:, feature] < threshold
+        right_idx = ~left_idx
+
+        # Vérification si les sous-ensembles gauche ou droit sont vides
+        if len(gradients[left_idx]) == 0 or len(gradients[right_idx]) == 0:
+            return _leaf_values()
+
+        # Construction des sous-arbres
+        left_tree = self._build_tree(X[left_idx], gradients[left_idx], hessians[left_idx], depth + 1)
+        right_tree = self._build_tree(X[right_idx], gradients[right_idx], hessians[right_idx], depth + 1)
+
+        return TreeNode(feature_index=feature, threshold=threshold, left=left_tree, right=right_tree)
+
+    def _predict_sample(self, x, tree):
+        if tree.value is not None:  # Si c'est une feuille
             return tree.value
-        if x[tree.feature_index] < tree.threshold:
-            return self._predict_samples(x, tree.left)
-        else:
-            return self._predict_samples(x, tree.right)
-        
-    def fit(self, X, gradient, hessian):
-        self.tree = self._tree_function(np.array(X), np.array(gradient), np.array(hessian))
+        if x[tree.feature_index] < tree.threshold:  # Si l'échantillon va à gauche
+            return self._predict_sample(x, tree.left)
+        else:  # Sinon, il va à droite
+            return self._predict_sample(x, tree.right)
+
+    def fit(self, X, gradients, hessians):
+        X = np.array(X)
+        gradients = np.array(gradients)
+        hessians = np.array(hessians)
+
+        self.tree = self._build_tree(X, gradients, hessians)  # Construction de l'arbre
 
     def predict(self, X):
         X = np.array(X)
-        return np.array([self._predict_samples(x, self.tree) for x in X])
+        return np.array([self._predict_sample(x, self.tree) for x in X])
     
 class XGBoostRegressor:
     def __init__(self, n_estimators=100, learning_rate=0.2, max_features="sqrt", max_depth=3, min_samples_leaf=10, min_samples_split=5,

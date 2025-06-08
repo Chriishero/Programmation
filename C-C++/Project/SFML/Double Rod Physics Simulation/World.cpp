@@ -2,7 +2,7 @@
 #include <iostream>
 #include <cmath>
 
-World::World(int nRod, float gravity) : m_nRod(nRod), m_gravity(gravity)
+World::World(float gravity, float friction) : m_gravity(gravity), m_friction(friction)
 {
 }
 
@@ -10,11 +10,11 @@ void World::create()
 {
 	for (int i = 0; i < 2; i++) {
 		if(m_vecRod.empty())
-			m_rod = new Rode(sf::Vector2f(20, 250), sf::Vector2f(920 / 2, 920 / 2), 40, 4, 1);
+			m_rod = new Rode(sf::Vector2f(20, 250), sf::Vector2f(920 / 2, 920 / 2), 90, 2, 1);
 		else {
 			auto prevPos = m_vecRod[i - 1]->getm_position();
 			auto prevSize = m_vecRod[i - 1]->getm_size();
-			m_rod = new Rode(prevSize, sf::Vector2f(prevPos.x, prevPos.y + prevSize.y), 30, 0, 1);
+			m_rod = new Rode(prevSize, sf::Vector2f(prevPos.x, prevPos.y + prevSize.y), 270, 0, 1);
 		}
 		m_vecRod.push_back(m_rod);
 	}
@@ -51,9 +51,11 @@ void World::motion() {
 	float f = - m2 * g * l2 * sin(theta2) + m2 * l1 * l2 * dtheta1 * dtheta1 * sin(theta1 - theta2);
 
 	double ddtheta1 = (e * d - f * b) / (a * d - b * c);
+	ddtheta1 -= m_friction * dtheta1;
 	m_vecRod[0]->setm_angularAcceleration(ddtheta1);
 	
 	double ddtheta2 = (f * a - e * c) / (a * d - b * c);
+	ddtheta2 -= m_friction * dtheta2;
 	m_vecRod[1]->setm_angularAcceleration(ddtheta2);
 }
 

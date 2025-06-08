@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.datasets import make_classification, make_regression
-from sklearn.metrics import r2_score, accuracy_score
+from sklearn.datasets import make_friedman1, make_regression
+from sklearn.metrics import r2_score
 from sklearn.model_selection import train_test_split
 
 class TreeNode:
@@ -112,12 +112,12 @@ class XGBoostRegressor:
         self.min_samples_split = min_samples_split
         self.reg_lambda = reg_lambda
         self.reg_gamma = reg_gamma
-        self.subsample = subsample
+        self.subsample = subsample # réduis la variance (bootstrap)
         self.loss = loss
         self.early_stopping_rounds = early_stopping_rounds
         self.validation_fraction = validation_fraction
 
-        self.initial_prediction = None
+        self.initial_prediction = None # F0
         self.model_list = []
 
     def _compute_gradient_hessian(self, y, y_pred):
@@ -132,33 +132,33 @@ class XGBoostRegressor:
         return X[random_index], gradient[random_index], hessian[random_index]
 
     def _gradient_descent(self, X, y):
-        if self.early_stopping_rounds and self.validation_fraction:
+        if self.early_stopping_rounds and self.validation_fraction: # s'il y a early_stopping_rounds
             X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=self.validation_fraction, random_state=0)
         else:
             X_train, y_train = X, y
             X_val = y_val = None
 
         m, n = X_train.shape
-        self.initial_prediction = 1/m * np.sum(y_train)
-        y_pred = np.full(m, self.initial_prediction)
+        self.initial_prediction = 1/m * np.sum(y_train) # moyenne des valeurs réels (y)
+        y_pred = np.full(m, self.initial_prediction) # prédictions initiales pour les exemples
 
-        if X_val is not None:
-            pred_val = np.full(X_val.shape[0], self.initial_prediction)
+        if X_val is not None: # s'il y a early_stopping_rounds
+            pred_val = np.full(X_val.shape[0], self.initial_prediction) # prédiction initiales sur le test de validation
             best_score = float("-inf")
             best_iter = None
 
         for i in range(self.n_estimators):
             gradient, hessian = self._compute_gradient_hessian(y_pred, y_train)
 
-            X_sub, grad_sub, hess_sub = self._subsample_function(X_train, gradient, hessian)
+            X_sub, grad_sub, hess_sub = self._subsample_function(X_train, gradient, hessian) # bootstrap
             model = DecisionTreeRegressor(self.max_features, self.max_depth, self.min_samples_leaf, self.min_samples_split,
                                             self.reg_lambda, self.reg_gamma)
             model.fit(X_sub, -grad_sub, hess_sub)
             self.model_list.append(model)
-            y_pred += self.learning_rate * model.predict(X_train)
+            y_pred += self.learning_rate * model.predict(X_train) # fi := fi-1 + alpha * Fi
             
-            if X_val is not None:
-                pred_val += self.learning_rate * model.predict(X_val)
+            if X_val is not None: # s'il y a early_stopping_rounds
+                pred_val += self.learning_rate * model.predict(X_val) # fi := fi-1 + alpha * Fi
                 score = r2_score(y_val, pred_val)
                 if score > best_score:
                     best_score = score
@@ -174,11 +174,10 @@ class XGBoostRegressor:
         X = np.array(X)
         y_pred = np.full(X.shape[0], self.initial_prediction)
         for model in self.model_list:
-            y_pred += self.learning_rate * model.predict(X)
+            y_pred += self.learning_rate * model.predict(X) # fi := fi-1 + alpha * Fi
         return y_pred
 
-X, y = make_classification(n_samples=500, n_features=10, n_informative=7, n_clusters_per_class=1, n_classes=4, random_state=0)
-X, y = make_regression(n_samples=1000, n_features=10, noise=30, random_state=0)
+X, y = make_friedman1(n_samples=1000, n_features=10, noise=1, random_state=0)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=0)
 
 model = XGBoostRegressor()

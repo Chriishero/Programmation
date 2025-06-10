@@ -1,10 +1,10 @@
 #include <iostream>
 #include "SFML/Graphics.hpp"
+#include <SFML/OpenGL.hpp>
+#include <TGUI/TGUI.hpp>
 #include "main.h"
 #include "World.h"
-#include <ImGui/imgui.h>
-#include <ImGui/imgui-SFML.h>
- 
+
 sf::RenderWindow window;
 
 int main()
@@ -13,6 +13,8 @@ int main()
     window.setVerticalSyncEnabled(true);
     sf::Clock deltaClock;
     Renderer renderer(window);
+
+	tgui::GuiSFML gui(window);
 
     World world(9.81f, 0.0f);
     world.create();

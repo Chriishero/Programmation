@@ -1,6 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.datasets import make_classification, make_regression
 from sklearn.metrics import r2_score, accuracy_score
 from sklearn.model_selection import train_test_split
 
@@ -13,19 +11,18 @@ class TreeNode:
         self.value = value
 
 class DecisionTreeRegressor:
-    def __init__(self, max_features, max_depth, min_samples_leaf, min_samples_split, reg_lambda, reg_gamma):
+    def __init__(self, max_features=None, max_depth=None, min_samples_leaf=None, min_samples_split=None,
+                  reg_lambda=None, reg_gamma=None):
         self.max_features = max_features
         self.max_depth = max_depth
         self.min_samples_leaf = min_samples_leaf
         self.min_samples_split = min_samples_split
         self.reg_lambda = reg_lambda
         self.reg_gamma = reg_gamma
-
-        self.tree = None
-
+    
     def _gain_function(self, G_left, G_right, H_left, H_right):
-        return 1/2 * (G_left**2 / (H_left + self.reg_lambda) + G_right**2 / (H_right + self.reg_lambda) 
-                      - (G_left + G_right)**2 / (H_left + H_right + self.reg_lambda)) - self.reg_gamma
+        return 1/2 * (G_left**2 / (H_left + self.reg_lambda) + G_right**2 / (H_right + self.reg_lambda) - 
+                      (G_left + G_right)**2 / (H_left + H_right + self.reg_lambda)) - self.reg_gamma
     
     def _split_function(self, X, gradient, hessian):
         m, n = X.shape
@@ -54,7 +51,6 @@ class DecisionTreeRegressor:
                 H_left = np.sum(hessian[left_mask])
                 H_right = np.sum(hessian[right_mask])
                 gain = self._gain_function(G_left, G_right, H_left, H_right)
-
                 if gain > best_gain:
                     best_gain = gain
                     best_split = feature_index, threshold
@@ -62,48 +58,48 @@ class DecisionTreeRegressor:
         return best_split
     
     def _tree_function(self, X, gradient, hessian, depth=0):
-        def _leaf_values():
+        def _leaf_value():
             G = np.sum(gradient)
             H = np.sum(hessian)
             return TreeNode(value=-G / (H + self.reg_lambda))
         
         if self.max_depth is not None and self.max_depth <= depth:
-            return _leaf_values()
+            return _leaf_value()
         
         split = self._split_function(X, gradient, hessian)
         if split is None:
-            return _leaf_values()
+            return _leaf_value()
         
         feature_index, threshold = split
         left_mask = X[:, feature_index] < threshold
         right_mask = ~left_mask
 
         if len(gradient[left_mask]) == 0 or len(gradient[right_mask]) == 0:
-            return _leaf_values()
+            return _leaf_value()
         
         left_tree = self._tree_function(X[left_mask], gradient[left_mask], hessian[left_mask], depth+1)
         right_tree = self._tree_function(X[right_mask], gradient[right_mask], hessian[right_mask], depth+1)
 
         return TreeNode(feature_index, threshold, left_tree, right_tree)
     
-    def _predict_samples(self, x, tree):
+    def _predict_sample(self, x, tree):
         if tree.value is not None:
             return tree.value
         if x[tree.feature_index] < tree.threshold:
-            return self._predict_samples(x, tree.left)
+            return self._predict_sample(x, tree.left)
         else:
-            return self._predict_samples(x, tree.right)
+            return self._predict_sample(x, tree.right)
         
     def fit(self, X, gradient, hessian):
         self.tree = self._tree_function(np.array(X), np.array(gradient), np.array(hessian))
 
     def predict(self, X):
-        X = np.array(X)
-        return np.array([self._predict_samples(x, self.tree) for x in X])
+        return np.array([self._predict_sample(x, self.tree) for x in np.array(X)])
     
 class XGBoostRegressor:
-    def __init__(self, n_estimators=100, learning_rate=0.2, max_features="sqrt", max_depth=3, min_samples_leaf=10, min_samples_split=5,
-                 reg_lambda=1.0, reg_gamma=0.0, subsample=0.9, loss='mean_squared', early_stopping_rounds=20, validation_fraction=0.1):
+    def __init__(self, n_estimators=100, learning_rate=0.2, max_features='sqrt', max_depth=3, 
+                 min_samples_leaf=10, min_samples_split=5, reg_lambda=1.0, reg_gamma=0.0, 
+                 subsample=0.9, loss='log_loss', early_stopping_rounds=20, validation_fraction=0.1):
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
         self.max_features = max_features
@@ -120,19 +116,16 @@ class XGBoostRegressor:
         self.initial_prediction = None
         self.model_list = []
 
-    def _compute_gradient_hessian(self, y, y_pred):
-        if self.loss == 'mean_squared':
-            gradient = y_pred - y
-            hessian = np.ones_like(y)
-            return gradient, hessian
-
+    def _gradient_hessian(self, y, y_pred):
+        if self.loss == 'log_loss':
+            return y - y_pred, np.ones_like(y)
+        
     def _subsample_function(self, X, gradient, hessian):
-        m, n = X.shape
-        random_index = np.random.choice(m, int(m * self.subsample), replace=False)
+        random_index = np.random.choice(len(X), int(len(X * self.subsample)), replace=False)
         return X[random_index], gradient[random_index], hessian[random_index]
 
     def _gradient_descent(self, X, y):
-        if self.early_stopping_rounds and self.validation_fraction:
+        if self.early_stopping_rounds is not None and self.validation_fraction is not None:
             X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=self.validation_fraction, random_state=0)
         else:
             X_train, y_train = X, y
@@ -142,29 +135,28 @@ class XGBoostRegressor:
         self.initial_prediction = 1/m * np.sum(y_train)
         y_pred = np.full(m, self.initial_prediction)
 
-        if X_val is not None:
-            pred_val = np.full(X_val.shape[0], self.initial_prediction)
-            best_score = float("-inf")
-            best_iter = None
+        if self.early_stopping_rounds is not None and self.validation_fraction is not None:
+            val_pred = np.full(X_val.shape[0], self.initial_prediction)
+            best_score = float('-inf')
+            best_i = None
 
         for i in range(self.n_estimators):
-            gradient, hessian = self._compute_gradient_hessian(y_pred, y_train)
-
+            gradient, hessian = self._gradient_hessian(y_train, y_pred)
             X_sub, grad_sub, hess_sub = self._subsample_function(X_train, gradient, hessian)
             model = DecisionTreeRegressor(self.max_features, self.max_depth, self.min_samples_leaf, self.min_samples_split,
                                             self.reg_lambda, self.reg_gamma)
             model.fit(X_sub, -grad_sub, hess_sub)
             self.model_list.append(model)
             y_pred += self.learning_rate * model.predict(X_train)
-            
-            if X_val is not None:
-                pred_val += self.learning_rate * model.predict(X_val)
-                score = r2_score(y_val, pred_val)
+
+            if self.early_stopping_rounds is not None and self.validation_fraction is not None:
+                val_pred += self.learning_rate * model.predict(X_val)
+                score = r2_score(y_val, val_pred)
                 if score > best_score:
                     best_score = score
-                    best_iter = i
-                elif i - best_iter >= self.early_stopping_rounds:
-                    print(f'break at {i}')
+                    best_i = i
+                elif i - best_i >= self.early_stopping_rounds:
+                    print(f'stop at {i}')
                     break
 
     def fit(self, X, y):
@@ -176,17 +168,3 @@ class XGBoostRegressor:
         for model in self.model_list:
             y_pred += self.learning_rate * model.predict(X)
         return y_pred
-
-X, y = make_classification(n_samples=500, n_features=10, n_informative=7, n_clusters_per_class=1, n_classes=4, random_state=0)
-X, y = make_regression(n_samples=1000, n_features=10, noise=30, random_state=0)
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=0)
-
-model = XGBoostRegressor()
-model.fit(X_train, y_train)
-y_pred = model.predict(X_test)
-
-plt.figure()
-plt.scatter(y_test, y_pred)
-plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], color='r')
-plt.title(f'{r2_score(y_test, y_pred)}')
-plt.show()

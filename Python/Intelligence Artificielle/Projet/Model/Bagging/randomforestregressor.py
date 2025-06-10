@@ -1,10 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.datasets import make_regression
-from sklearn.metrics import r2_score
-
-# Générer un dataset avec plusieurs classes
-X, y = make_regression(n_features=10, n_samples=500, noise=30, random_state=0)
 
 class TreeNode:
     def __init__(self, feature_index=None, threshold=None, left=None, right=None, value=None):
@@ -170,13 +164,3 @@ class RandomForestRegressor:
         X = np.array(X)
         predictions_list = np.array([model.predict(X) for model in self.model_list])
         return predictions_list.mean(axis=0) # moyenne des prédictions pour chaque échantillons de X
-
-model = RandomForestRegressor()
-model.fit(X, y)
-y_pred = model.predict(X)
-
-plt.figure()
-plt.scatter(y, y_pred)
-plt.plot([y.min(), y.max()], [y.min(), y.max()], 'r--')
-plt.title(f"{r2_score(y, y_pred)}")
-plt.show()

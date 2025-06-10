@@ -1,6 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.datasets import make_classification
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 
@@ -144,8 +142,8 @@ class XGBoostClassifier:
     def _gradient_hessian(self, y_onehot, proba):
         if self.loss == "log_loss":
             # Gradient = p_k - y_k
-            gradient = proba - y_onehot
-            hessian = proba * (1 - proba)
+            gradient = proba - y_onehot # dérivé de la perte par rapport à la prédiction précédente
+            hessian = proba * (1 - proba) # dérivé seconde
             return gradient, hessian
 
     def _subsample(self, X, gradient, hessian):
@@ -217,16 +215,3 @@ class XGBoostClassifier:
             for tree in self.model_list[k]:
                 logits[:, k] += self.learning_rate * tree.predict(X) # logits de la classe k
         return np.argmax(self._softmax(logits), axis=1) # classe qui maximise le softmax
-
-# Test
-X, y = make_classification(n_samples=500, n_features=10, n_informative=2, n_clusters_per_class=1, n_classes=4, random_state=0)
-model = XGBoostClassifier()
-model.fit(X, y)
-y_pred = model.predict(X)
-
-plt.figure()
-plt.scatter(X[:, 0], y)
-plt.plot(X[:, 0], y_pred, color='r')
-plt.title(f'Accuracy: {accuracy_score(y, y_pred):.3f}')
-plt.legend()
-plt.show()

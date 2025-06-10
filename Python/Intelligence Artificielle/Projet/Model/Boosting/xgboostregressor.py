@@ -1,6 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.datasets import make_friedman1, make_regression
 from sklearn.metrics import r2_score
 from sklearn.model_selection import train_test_split
 
@@ -140,8 +138,8 @@ class XGBoostRegressor:
 
     def _compute_gradient_hessian(self, y, y_pred):
         if self.loss == 'mean_squared':
-            gradient = y_pred - y
-            hessian = np.ones_like(y)
+            gradient = y - y_pred # dérivé de la perte par rapport à la prédiction précédente
+            hessian = np.ones_like(y) # dérivé seconde
             return gradient, hessian
 
     def _subsample_function(self, X, gradient, hessian):
@@ -166,7 +164,7 @@ class XGBoostRegressor:
             best_iter = None
 
         for i in range(self.n_estimators):
-            gradient, hessian = self._compute_gradient_hessian(y_pred, y_train)
+            gradient, hessian = self._compute_gradient_hessian(y_train, y_pred)
 
             X_sub, grad_sub, hess_sub = self._subsample_function(X_train, gradient, hessian) # bootstrap
             model = DecisionTreeRegressor(self.max_features, self.max_depth, self.min_samples_leaf, self.min_samples_split,
@@ -194,16 +192,3 @@ class XGBoostRegressor:
         for model in self.model_list:
             y_pred += self.learning_rate * model.predict(X) # fi := fi-1 + alpha * Fi
         return y_pred
-
-X, y = make_friedman1(n_samples=1000, n_features=10, noise=1, random_state=0)
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=0)
-
-model = XGBoostRegressor()
-model.fit(X_train, y_train)
-y_pred = model.predict(X_test)
-
-plt.figure()
-plt.scatter(y_test, y_pred)
-plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], color='r')
-plt.title(f'{r2_score(y_test, y_pred)}')
-plt.show()

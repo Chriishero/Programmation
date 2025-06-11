@@ -154,17 +154,27 @@ void Rode::setm_jointPosition(sf::Vector2f position)
     m_jointPosition = position;
 }
 
+void Rode::setm_size(sf::Vector2f size)
+{
+    m_size = size;
+}
+
 void Rode::setm_angle(float angle)
 {
     m_angle = angle;
 }
 
-void Rode::setm_angularVelocity(double angularVelocity)
+void Rode::setm_weight(float w)
+{
+    m_weight = w;
+}
+
+void Rode::setm_angularVelocity(float angularVelocity)
 {
     m_angularVelocity = angularVelocity;
 }
 
-void Rode::setm_angularAcceleration(double angularAcceleration)
+void Rode::setm_angularAcceleration(float angularAcceleration)
 {
     m_angularAcceleration = angularAcceleration;
 }

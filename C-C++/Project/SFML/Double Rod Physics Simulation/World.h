@@ -2,6 +2,7 @@
 #include <vector>
 #include "Rode.h"
 #include "Renderer.h"
+#include <TGUI/TGUI.hpp>
 
 class World
 {
@@ -9,6 +10,7 @@ public:
 	World(float gravity, float friction);
 
 	void create();
+	void setGui(tgui::GuiSFML &gui);
 	void motion();
 	void update(float deltaTime);
 	void render(Renderer& renderer);
@@ -24,5 +26,14 @@ private:
 	std::vector<Rode*> m_vecRod{};
 
 	float m_speedFactor = 1.0f;
+
+	float l1 = 0;
+	float l2 = 0;
+	float theta1 = 0;
+	float theta2 = 0;
+	float dtheta1 = 0;
+	float dtheta2 = 0;
+	float m1 = 0;
+	float m2 = 0;
 };
 

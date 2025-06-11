@@ -29,9 +29,11 @@ public:
 	void setm_massPosition(sf::Vector2f position);
 	void setm_jointOrigin(sf::Vector2f origin);
 	void setm_jointPosition(sf::Vector2f position);
+	void setm_size(sf::Vector2f size);
 	void setm_angle(float angle);
-	void setm_angularVelocity(double angularVelocity);
-	void setm_angularAcceleration(double angularAcceleration);
+	void setm_angularVelocity(float  angularVelocity);
+	void setm_angularAcceleration(float angularAcceleration);
+	void setm_weight(float w);
 private:
 	float m_potentialEnergy = 0.0f;
 	float m_kineticEnergy = 0.0f;

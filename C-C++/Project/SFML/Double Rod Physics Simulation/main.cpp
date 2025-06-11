@@ -18,11 +18,13 @@ int main()
 
     World world(9.81f, 0.0f);
     world.create();
+	world.setGui(gui);
 
     while (window.isOpen()) {
         float deltaTime = deltaClock.restart().asSeconds();
         sf::Event event;
         while (window.pollEvent(event)) {
+            gui.handleEvent(event);
             if (event.type == sf::Event::Closed) {
                 window.close();
             }
@@ -31,6 +33,8 @@ int main()
 
         world.render(renderer);
         world.update(deltaTime);
+
+        gui.draw();
 
         window.display();
     }

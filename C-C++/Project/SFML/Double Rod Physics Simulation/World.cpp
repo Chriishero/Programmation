@@ -10,7 +10,7 @@ void World::create()
 {
 	for (int i = 0; i < 2; i++) {
 		if(m_vecRod.empty())
-			m_rod = new Rode(sf::Vector2f(20, 250), sf::Vector2f(920 / 2, 920 / 2), 90, 2, 1);
+			m_rod = new Rode(sf::Vector2f(20, 250), sf::Vector2f(1200 / 2, 920 / 2), 90, 2, 1);
 		else {
 			auto prevPos = m_vecRod[i - 1]->getm_position();
 			auto prevSize = m_vecRod[i - 1]->getm_size();
@@ -18,6 +18,56 @@ void World::create()
 		}
 		m_vecRod.push_back(m_rod);
 	}
+}
+
+void World::setGui(tgui::GuiSFML &gui)
+{
+	l1 = m_vecRod[0]->getm_size().y;
+	l2 = m_vecRod[1]->getm_size().y;
+	theta1 = m_vecRod[0]->getm_angle();
+	theta2 = m_vecRod[1]->getm_angle();
+	dtheta1 = m_vecRod[0]->getm_angularVelocity();
+	dtheta2 = m_vecRod[1]->getm_angularVelocity();
+	m1 = m_vecRod[0]->getm_weight();
+	m2 = m_vecRod[1]->getm_weight();
+
+	std::vector<std::shared_ptr<tgui::Slider>> sliderVec{};
+	std::vector<float*> varVec{ &l1, &l2, &theta1, &theta2, &dtheta1, &dtheta2, &m1, &m2 };
+	std::vector<std::string> nameVarVec{ "l1", "l2", "theta1", "theta2", "dtheta1", "dtheta2", "m1", "m2" };
+	std::vector<int> varMaxValue{ 1000, 1000, 360, 360, 10, 10, 10, 10 };
+
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 2; j++) {
+			int index = 2 * i + j;
+			auto slider = tgui::Slider::create(0, varMaxValue[index]);
+			slider->setValue(*varVec[2 * i + j]);
+			slider->setPosition({ 5 + 165 * j, 0 + 50 * i });
+			slider->setSize({ 150, 20 });
+			gui.add(slider);
+			auto label = tgui::Label::create(nameVarVec[2 * i + j] + " : " + std::to_string(*varVec[2 * i + j]));
+			label->setPosition({ 5 + 165 * j, 25 + 50 * i });
+			gui.add(label);
+			slider->onValueChange([label, ptr = varVec[index], name = nameVarVec[index], i, j, this](float value) {
+				label->setText(name + " : " + std::to_string(value));
+				*ptr = value;
+				std::cout << m2 << std::endl;
+			});
+		}
+	}
+	auto button = tgui::Button::create("Apply");
+	button->setPosition({ 0, 200 });
+	button->setSize({ 200, 40 });
+	gui.add(button);
+	button->onPress([=]() {
+		m_vecRod[0]->setm_size(sf::Vector2f(m_vecRod[0]->getm_size().x, l1));
+		m_vecRod[1]->setm_size(sf::Vector2f(m_vecRod[1]->getm_size().x, l2));
+		m_vecRod[0]->setm_angle(theta1);
+		m_vecRod[1]->setm_angle(theta2);
+		m_vecRod[0]->setm_angularVelocity(dtheta1);
+		m_vecRod[1]->setm_angularVelocity(dtheta2);
+		m_vecRod[0]->setm_weight(m1);
+		m_vecRod[1]->setm_weight(m2);
+	});
 }
 
 void World::motion() {

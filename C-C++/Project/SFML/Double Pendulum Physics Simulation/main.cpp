@@ -9,7 +9,7 @@ sf::RenderWindow window;
 
 int main()
 {
-    window.create(sf::VideoMode(WIN_WIDTH, WIN_HEIGHT), "Double Rode Physics Simulation");
+    window.create(sf::VideoMode(WIN_WIDTH, WIN_HEIGHT), "Double Pendulum Physics Simulation");
     window.setVerticalSyncEnabled(true);
     sf::Clock deltaClock;
     Renderer renderer(window);

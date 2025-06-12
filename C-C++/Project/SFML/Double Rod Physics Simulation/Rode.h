@@ -7,6 +7,7 @@ class Rode
 public:
 	Rode(sf::Vector2f size, sf::Vector2f position, float angle, float angularVelocity, float weight);
 
+	void begin();
 	void motion(float deltaTime);
 	void update(float deltaTime);
 	void draw(Renderer& renderer);

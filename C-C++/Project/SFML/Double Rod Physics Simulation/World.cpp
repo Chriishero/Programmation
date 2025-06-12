@@ -16,6 +16,7 @@ void World::create()
 			auto prevSize = m_vecRod[i - 1]->getm_size();
 			m_rod = new Rode(prevSize, sf::Vector2f(prevPos.x, prevPos.y + prevSize.y), 270, 0, 1);
 		}
+		m_rod->begin();
 		m_vecRod.push_back(m_rod);
 	}
 }
@@ -32,13 +33,14 @@ void World::setGui(tgui::GuiSFML &gui)
 	m2 = m_vecRod[1]->getm_weight();
 
 	std::vector<std::shared_ptr<tgui::Slider>> sliderVec{};
-	std::vector<float*> varVec{ &l1, &l2, &theta1, &theta2, &dtheta1, &dtheta2, &m1, &m2 };
-	std::vector<std::string> nameVarVec{ "l1", "l2", "theta1", "theta2", "dtheta1", "dtheta2", "m1", "m2" };
-	std::vector<int> varMaxValue{ 1000, 1000, 360, 360, 10, 10, 10, 10 };
+	std::vector<float*> varVec{ &l1, &l2, &theta1, &theta2, &dtheta1, &dtheta2, &m1, &m2, &frictionTemp};
+	std::vector<std::string> nameVarVec{ "l1", "l2", "theta1", "theta2", "dtheta1", "dtheta2", "m1", "m2", "friction"};
+	std::vector<int> varMaxValue{ 1000, 1000, 360, 360, 10, 10, 10, 10, 10};
 
-	for (int i = 0; i < 4; i++) {
+	for (int i = 0; i < 5; i++) {
 		for (int j = 0; j < 2; j++) {
 			int index = 2 * i + j;
+			if (index >= varVec.size()) break;
 			auto slider = tgui::Slider::create(0, varMaxValue[index]);
 			slider->setValue(*varVec[2 * i + j]);
 			slider->setPosition({ 5 + 165 * j, 0 + 50 * i });
@@ -47,15 +49,14 @@ void World::setGui(tgui::GuiSFML &gui)
 			auto label = tgui::Label::create(nameVarVec[2 * i + j] + " : " + std::to_string(*varVec[2 * i + j]));
 			label->setPosition({ 5 + 165 * j, 25 + 50 * i });
 			gui.add(label);
-			slider->onValueChange([label, ptr = varVec[index], name = nameVarVec[index], i, j, this](float value) {
+			slider->onValueChange([label, ptr = varVec[index], name = nameVarVec[index], i, j](float value) {
 				label->setText(name + " : " + std::to_string(value));
 				*ptr = value;
-				std::cout << m2 << std::endl;
 			});
 		}
 	}
 	auto button = tgui::Button::create("Apply");
-	button->setPosition({ 0, 200 });
+	button->setPosition({ 0, 25 * (varVec.size() + 1)});
 	button->setSize({ 200, 40 });
 	gui.add(button);
 	button->onPress([=]() {
@@ -67,6 +68,9 @@ void World::setGui(tgui::GuiSFML &gui)
 		m_vecRod[1]->setm_angularVelocity(dtheta2);
 		m_vecRod[0]->setm_weight(m1);
 		m_vecRod[1]->setm_weight(m2);
+		m_friction = frictionTemp / 10; // Normalisation de la friction : 1 = 0.1, 10 = 1
+		m_vecRod[0]->begin();
+		m_vecRod[1]->begin();
 	});
 }
 

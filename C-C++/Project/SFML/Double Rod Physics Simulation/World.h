@@ -35,5 +35,6 @@ private:
 	float dtheta2 = 0;
 	float m1 = 0;
 	float m2 = 0;
+	float frictionTemp = 0.0f;
 };
 

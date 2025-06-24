@@ -16,23 +16,24 @@ public:
 	void update(float deltaTime);
 	void render(Renderer& renderer);
 
+	float M_PI = 3.14159265358979323846f;
+
 private:
 	int m_nBody;
+
+	float m_distMin = 0.0f;
+	float m_distMax = 1000.0f;
+	float m_angleMin = 0.0f;
+	float m_angleMax = 2 * M_PI;
+	float m_massMin = 1e4f;
+	float m_massMax = 1e8f;
+	float m_centralRadius = 10.0f;
+	float m_centralMass = 1e12f;
+	const float m_pixelToMeter = 1e0;
 
 	Body* m_body;
 	std::vector<Body*> m_vecBody{};
 
-	float m_r1Temp;
-	float m_r2Temp;
-	float m_x1Temp;
-	float m_x2Temp;
-	float m_y1Temp;
-	float m_y2Temp;
-	float m_dx1Temp;
-	float m_dx2Temp;
-	float m_dy1Temp;
-	float m_dy2Temp;
-	float m_m1Temp;
-	float m_m2Temp;
+	std::vector<float> varVec{};
 };
 

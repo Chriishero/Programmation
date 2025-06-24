@@ -15,7 +15,7 @@ int main() {
 	tgui::GuiSFML gui(window);
 
 	Renderer renderer(window);
-	World world(3);
+	World world(1e3);
 	world.create();
 	world.setGui(gui);
 		

@@ -1,9 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import make_regression
+from sklearn.metrics import r2_score
 
-n_features = 10
-x, y = make_regression(n_samples=500, n_features=n_features, noise=10, random_state=0)
+x, y = make_regression(n_samples=500, n_features=10, noise=10, random_state=0)
 X = np.hstack((x, np.ones((x.shape[0], 1))))
 y = y.reshape((y.shape[0], 1))
 
@@ -54,12 +54,12 @@ class LocallyWeightedRegression:
             self.normal_equation(X, y, x)
 
         return self.hypothesis(x)
-    
-x = np.hstack((np.random.randn(1, n_features), np.ones((1, 1))))
+
 
 model = LocallyWeightedRegression(n_iteration=1000, learning_rate=0.2, tau=0.9, method="gradient descent")
-y_pred = model.predict(X, y, x)
-print(y_pred)
+model = LocallyWeightedRegression()
+y_preds = [model.predict(X, y, x) for x in X]
+print(f'{r2_score(y, y_preds)}')
 
 plt.figure()
 plt.plot(range(model.n_iteration), model.cost_history, label="Évolution de la fonction coût")

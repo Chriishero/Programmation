@@ -1,184 +1,57 @@
 import numpy as np
-from sklearn.metrics import accuracy_score, r2_score
-from sklearn.model_selection import train_test_split
 
-class TreeNode:
-    def __init__(self, feature_index=None, threshold=None, left=None, right=None, value=None):
-        self.feature_index = feature_index
-        self.threshold = threshold
-        self.left = left
-        self.right = right
-        self.value = value
+class SVM:
+    def __init__(self, n_iteration=100, kernel='rbf', polynom_degree=4, polynomial_constant=1.0, gamma=1.0, regularization=1.0):
+        self.n_iteration = n_iteration
+        self.kernel = kernel
+        self.polynom_degree = polynom_degree
+        self.polynomial_constant = polynomial_constant
+        self.gamma = gamma
+        self.C = regularization
 
-class DecisionTreeRegressor:
-    def __init__(self, max_features, max_depth, min_samples_leaf, min_samples_split, reg_lambda, reg_gamma):
-        self.max_features = max_features
-        self.max_depth = max_depth
-        self.min_samples_leaf = min_samples_leaf
-        self.min_samples_split = min_samples_split 
-        self.reg_lambda = reg_lambda
-        self.reg_gamma = reg_gamma
+        self.X_train, self.y_train = None, None
+        self.K, self.alpha, self.b = None, None, 0
 
-        self.tree = None
-
-    def _gain_function(self, G_left, G_right, H_left, H_right):
-        return 1/2 * (G_left**2 / (H_left + self.reg_lambda) + G_right**2 / (H_right + self.reg_lambda) -
-                      (G_left + G_right)**2 / (H_left + H_right + self.reg_lambda)) - self.reg_gamma
+    def _kernel_function(self, X, Z):
+        if self.kernel == 'linear':
+            return X @ Z.T
+        if self.kernel == 'polynomial':
+            return (X @ Z.T + self.polynomial_constant)**self.polynom_degree
+        if self.kernel == 'rbf':
+            return np.exp(-self.gamma * np.linalg.norm(X[:, np.newaxis, :] - Z, axis=2)**2)
+        
+    def _dual_objectiv_function(self, X, y):
+        return np.sum(self.alpha) - 1/2 * self.alpha @ ((np.outer(y, y) * self.K) @ self.alpha)
     
-    def _split_function(self, X, grad, hess):
+    def _sequential_minimal_optimization(self, X, y):
         m, n = X.shape
-        best_split = None
-        best_gain = float("-inf")
-        indices = np.arange(n)
+        self.alpha = np.zeros(m)
+        for iteration in range(self.n_iteration):
+            for i in range(m):
+                j = np.random.choice([k for k in range(m) if k != i])
 
-        if isinstance(self.max_features, int):
-            indices = np.random.choice(n, self.max_features, replace=False)
-        if self.max_features == "sqrt":
-            indices = np.random.choice(n, int(np.sqrt(n)), replace=False)
-        if self.max_features == 'log2':
-            indices = np.random.choice(n, int(np.log2(n)), replace=False)
-        for feature_index in indices:
-            thresholds = np.unique(X[:, feature_index])
-            for threshold in thresholds:
-                left_mask = X[:, feature_index] < threshold
-                right_mask = ~left_mask
+                old_alpha_i, old_alpha_j = self.alpha[i], self.alpha[j]
 
-                if self.min_samples_leaf is not None and (len(grad[left_mask]) < self.min_samples_leaf or 
-                                                          len(grad[right_mask]) < self.min_samples_leaf):
-                    continue
-                if self.min_samples_split is not None and (len(grad[left_mask]) < self.min_samples_split or
-                                                           len(grad[right_mask])< self.min_samples_split):
-                    continue
+                zeta = y[i] * old_alpha_i + y[j] * old_alpha_j
+                self.alpha[j] = (1 - y[i] * self.K[i, j] * zeta) / (self.K[j, j] - self.K[i, j])
+                self.alpha[j] = np.clip(self.alpha[j], 0, self.C)
 
-                G_left = np.sum(grad[left_mask])
-                G_right = np.sum(grad[right_mask])
-                H_left = np.sum(hess[left_mask])
-                H_right = np.sum(hess[right_mask])
-                gain = self._gain_function(G_left, G_right, H_left, H_right)
-                if gain > best_gain:
-                    best_gain = gain
-                    best_split = feature_index, threshold
+                self.alpha[i] = self.alpha[i] + y[i] * y[j] * (old_alpha_j - self.alpha[j])
+                self.alpha[i] = np.clip(self.alpha[i], 0, self.C)
 
-        return best_split
-    
-    def _tree_function(self, X, grad, hess, depth=0):
-        def _leaf_value():
-            G = np.sum(grad)
-            H = np.sum(hess)
-            return TreeNode(value=-G / (H + self.reg_lambda))
-        
-        if self.max_depth is not None and self.max_depth <= depth:
-            return _leaf_value()
-        
-        split = self._split_function(X, grad, hess)
-        if split is None:
-            return _leaf_value()
-        
-        feature_index, threshold = split
-        left_mask = X[:, feature_index] < threshold
-        right_mask = ~left_mask
-        if len(grad[left_mask]) == 0 or len(grad[right_mask]) == 0:
-            return _leaf_value()
-        
-        left_tree = self._tree_function(X[left_mask], grad[left_mask], hess[left_mask], depth+1)
-        right_tree = self._tree_function(X[right_mask], grad[right_mask], hess[right_mask], depth+1)
+                E_i = np.sum(y.ravel() * self.alpha * self.K[i, :]) + self.b - y[i]
+                E_j = np.sum(y.ravel() * self.alpha * self.K[j, :]) + self.b - y[j]
 
-        return TreeNode(feature_index, threshold, left_tree, right_tree)
-    
-    def _predict_sample(self, x, tree):
-        if tree.value is not None:
-            return tree.value
-        if x[tree.feature_index] < tree.threshold:
-            return self._predict_sample(x, tree.left)
-        else:
-            return self._predict_sample(x, tree.right)
-    
-    def fit(self, X, grad, hess):
-        self.tree = self._tree_function(np.array(X), np.array(grad), np.array(hess))
-
-    def predict(self, X):
-        return np.array([self._predict_sample(x, self.tree) for x in X])
-    
-class XGBoostClassifier:
-    def __init__(self, n_estimators=100, learning_rate=0.2, max_features='sqrt', max_depth=3, min_samples_leaf=10, min_samples_split=5, 
-                 reg_lambda=1.0, reg_gamma=0.0, subsample=0.9, loss='log_loss', early_stopping_rounds=20, validation_fraction=0.1):
-        self.n_estimators = n_estimators
-        self.learning_rate = learning_rate
-        self.max_features = max_features
-        self.max_depth = max_depth
-        self.min_samples_leaf = min_samples_leaf
-        self.min_samples_split = min_samples_split
-        self.reg_lambda = reg_lambda
-        self.reg_gamma = reg_gamma
-        self.subsample = subsample
-        self.loss = loss
-        self.early_stopping_rounds = early_stopping_rounds
-        self.validation_fraction = validation_fraction
-        
-        self.n_classes = None
-        self.model_list = []
-
-    def _softmax(self, logits):
-        exp = np.exp(logits - np.max(logits, axis=1, keepdims=True))
-        return exp / np.sum(exp, axis=1, keepdims=True)
-
-    def _compute_gradient_hessian(self, proba, y_onehot):
-        if self.loss == "log_loss":
-            return proba - y_onehot, proba * (1 - proba)
-        
-    def _subsample_function(self, X, grad, hess):
-        m, n = X.shape
-        random_index = np.random.choice(m, int(m * self.subsample), replace=False)
-        return X[random_index], grad[random_index], hess[random_index]
-    
-    def _gradient_descent(self, X, y):
-        if self.early_stopping_rounds is not None and self.validation_fraction:
-            X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=self.validation_fraction, random_state=0)
-            best_score = float("-inf")
-            best_i = None
-        else:
-            X_train, y_train = X, y
-            X_val = y_val = None
-
-        m, n = X_train.shape
-        self.n_classes = np.max(y) + 1
-        logits = np.zeros((m, self.n_classes))
-        y_onehot = np.eye(self.n_classes)[y_train]
-
-        self.model_list = [[] for _ in range(self.n_classes)]
-
-        if self.early_stopping_rounds is not None and self.validation_fraction is not None:
-            val_logits = np.zeros((X_val.shape[0], self.n_classes))
-        
-        for i in range(self.n_estimators):
-            proba = self._softmax(logits)
-            gradient, hessian = self._compute_gradient_hessian(proba, y_onehot)
-            for k in range(self.n_classes):
-                X_sub, grad_sub, hess_sub = self._subsample_function(X_train, gradient[:, k], hessian[:, k])
-                model = DecisionTreeRegressor(self.max_features, self.max_depth, self.min_samples_leaf, self.min_samples_split,
-                                              self.reg_lambda, self.reg_gamma)
-                model.fit(X_sub, grad_sub, hess_sub)
-                self.model_list[k].append(model)
-                logits[:, k] += self.learning_rate * model.predict(X_train)
-            if self.early_stopping_rounds is not None and self.validation_fraction is not None:
-                for k in range(self.n_classes):
-                    val_logits[:, k] += self.learning_rate * self.model_list[k][-1].predict(X_val)
-                pred_val = np.argmax(self._softmax(val_logits), axis=1)
-                score = accuracy_score(y_val, pred_val)
-                if score > best_score:
-                    best_score = score
-                    best_i = i
-                elif i - best_i >= self.early_stopping_rounds:
-                    print(f"early stop at {i}")
-                    break
+                b1 = self.b - E_i - y[i] * (self.alpha[i] - old_alpha_i) * self.K[i, j] - y[j] * (self.alpha[j] - old_alpha_j) * self.K[i, j]
+                b2 = self.b - E_j - y[i] * (self.alpha[i] - old_alpha_i) * self.K[i, j] - y[j] * (self.alpha[j] - old_alpha_j) * self.K[j, j]
+                self.b = (b1 + b2) / 2
 
     def fit(self, X, y):
-        self._gradient_descent(np.array(X), np.array(y))
+        self.X_train, self.y_train = X, y = np.array(X), np.array(y)
+        self.K = self._kernel_function(X, X)
+        self._sequential_minimal_optimization(X, y)
 
     def predict(self, X):
         X = np.array(X)
-        logits = np.zeros((X.shape[0], self.n_classes))
-        for k in range(self.n_classes):
-            for model in self.model_list[k]:
-                logits[:, k] += self.learning_rate * model.predict(X)
-        return np.argmax(self._softmax(logits), axis=1)
+        K = self._kernel_function(X, self.X_train)
+        return np.sign(np.sum(self.alpha * self.y_train * K, axis=1) + self.b)

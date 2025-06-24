@@ -25,7 +25,7 @@ class LogisticRegression:
     
     def gradient(self, X, y):
         m = len(y)
-        h = self.sigmoid(X)
+        h = self.sigmoid(X) 
         return 1/m * X.T @ (y - h)
     
     def newton_raphson_step(self, X, y):

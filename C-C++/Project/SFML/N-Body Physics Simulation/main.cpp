@@ -15,12 +15,15 @@ int main() {
 	tgui::GuiSFML gui(window);
 
 	Renderer renderer(window);
-	World world(1e3);
+	World world(1e3, 10, "Euler");
 	world.create();
 	world.setGui(gui);
-		
+
 	while (window.isOpen()) {
-		float deltaTime = deltaClock.getElapsedTime().asSeconds();
+		float frameTime = deltaClock.getElapsedTime().asSeconds();
+		std::cout << "Frame time: " << frameTime << " seconds" << std::endl;
+		deltaClock.restart();
+
 		sf::Event event;
 		while (window.pollEvent(event)) {
 			gui.handleEvent(event);
@@ -30,7 +33,7 @@ int main() {
 		}
 		window.clear(sf::Color::Black);
 
-		world.update(deltaTime);
+		world.update(frameTime);
 		world.render(renderer);
 
 		gui.draw();

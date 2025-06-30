@@ -4,12 +4,13 @@ from sklearn.metrics import accuracy_score, r2_score
 from sklearn.model_selection import train_test_split
 from rappel import *
 
-type = "classif"
-model = SVM()
+type = "regression"
+model = LinearRegression()
 
 plt.figure()
 if type == "regression":
     X, y = make_regression(n_samples=500, n_features=10, noise=10, random_state=0)
+    y = y.reshape(-1, 1)
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=0)
 
     model.fit(X_train, y_train)

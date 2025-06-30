@@ -13,6 +13,7 @@ public:
 	float getm_size();
 	sf::Vector2f getm_position();
 	sf::Vector2f getm_velocity();
+	sf::Vector2f getm_acceleration();
 	float getm_weight();
 
 	void setm_size(float size);

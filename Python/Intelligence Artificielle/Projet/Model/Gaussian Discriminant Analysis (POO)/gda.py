@@ -22,7 +22,7 @@ class GDAClassifier:
         return np.array([X[y.flatten() == c].sum(axis=0) / (y.flatten() == c).sum(axis=0)  for c in classes]) # ou X[y.flatten() == c].mean(axis=0)
     
     def covariance_matrix(self, X, y):
-        classes = np.unique(y)
+        classes = np.unique(y) 
         mu = self.means(X, y)
         #return np.array([X[y.flatten() == c].var(axis=0) for c in classes])
         return np.array([ 

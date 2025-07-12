@@ -176,7 +176,7 @@ class RandomForestClassifier:
         X = np.array(X)
         predictions_list = np.array([model.predict(X) for model in self.model_list])
 
-        n_samples = predictions_list.shape[1]
+        n_samples = predictions_list.shape[1] # ou X.shape[0]
         majority_votes = []
         for i in range(n_samples):
             values, counts = np.unique(predictions_list[:, i], return_counts=True)

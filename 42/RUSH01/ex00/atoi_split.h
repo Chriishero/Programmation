@@ -1,1 +1,0 @@
-int *ft_atoi_split(char *str);

@@ -13,7 +13,8 @@ public:
 
 	void create();
 	void setGui(tgui::GuiSFML &gui);
-	std::vector<sf::Vector2f> computeAcceleration();
+	sf::Vector2f newtonRaphsonMethod(sf::Vector2f acceleration, sf::Vector2f velocity, sf::Vector2f position);
+	std::vector<sf::Vector2f> computeAcceleration(std::vector<sf::Vector2f> velocities = {}, std::vector<sf::Vector2f> positions = {});
 	void motion(float deltaTime);
 	void update(float deltaTime);
 	void render(Renderer& renderer);

@@ -112,9 +112,11 @@ void World::setGui(tgui::GuiSFML& gui)
 	auto comboBox = tgui::ComboBox::create();
 	comboBox->setPosition({ 1200 - 410}, 25);
 	comboBox->setSize({ 200, 20 });
-	comboBox->addItem("Euler");
+	comboBox->addItem("Explicit Euler");
+	comboBox->addItem("Implicit Euler");
+	comboBox->addItem("Verlet");
 	comboBox->addItem("Runge-Kutta 2nd-Order");
-	comboBox->addItem("Runge-Kutta 4nd-Order");
+	comboBox->addItem("Runge-Kutta 4th-Order");
 	comboBox->setSelectedItem(m_approximationMethod);
 	gui.add(comboBox);
 
@@ -123,13 +125,23 @@ void World::setGui(tgui::GuiSFML& gui)
 	});
 }
 
-std::vector<sf::Vector2f> World::computeAcceleration()
+sf::Vector2f World::newtonRaphsonMethod(sf::Vector2f acceleration, sf::Vector2f velocity, sf::Vector2f position)
+{
+	
+	return acceleration;
+}
+
+std::vector<sf::Vector2f> World::computeAcceleration(std::vector<sf::Vector2f> velocities, std::vector<sf::Vector2f> positions)
 {
 	std::vector<sf::Vector2f> accelerations(m_nBody, sf::Vector2f(0.0f, 0.0f));
 	double softening = 0.1f * m_pixelToMeter; // adoucissement pour éviter les singularités
 	for (int i = 0; i < m_vecBody.size(); i++) {
+		sf::Vector2f position_i = positions.empty() ? m_vecBody[i]->getm_position() : positions[i];
+		sf::Vector2f velocity_i = velocities.empty() ? m_vecBody[i]->getm_velocity() : velocities[i];
 		for (int j = i + 1; j < m_vecBody.size(); j++) {
-			sf::Vector2f delta = (m_vecBody[j]->getm_position() - m_vecBody[i]->getm_position()) * m_pixelToMeter;
+			sf::Vector2f position_j = positions.empty() ? m_vecBody[j]->getm_position() : positions[j];
+
+			sf::Vector2f delta = (position_j - position_i) * m_pixelToMeter;
 			//std::cout << "delta : " << delta.x << " " << delta.y << std::endl;
 			float rij = sqrt(delta.x * delta.x + delta.y * delta.y) + softening;
 			//std::cout << "rij : " << rij << std::endl;
@@ -143,30 +155,93 @@ std::vector<sf::Vector2f> World::computeAcceleration()
 }
 
 void World::motion(float deltaTime) {
-	if (m_approximationMethod == "Euler") {
+	if (m_approximationMethod == "Explicit Euler") {
 		std::vector<sf::Vector2f> accelerations = computeAcceleration();
 		for (int i = 0; i < m_nBody; i++) {
 			m_vecBody[i]->setm_acceleration(accelerations[i]);
 			m_vecBody[i]->update(deltaTime);
 		}
 	}
-	else if(m_approximationMethod == "Runge-Kutta 2nd-Order")
-	{
-		for (int iter = 0; iter < 2; iter++) {
-			std::vector<sf::Vector2f> accelerations = computeAcceleration();
-			for (int i = 0; i < m_nBody; i++) {
-				m_vecBody[i]->setm_acceleration(accelerations[i]);
-				m_vecBody[i]->update(deltaTime / 2.0f);
-			}
+	else if (m_approximationMethod == "Implicit Euler") {
+		std::vector<sf::Vector2f> accelerations {};
+		for (int i = 0; i < m_nBody; i++) {
+			accelerations[i] = newtonRaphsonMethod(m_vecBody[i]->getm_acceleration(), m_vecBody[i]->getm_velocity(), 
+				m_vecBody[i]->getm_position());
+			m_vecBody[i]->setm_acceleration(accelerations[i]);
+			m_vecBody[i]->update(deltaTime);
 		}
 	}
-	else if (m_approximationMethod == "Runge-Kutta 4nd-Order")
-	{
+	else if (m_approximationMethod == "Verlet") {
 		std::vector<sf::Vector2f> accelerations = computeAcceleration();
-		std::vector<sf::Vector2f> k1_velocity(m_nBody), k1_position(m_nBody);
-		std::vector<sf::Vector2f> k2_velocity(m_nBody), k2_position(m_nBody);
-		std::vector<sf::Vector2f> k3_velocity(m_nBody), k3_position(m_nBody);
+		for (int i = 0; i < m_nBody; i++) {
+			m_vecBody[i]->setm_acceleration(accelerations[i]);
+			m_vecBody[i]->setm_position(m_vecBody[i]->getm_position() + deltaTime * m_vecBody[i]->getm_velocity()
+				+ deltaTime * deltaTime / 2.0f * accelerations[i]);
+		}
+		accelerations = computeAcceleration();
+		for (int i = 0; i < m_nBody; i++) {
+			m_vecBody[i]->setm_velocity(m_vecBody[i]->getm_velocity() + deltaTime / 2.0f
+				* (m_vecBody[i]->getm_acceleration() + accelerations[i]));
+		}
+	}
+	else if(m_approximationMethod == "Runge-Kutta 2nd-Order")
+	{
+		std::vector<sf::Vector2f> k1_acceleration, k1_velocity(m_nBody), k1_position(m_nBody);
+		std::vector<sf::Vector2f> k2_acceleration, k2_velocity(m_nBody), k2_position(m_nBody);
+
+		for (int i = 0; i < m_nBody; i++) {
+			k1_velocity[i] = m_vecBody[i]->getm_velocity();
+			k1_position[i] = m_vecBody[i]->getm_position();
+		}
+		k1_acceleration = computeAcceleration(k1_velocity, k1_position);
+
+		for (int i = 0; i < m_nBody; i++) {
+			k2_velocity[i] = k1_velocity[i] + k1_acceleration[i] * deltaTime / 2.0f;
+			k2_position[i] = k1_position[i] + k1_velocity[i] * deltaTime / 2.0f;
+		}
+		k2_acceleration = computeAcceleration(k2_velocity, k2_position);
+
+		for (int i = 0; i < m_nBody; i++) {
+			m_vecBody[i]->setm_acceleration(k2_acceleration[i]);
+			m_vecBody[i]->setm_velocity(k1_velocity[i] + deltaTime * k2_acceleration[i]);
+			m_vecBody[i]->setm_position(k1_position[i] + deltaTime * k2_velocity[i]);
+		}
+	}
+	else if (m_approximationMethod == "Runge-Kutta 4th-Order")
+	{
+		std::vector<sf::Vector2f> k1_acceleration, k1_velocity(m_nBody), k1_position(m_nBody);
+		std::vector<sf::Vector2f> k2_acceleration, k2_velocity(m_nBody), k2_position(m_nBody);
+		std::vector<sf::Vector2f> k3_acceleration, k3_velocity(m_nBody), k3_position(m_nBody);
+		std::vector<sf::Vector2f> k4_acceleration, k4_velocity(m_nBody), k4_position(m_nBody);
 		
+		for (int i = 0; i < m_nBody; i++) {
+			k1_velocity[i] = m_vecBody[i]->getm_velocity();
+			k1_position[i] = m_vecBody[i]->getm_position();
+		}
+		k1_acceleration = computeAcceleration(k1_velocity, k1_position);
+		for (int i = 0; i < m_nBody; i++) {
+			k2_velocity[i] = k1_velocity[i] + k1_acceleration[i] * deltaTime / 2.0f;
+			k2_position[i] = k1_position[i] + k1_velocity[i] * deltaTime / 2.0f;
+		}
+		k2_acceleration = computeAcceleration(k2_velocity, k2_position);
+		for (int i = 0; i < m_nBody; i++) {
+			k3_velocity[i] = k2_velocity[i] + k2_acceleration[i] * deltaTime / 2.0f;
+			k3_position[i] = k2_position[i] + k2_velocity[i] * deltaTime / 2.0f;
+		}
+		k3_acceleration = computeAcceleration(k3_velocity, k3_position);
+		for (int i = 0; i < m_nBody; i++) {
+			k4_velocity[i] = k3_velocity[i] + k3_acceleration[i] * deltaTime;
+			k4_position[i] = k3_position[i] + k3_velocity[i] * deltaTime;
+		}
+		k4_acceleration = computeAcceleration(k4_velocity, k4_position);
+
+		for (int i = 0; i < m_nBody; i++) {
+			m_vecBody[i]->setm_acceleration(k4_acceleration[i]);
+			m_vecBody[i]->setm_velocity(k1_velocity[i] + deltaTime / 6.0f *
+				(k1_acceleration[i] + 2.0f * k2_acceleration[i] + 2.0f * k3_acceleration[i] + k4_acceleration[i]));
+			m_vecBody[i]->setm_position(k1_position[i] + deltaTime / 6.0f *
+				(k1_velocity[i] + 2.0f * k2_velocity[i] + 2.0f * k3_velocity[i] + k4_velocity[i]));
+		}
 	}
 }
 
@@ -174,10 +249,6 @@ void World::update(float deltaTime)
 {
 	float dt = deltaTime * m_timeScale;
 	motion(dt);
-	for (int i = 0; i < m_nBody; i++) {
-		//if(m_approximationMethod == "Euler") m_vecBody[i]->update(dt);
-		//if(m_approximationMethod == "Runge-Kutta 2nd-Order") m_vecBody[i]->update(dt / 2.0f);
-	}
 }
 
 void World::render(Renderer& renderer)

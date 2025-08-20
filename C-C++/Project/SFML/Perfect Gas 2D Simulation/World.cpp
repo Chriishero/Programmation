@@ -16,6 +16,7 @@ void World::create()
 
 void World::update(float deltaTime)
 {
+	m_gas->update(deltaTime);
 }
 
 void World::render(Renderer& renderer)

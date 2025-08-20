@@ -39,7 +39,7 @@ class Softmax:
 
         for i in range(self.n_iteration):
             gradient = self.gradient(X, y)
-            self.theta  = self.theta - self.learning_rate * gradient
+            self.theta = self.theta - self.learning_rate * gradient
             cost_history[i] = self.cross_entropy(X, y)
 
         return cost_history

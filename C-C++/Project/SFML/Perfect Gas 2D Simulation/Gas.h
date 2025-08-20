@@ -19,8 +19,8 @@ class Gas
 			sf::Texture texture;
 
 			sf::Vector2f position;
-			sf::Vector2f size;
 			sf::Vector2f velocity;
+			sf::Vector2f size;
 		} Molecule;
 
 	private:

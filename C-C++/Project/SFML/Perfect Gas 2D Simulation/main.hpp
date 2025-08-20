@@ -3,9 +3,11 @@
 
 #include <iostream>
 #include <optional>
-#include <cstdlib>
+#include <random>
 #include <SFML/Graphics.hpp>
 #include <TGUI/TGUI.hpp>
+#include <ImGui/imgui.h>
+#include <ImGui/imgui-SFML.h>
 #include "Renderer.h"
 #include "Gas.h"
 #include "World.h"

@@ -10,7 +10,7 @@ model = SoftmaxRegression()
 plt.figure()
 if type == "regression":
     X, y = make_regression(n_samples=500, n_features=10, noise=10, random_state=0)
-    y = y.reshape(-1, 1)
+    y = y.reshape(-1, 1) # sauf pour le XGBoostRegressor
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=0)
 
     model.fit(X_train, y_train)

@@ -9,28 +9,24 @@ class SoftmaxRegression:
 
     def _logits_function(self, X):
         return X @ self.theta
-
+    
     def _softmax_function(self, logits):
         exp_logits = np.exp(logits - np.max(logits, axis=1, keepdims=True))
         return exp_logits / np.sum(exp_logits, axis=1, keepdims=True)
-
-    def _cross_entropy_function(self, X, y):
+    
+    def _loss_function(self, X, y):
         m, n = X.shape
-        logits = self._logits_function(X)
-        proba = self._softmax_function(logits)
+        proba = self._softmax_function(self._logits_function(X))
         y_true = proba[np.arange(m), y]
-
-        return -1/m * np.sum(np.log(y_true + 1e-15))
+        return 1/m * np.sum(-np.log(y_true + 1e-15))
     
     def _gradient_function(self, X, y):
         m, n = X.shape
-        logits = self._logits_function(X)
-        proba = self._softmax_function(logits)
+        proba = self._softmax_function(self._logits_function(X))
         y_onehot = np.zeros_like(proba)
         y_onehot[np.arange(m), y] = 1
-
         return 1/m * X.T @ (proba - y_onehot)
-
+    
     def _gradient_descent(self, X, y):
         m, n = X.shape
         k = np.unique(y).shape[0]
@@ -39,9 +35,8 @@ class SoftmaxRegression:
             self.theta -= self.learning_rate * self._gradient_function(X, y)
 
     def fit(self, X, y):
-        X, y = np.array(X), np.array(y)
-        self._gradient_descent(X, y)
+        self._gradient_descent(np.array(X), np.array(y))
 
     def predict(self, X):
-        logits = self._logits_function(np.array(X))
+        logits = self._logits_function(X)
         return np.argmax(self._softmax_function(logits), axis=1)

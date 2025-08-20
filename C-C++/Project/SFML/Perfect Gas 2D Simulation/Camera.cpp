@@ -12,13 +12,13 @@ sf::View Camera::getView(sf::Vector2u windowSize)
 	if (aspectRatio < 1.0f) {
 		size.x = m_zoomLevel;
 		size.y = m_zoomLevel / aspectRatio;
-	} 
+	}
 	else {
 		size.x = m_zoomLevel * aspectRatio;
 		size.y = m_zoomLevel;
 	}
 
-	return (sf::View(sf::Vector2f(WIN_HEIGHT / 2.0f, WIN_WIDTH / 2.0f), size));
+	return (sf::View(sf::Vector2f(windowSize.x / 2.0f, windowSize.y / 2.0f), size));
 }
 
 

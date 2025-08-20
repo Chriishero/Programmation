@@ -11,9 +11,10 @@ int main() {
 	sf::Clock deltaClock;
 
 	tgui::GuiSFML gui(window);
+	ImGui::SFML::Init(window);
 
 	Renderer renderer(window);
-	Camera camera;
+	Camera camera(1000.0f);
 
 	World world;
 	world.create();
@@ -24,16 +25,22 @@ int main() {
 
 		sf::Event event;
 		while (window.pollEvent(event)) {
+			ImGui::SFML::ProcessEvent(window, event);
 			if (event.type == sf::Event::Closed)
 				window.close();
 		}
+		ImGui::SFML::Update(window, deltaClock.restart());
+		ImGui::Begin("Hello world");
+		ImGui::Button("Pretty button");
+		ImGui::End();
 		window.clear(sf::Color::Black);
 
-		//window.setView(camera.getView(window.getSize()));
+		window.setView(camera.getView(window.getSize()));
 		world.update(frameTime);
 		world.render(renderer);
 
 		gui.draw();
+		ImGui::SFML::Render(window);
 		window.display();
 	}
 

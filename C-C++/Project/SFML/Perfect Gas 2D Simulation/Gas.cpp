@@ -2,23 +2,35 @@
 
 Gas::Gas(float nMolecules, float volume, float temperature) 
 	: m_nMolecules(nMolecules), m_volume(volume), m_temperature(temperature)
-{}
+{
+	m_xPosMax = (float)WIN_WIDTH;
+	m_yPosMax = (float)WIN_HEIGHT;
 
-void Gas::begin()
+	m_gasParams = { &m_nMolecules, &m_volume, &m_temperature,
+									&m_xPosMin, &m_xPosMax, &m_yPosMin, &m_yPosMax,
+									&m_xVelMin, &m_xVelMax, &m_yVelMin, &m_yVelMax,
+									&m_moleculeRadius };
+	m_cpyGasParams = { m_nMolecules, m_volume, m_temperature,
+									m_xPosMin, m_xPosMax, m_yPosMin, m_yPosMax,
+									m_xVelMin, m_xVelMax, m_yVelMin, m_yVelMax,
+									m_moleculeRadius };
+}
+
+void Gas::create()
 {
 	std::random_device gen;
 	for (int i = 0; i < m_nMolecules; i++)
 	{
 		// Random Generator
-		std::uniform_int_distribution xPosRNG(0, WIN_WIDTH);
-		std::uniform_int_distribution yPosRNG(0, WIN_HEIGHT);
-		std::uniform_int_distribution xVelRNG(-500, 500);
-		std::uniform_int_distribution yVelRNG(-500, 500);
+		std::uniform_real_distribution<float> xPosRNG(m_xPosMin, m_xPosMax);
+		std::uniform_real_distribution<float> yPosRNG(m_yPosMin, m_yPosMax);
+		std::uniform_real_distribution<float> xVelRNG(m_xVelMin, m_xVelMax);
+		std::uniform_real_distribution<float> yVelRNG(m_yVelMin, m_yVelMax);
 
 		// Shape, RenderTexture, Texture
 		m_molecule = new Molecule;
 		m_molecule->shape.setPosition({ 0, 0 });
-		m_molecule->shape.setRadius(20.0f);
+		m_molecule->shape.setRadius(m_moleculeRadius);
 		m_molecule->shape.setFillColor(sf::Color::White);
 
 		m_molecule->renderTexture.create(m_molecule->shape.getGlobalBounds().width,
@@ -38,6 +50,41 @@ void Gas::begin()
 		m_molecule->velocity = sf::Vector2f(xVelRNG(gen), yVelRNG(gen));
 
 		m_moleculeList.push_back(m_molecule);
+	}
+}
+
+void Gas::destroy()
+{
+	for (auto& molecule : m_moleculeList)
+	{
+		delete molecule;
+	}
+	m_moleculeList.clear();
+}
+
+void Gas::updateGui()
+{
+	ImGui::SliderFloat("Number of Molecules", &m_cpyGasParams[0], 1.0f, 1000.0f);
+	ImGui::SliderFloat("Volume", &m_cpyGasParams[1], 0.01f, 10.0f);
+	ImGui::SliderFloat("Temperature", &m_cpyGasParams[2], -273.0f, 1000.0f);
+	ImGui::SliderFloat("Minimal Position on X axis", &m_cpyGasParams[3], 0.0f, WIN_WIDTH);
+	ImGui::SliderFloat("Maximal Position on X axis", &m_cpyGasParams[4], 0.0f, WIN_WIDTH);
+	ImGui::SliderFloat("Minimal Position on Y axis", &m_cpyGasParams[5], 0.0f, WIN_HEIGHT);
+	ImGui::SliderFloat("Maximal Position on Y axis", &m_cpyGasParams[6], 0.0f, WIN_HEIGHT);
+	ImGui::SliderFloat("Minimal Velocity on X axis", &m_cpyGasParams[7], 1.0f, 1000.0f);
+	ImGui::SliderFloat("Maximal Velocity on X axis", &m_cpyGasParams[8], 1.0f, 1000.0f);
+	ImGui::SliderFloat("Minimal Velocity on Y axis", &m_cpyGasParams[9], 1.0f, 1000.0f);
+	ImGui::SliderFloat("Maximal Velocity on Y axis", &m_cpyGasParams[10], 1.0f, 1000.0f);
+	ImGui::SliderFloat("Molecules Radius", &m_cpyGasParams[11], 1.0f, 100.0f);
+	
+	if (ImGui::Button("Reload Gas"))
+	{
+		for (int i = 0; i < m_cpyGasParams.size() && i < m_cpyGasParams.size(); i++)
+		{
+			*m_gasParams[i] = m_cpyGasParams[i];
+		}
+		destroy();
+		create();
 	}
 }
 

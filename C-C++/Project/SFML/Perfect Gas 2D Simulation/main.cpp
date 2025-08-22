@@ -30,9 +30,6 @@ int main() {
 				window.close();
 		}
 		ImGui::SFML::Update(window, deltaClock.restart());
-		ImGui::Begin("Hello world");
-		ImGui::Button("Pretty button");
-		ImGui::End();
 		window.clear(sf::Color::Black);
 
 		window.setView(camera.getView(window.getSize()));

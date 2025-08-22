@@ -11,6 +11,7 @@ class World
 		World();
 
 		void create();
+		void createGui();
 		void update(float deltaTime);
 		void render(Renderer& renderer);
 

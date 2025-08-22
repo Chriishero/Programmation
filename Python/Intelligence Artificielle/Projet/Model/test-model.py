@@ -5,7 +5,7 @@ from sklearn.model_selection import train_test_split
 from rappel import *
 
 type = "classif"
-model = SoftmaxRegression()
+model = GDAClassifier()
 
 plt.figure()
 if type == "regression":

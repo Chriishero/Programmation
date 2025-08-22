@@ -9,7 +9,9 @@ class Gas
 	public:
 		Gas(float nMolecules, float volume, float temperature);
 
-		void begin();
+		void create();
+		void destroy();
+		void updateGui();
 		void update(float deltaTime);
 		void render(Renderer& renderer);
 
@@ -29,6 +31,20 @@ class Gas
 		float m_temperature;
 
 		float m_pressure = {};
+
+		// Simulation Parameters
+		float m_xPosMin = 0.0f;
+		float m_xPosMax{};
+		float m_yPosMin = 0.0f;
+		float m_yPosMax{};
+		float m_xVelMin = -500.0f;
+		float m_xVelMax = 500.0f;
+		float m_yVelMin = -500.0f;
+		float m_yVelMax = 500.0f;
+		float m_moleculeRadius = 20.0f;
+
+		std::vector<float*> m_gasParams{};
+		std::vector<float> m_cpyGasParams{};
 
 		Molecule* m_molecule;
 		std::vector<Molecule*> m_moleculeList{};

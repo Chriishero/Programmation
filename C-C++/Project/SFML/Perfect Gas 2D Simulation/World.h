@@ -11,7 +11,7 @@ class World
 		World();
 
 		void create();
-		void createGui();
+		void createContainer();
 		void update(float deltaTime);
 		void render(Renderer& renderer);
 
@@ -21,5 +21,7 @@ class World
 		float m_nMolecules;
 		float m_volume;
 		float m_temperature;
+
+		sf::VertexArray m_containerVertices;
 };
 

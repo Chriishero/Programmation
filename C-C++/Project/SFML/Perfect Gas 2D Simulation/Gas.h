@@ -22,6 +22,7 @@ class Gas
 
 			sf::Vector2f position;
 			sf::Vector2f velocity;
+			sf::Vector2f acceleration;
 			sf::Vector2f size;
 		} Molecule;
 
@@ -41,7 +42,7 @@ class Gas
 		float m_xVelMax = 500.0f;
 		float m_yVelMin = -500.0f;
 		float m_yVelMax = 500.0f;
-		float m_moleculeRadius = 20.0f;
+		float m_moleculeRadius = 15.0f;
 
 		std::vector<float*> m_gasParams{};
 		std::vector<float> m_cpyGasParams{};

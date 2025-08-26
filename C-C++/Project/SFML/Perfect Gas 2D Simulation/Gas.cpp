@@ -3,6 +3,9 @@
 Gas::Gas(float nMolecules, float volume, float temperature) 
 	: m_nMolecules(nMolecules), m_volume(volume), m_temperature(temperature)
 {
+	float boltzmann_constant = 1.380649e-23l; // joule per kelvin
+	m_pressure = (nMolecules * boltzmann_constant * temperature) / volume; // pascal
+
 	m_xPosMax = (float)WIN_WIDTH;
 	m_yPosMax = (float)WIN_HEIGHT;
 
@@ -22,8 +25,8 @@ void Gas::create()
 	for (int i = 0; i < m_nMolecules; i++)
 	{
 		// Random Generator
-		std::uniform_real_distribution<float> xPosRNG(m_xPosMin, m_xPosMax);
-		std::uniform_real_distribution<float> yPosRNG(m_yPosMin, m_yPosMax);
+		std::uniform_real_distribution<float> xPosRNG(m_xPosMin + m_moleculeRadius * 2, m_xPosMax - m_moleculeRadius * 2);
+		std::uniform_real_distribution<float> yPosRNG(m_yPosMin + m_moleculeRadius * 2, m_yPosMax - m_moleculeRadius * 2);
 		std::uniform_real_distribution<float> xVelRNG(m_xVelMin, m_xVelMax);
 		std::uniform_real_distribution<float> yVelRNG(m_yVelMin, m_yVelMax);
 
@@ -64,17 +67,17 @@ void Gas::destroy()
 
 void Gas::updateGui()
 {
-	ImGui::SliderFloat("Number of Molecules", &m_cpyGasParams[0], 1.0f, 1000.0f);
+	ImGui::SliderFloat("Number of Molecules", &m_cpyGasParams[0], 1.0f, 10000.0f);
 	ImGui::SliderFloat("Volume", &m_cpyGasParams[1], 0.01f, 10.0f);
 	ImGui::SliderFloat("Temperature", &m_cpyGasParams[2], -273.0f, 1000.0f);
 	ImGui::SliderFloat("Minimal Position on X axis", &m_cpyGasParams[3], 0.0f, WIN_WIDTH);
 	ImGui::SliderFloat("Maximal Position on X axis", &m_cpyGasParams[4], 0.0f, WIN_WIDTH);
 	ImGui::SliderFloat("Minimal Position on Y axis", &m_cpyGasParams[5], 0.0f, WIN_HEIGHT);
 	ImGui::SliderFloat("Maximal Position on Y axis", &m_cpyGasParams[6], 0.0f, WIN_HEIGHT);
-	ImGui::SliderFloat("Minimal Velocity on X axis", &m_cpyGasParams[7], 1.0f, 1000.0f);
-	ImGui::SliderFloat("Maximal Velocity on X axis", &m_cpyGasParams[8], 1.0f, 1000.0f);
-	ImGui::SliderFloat("Minimal Velocity on Y axis", &m_cpyGasParams[9], 1.0f, 1000.0f);
-	ImGui::SliderFloat("Maximal Velocity on Y axis", &m_cpyGasParams[10], 1.0f, 1000.0f);
+	ImGui::SliderFloat("Minimal Velocity on X axis", &m_cpyGasParams[7], -1000.0f, 1000.0f);
+	ImGui::SliderFloat("Maximal Velocity on X axis", &m_cpyGasParams[8], -1000.0f, 1000.0f);
+	ImGui::SliderFloat("Minimal Velocity on Y axis", &m_cpyGasParams[9], -1000.0f, 1000.0f);
+	ImGui::SliderFloat("Maximal Velocity on Y axis", &m_cpyGasParams[10], -1000.0f, 1000.0f);
 	ImGui::SliderFloat("Molecules Radius", &m_cpyGasParams[11], 1.0f, 100.0f);
 	
 	if (ImGui::Button("Reload Gas"))

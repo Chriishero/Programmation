@@ -14,6 +14,11 @@ void Renderer::draw(const sf::Texture& texture, const sf::Vector2f position, con
 	m_target->draw(m_sprite);
 }
 
+void Renderer::drawVertexArray(const sf::VertexArray& vertexArray)
+{
+	m_target->draw(vertexArray);
+}
+
 sf::RenderTarget& Renderer::getm_target()
 {
 	return (*m_target);

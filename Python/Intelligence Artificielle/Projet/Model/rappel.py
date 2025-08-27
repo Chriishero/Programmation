@@ -1,41 +1,47 @@
 import numpy as np
 
-class SoftmaxRegressor:
-    def __init__(self, n_iteration=100, learning_rate=0.2):
+class LogisticRegression:
+    def __init__(self, n_iteration=100, learning_rate=0.2, method="newton_raphson"):
         self.n_iteration = n_iteration
         self.learning_rate = learning_rate
+        self.method = method
 
         self.theta = None
 
     def _logits_function(self, X):
         return X @ self.theta
-
-    def _softmax(self, X):
-        logits = self._logits_function(X)
-        return np.exp(logits) / np.sum(np.exp(logits), axis=1, keepdims=True)
+    
+    def _sigmoid_function(self, X):
+        return 1 / (1 + np.exp(-self._logits_function(X)))
     
     def _likelihood(self, X, y):
         m, n = X.shape
-        proba = self._softmax(X)
-        y_true = proba[np.arange(m), y]
-        return 1/m * np.sum(-np.log(y_true + 1e-15))
+        h = self._sigmoid_function(X)
+        return 1/m * np.sum(y * np.log(h + 1e-15) + (1 - y) * np.log(1 - h))
     
     def _gradient_function(self, X, y):
         m, n = X.shape
-        proba = self._softmax(X)
-        y_onehot = np.zeros_like(proba)
-        y_onehot[np.arange(m), y] = 1
-        return 1/m * X.T @ (proba - y_onehot)
+        h = self._sigmoid_function(X)
+        return 1/m * X.T @ (y - h)
     
-    def _gradient_descent(self, X, y):
+    def _newton_raphson_step(self, X, y):
         m, n = X.shape
-        k = np.unique(y).shape[0]
-        self.theta = np.zeros((n, k))
+        h = self._sigmoid_function(X)
+        H = -1/m * X.T @ np.diagflat(h * (1 - h)) @ X
+        H -= 1e-15 * np.eye(H.shape[1])
+        return np.linalg.inv(H) @ self._gradient_function(X, y)
+    
+    def _optimisation_function(self, X, y):
+        m, n = X.shape
+        self.theta = np.zeros(n)
         for i in range(self.n_iteration):
-            self.theta -= self.learning_rate * self._gradient_function(X, y)
+            if self.method == "gradient_descent":
+                self.theta += self.learning_rate * self._gradient_function(X, y)
+            elif self.method == "newton_raphson":
+                self.theta -= self._newton_raphson_step(X, y)
 
     def fit(self, X, y):
-        self._gradient_descent(np.array(X), np.array(y))
+        self._optimisation_function(np.array(X), np.array(y))
 
     def predict(self, X):
-        return np.argmax(self._softmax(np.array(X)), axis=1)
+        return self._sigmoid_function(X) >= 0.5

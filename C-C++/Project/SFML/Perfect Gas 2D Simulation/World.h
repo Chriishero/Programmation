@@ -2,8 +2,8 @@
 
 #include "main.hpp"
 
-class Renderer;
 class Gas;
+class Renderer;
 
 class World
 {
@@ -14,14 +14,24 @@ class World
 		void createContainer();
 		void update(float deltaTime);
 		void render(Renderer& renderer);
+		void renderGui();
+
+		typedef struct
+		{
+			sf::VertexArray vertices;
+			float outlineThickness;
+		} Container;
 
 	private:
 		Gas* m_gas;
 
+		// Gas Parameters
 		float m_nMolecules;
 		float m_volume;
 		float m_temperature;
 
-		sf::VertexArray m_containerVertices;
+		float m_timeScale = 1.0f;
+
+		Container m_container;
 };
 

@@ -10,7 +10,6 @@ int main() {
 	window.setVerticalSyncEnabled(true);
 	sf::Clock deltaClock;
 
-	tgui::GuiSFML gui(window);
 	ImGui::SFML::Init(window);
 
 	Renderer renderer(window);
@@ -35,8 +34,8 @@ int main() {
 		window.setView(camera.getView(window.getSize()));
 		world.update(frameTime);
 		world.render(renderer);
+		world.renderGui();
 
-		gui.draw();
 		ImGui::SFML::Render(window);
 		window.display();
 	}

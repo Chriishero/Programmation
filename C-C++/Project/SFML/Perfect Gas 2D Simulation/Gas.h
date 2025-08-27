@@ -11,9 +11,11 @@ class Gas
 
 		void create();
 		void destroy();
-		void updateGui();
+		void renderGui();
 		void update(float deltaTime);
 		void render(Renderer& renderer);
+
+		void setm_moleculeRadius(float radius);
 
 		typedef struct {
 			sf::CircleShape shape;
@@ -38,11 +40,14 @@ class Gas
 		float m_xPosMax{};
 		float m_yPosMin = 0.0f;
 		float m_yPosMax{};
+
 		float m_xVelMin = -500.0f;
 		float m_xVelMax = 500.0f;
 		float m_yVelMin = -500.0f;
 		float m_yVelMax = 500.0f;
-		float m_moleculeRadius = 15.0f;
+
+		float m_moleculeSizePercentage = 0.05; // pourcentage de l'air total du conteneur occupé par les molécules
+		float m_moleculeRadius{};
 
 		std::vector<float*> m_gasParams{};
 		std::vector<float> m_cpyGasParams{};

@@ -3,7 +3,7 @@
 Gas::Gas(float nMolecules, float volume, float temperature) 
 	: m_nMolecules(nMolecules), m_volume(volume), m_temperature(temperature)
 {
-	float boltzmann_constant = 1.380649e-23l; // joule per kelvin
+	long double boltzmann_constant = 1.380649e-23l; // joule per kelvin
 	m_pressure = (nMolecules * boltzmann_constant * temperature) / volume; // pascal
 
 	m_xPosMax = (float)WIN_WIDTH;
@@ -12,15 +12,16 @@ Gas::Gas(float nMolecules, float volume, float temperature)
 	m_gasParams = { &m_nMolecules, &m_volume, &m_temperature,
 									&m_xPosMin, &m_xPosMax, &m_yPosMin, &m_yPosMax,
 									&m_xVelMin, &m_xVelMax, &m_yVelMin, &m_yVelMax,
-									&m_moleculeRadius };
+									&m_moleculeSizePercentage };
 	m_cpyGasParams = { m_nMolecules, m_volume, m_temperature,
 									m_xPosMin, m_xPosMax, m_yPosMin, m_yPosMax,
-									m_xVelMin, m_xVelMax, m_yVelMin, m_yVelMax,
-									m_moleculeRadius };
+									m_xVelMin, m_xVelMax, m_yVelMin, m_yVelMax, 
+									m_moleculeSizePercentage };
 }
 
 void Gas::create()
 {
+	m_moleculeRadius = sqrt((m_moleculeSizePercentage * WIN_WIDTH * WIN_HEIGHT) / (M_PI * m_nMolecules));
 	std::random_device gen;
 	for (int i = 0; i < m_nMolecules; i++)
 	{
@@ -52,6 +53,9 @@ void Gas::create()
 		// Initial Velocity
 		m_molecule->velocity = sf::Vector2f(xVelRNG(gen), yVelRNG(gen));
 
+		// Initial Acceleration
+		m_molecule->acceleration = sf::Vector2f(0.0f, 0.0f);
+
 		m_moleculeList.push_back(m_molecule);
 	}
 }
@@ -65,21 +69,23 @@ void Gas::destroy()
 	m_moleculeList.clear();
 }
 
-void Gas::updateGui()
+void Gas::renderGui()
 {
-	ImGui::SliderFloat("Number of Molecules", &m_cpyGasParams[0], 1.0f, 10000.0f);
-	ImGui::SliderFloat("Volume", &m_cpyGasParams[1], 0.01f, 10.0f);
-	ImGui::SliderFloat("Temperature", &m_cpyGasParams[2], -273.0f, 1000.0f);
-	ImGui::SliderFloat("Minimal Position on X axis", &m_cpyGasParams[3], 0.0f, WIN_WIDTH);
-	ImGui::SliderFloat("Maximal Position on X axis", &m_cpyGasParams[4], 0.0f, WIN_WIDTH);
-	ImGui::SliderFloat("Minimal Position on Y axis", &m_cpyGasParams[5], 0.0f, WIN_HEIGHT);
-	ImGui::SliderFloat("Maximal Position on Y axis", &m_cpyGasParams[6], 0.0f, WIN_HEIGHT);
-	ImGui::SliderFloat("Minimal Velocity on X axis", &m_cpyGasParams[7], -1000.0f, 1000.0f);
-	ImGui::SliderFloat("Maximal Velocity on X axis", &m_cpyGasParams[8], -1000.0f, 1000.0f);
-	ImGui::SliderFloat("Minimal Velocity on Y axis", &m_cpyGasParams[9], -1000.0f, 1000.0f);
-	ImGui::SliderFloat("Maximal Velocity on Y axis", &m_cpyGasParams[10], -1000.0f, 1000.0f);
-	ImGui::SliderFloat("Molecules Radius", &m_cpyGasParams[11], 1.0f, 100.0f);
-	
+	if (ImGui::CollapsingHeader("Gas Settings"))
+	{
+		ImGui::SliderFloat("Number of Molecules", &m_cpyGasParams[0], 1.0f, 10000.0f);
+		ImGui::SliderFloat("Volume", &m_cpyGasParams[1], 0.01f, 10.0f);
+		ImGui::SliderFloat("Temperature", &m_cpyGasParams[2], -273.0f, 1000.0f);
+		ImGui::SliderFloat("Minimal Position on X axis", &m_cpyGasParams[3], 0.0f, WIN_WIDTH);
+		ImGui::SliderFloat("Maximal Position on X axis", &m_cpyGasParams[4], 0.0f, WIN_WIDTH);
+		ImGui::SliderFloat("Minimal Position on Y axis", &m_cpyGasParams[5], 0.0f, WIN_HEIGHT);
+		ImGui::SliderFloat("Maximal Position on Y axis", &m_cpyGasParams[6], 0.0f, WIN_HEIGHT);
+		ImGui::SliderFloat("Minimal Velocity on X axis", &m_cpyGasParams[7], -1000.0f, 1000.0f);
+		ImGui::SliderFloat("Maximal Velocity on X axis", &m_cpyGasParams[8], -1000.0f, 1000.0f);
+		ImGui::SliderFloat("Minimal Velocity on Y axis", &m_cpyGasParams[9], -1000.0f, 1000.0f);
+		ImGui::SliderFloat("Maximal Velocity on Y axis", &m_cpyGasParams[10], -1000.0f, 1000.0f);
+		ImGui::SliderFloat("Percentage of surface area occupied by the molecules", &m_cpyGasParams[11], 0.0f, 1.0f);
+	}
 	if (ImGui::Button("Reload Gas"))
 	{
 		for (int i = 0; i < m_cpyGasParams.size() && i < m_cpyGasParams.size(); i++)
@@ -92,7 +98,7 @@ void Gas::updateGui()
 }
 
 void Gas::update(float deltaTime)
-{
+{ 
 	for (auto& molecule : m_moleculeList)
 	{
 		molecule->position += deltaTime * molecule->velocity;
@@ -106,4 +112,9 @@ void Gas::render(Renderer& renderer)
 		renderer.draw(molecule->texture, molecule->position, molecule->size); 
 		//printf("Molecule position : (%f, %f)\n", molecule->position.x, molecule->position.y);
 	}
+}
+
+void Gas::setm_moleculeRadius(float radius)
+{
+	m_moleculeRadius = radius;
 }

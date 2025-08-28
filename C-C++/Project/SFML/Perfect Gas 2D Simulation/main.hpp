@@ -8,6 +8,8 @@
 #include <ImGui/imgui.h>
 #include <ImGui/imgui-SFML.h>
 #include "Renderer.h"
+#include "Body.h"
+#include "Shape.h"
 #include "Gas.h"
 #include "World.h"
 

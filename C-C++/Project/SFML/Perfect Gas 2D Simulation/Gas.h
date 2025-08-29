@@ -3,8 +3,9 @@
 #include "main.hpp"
 
 class Renderer;
+class Body;
 
-class Gas
+class Gas // LA STRUCT MOLECULE NE CONTIENT PAS VEL ET ACC, C'EST QUE LE BODY, IDEM POUR LA MISE À JOUR
 {
 	public:
 		Gas(float nMolecules, float volume, float temperature);
@@ -54,5 +55,8 @@ class Gas
 
 		Molecule* m_molecule;
 		std::vector<Molecule*> m_moleculeList{};
+
+		Body* m_moleculeBody;
+		std::vector<Body*> m_moleculeBodyList{};
 };
 

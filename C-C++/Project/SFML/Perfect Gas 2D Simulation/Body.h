@@ -4,23 +4,33 @@
 
 class Shape;
 
-class Body // JE VEUX FAIRE EN SORTE DE STOCKER LA POSITION DE TOUS LES PIXELS OCCUPÉ PAR LE CORPS
+class Body // C'EST UNIQUEMENT LE CORPS QUI A POS VEL ET ACC DE MODIFIER ET QUI LES CONTIENT
 {
 	public:
 		Body();
 
-		void setShape(const Shape& shape);
+		void setShape(Shape *shape);
 		const Shape& getShape() const;
 
-		void setSize(const float size);
-		const float getSize() const;
+		void setSize(const sf::Vector2f size);
+		const sf::Vector2f getSize() const;
 
 		void setPosition(const sf::Vector2f position);
 		const sf::Vector2f getPosition() const;
+
+		void setVelocity(const sf::Vector2f velocity);
+		const sf::Vector2f getVelocity() const;
+
+		void setAcceleration(const sf::Vector2f acceleration);
+		const sf::Vector2f getAcceleration() const;
+
+		const std::vector<sf::Vector2f> getBoundaries() const;
 		
 	private:
 		Shape* m_shape;
-		float m_size;
+		sf::Vector2f m_size;
 		sf::Vector2f m_position;
+		sf::Vector2f m_velocity;
+		sf::Vector2f m_acceleration;
 };
 

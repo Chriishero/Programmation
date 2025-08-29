@@ -2,6 +2,7 @@
 
 #include "main.hpp"
 
+class Physics;
 class Gas;
 class Renderer;
 
@@ -23,6 +24,7 @@ class World
 		} Container;
 
 	private:
+		Physics* m_physics;
 		Gas* m_gas;
 
 		// Gas Parameters
@@ -31,7 +33,10 @@ class World
 		float m_temperature;
 
 		float m_timeScale = 1.0f;
+		std::string m_numericalApproximationMethod;
 
 		Container m_container;
+		Body* m_containerBody;
+		sf::Vector2f m_containerSize;
 };
 

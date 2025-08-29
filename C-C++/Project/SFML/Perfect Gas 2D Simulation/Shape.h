@@ -8,7 +8,7 @@ class Shape
 
 		enum class Type
 		{
-			Circle, Lines
+			Circle, Rectangle
 		};
 
 		void setType(Type type);

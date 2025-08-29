@@ -47,8 +47,7 @@ void Gas::create()
 
 		// Initial Position, size
 		m_molecule->position = sf::Vector2f(xPosRNG(gen), yPosRNG(gen));
-		m_molecule->size = sf::Vector2f(m_molecule->shape.getGlobalBounds().width,
-										m_molecule->shape.getGlobalBounds().height);
+		m_molecule->size = sf::Vector2f(m_molecule->shape.getGlobalBounds().width, m_molecule->shape.getGlobalBounds().height);
 
 		// Initial Velocity
 		m_molecule->velocity = sf::Vector2f(xVelRNG(gen), yVelRNG(gen));
@@ -57,16 +56,34 @@ void Gas::create()
 		m_molecule->acceleration = sf::Vector2f(0.0f, 0.0f);
 
 		m_moleculeList.push_back(m_molecule);
+		
+		// Création du corps physique de la molécule
+		m_moleculeBody = new Body();
+		Shape moleculeShape;
+		moleculeShape.setType(Shape::Type::Circle);
+		m_moleculeBody->setShape(&moleculeShape);
+		m_moleculeBody->setPosition(m_molecule->position);
+		m_moleculeBody->setSize(m_molecule->size);
+		m_moleculeBodyList.push_back(m_moleculeBody);
+		/*
+		printf("Molecule Position : (%f, %f)\n", m_moleculeBody->getPosition().x, m_moleculeBody->getPosition().y);
+		auto boundaries = m_moleculeBody->getBoundaries();
+		for (auto pos : boundaries)
+		{
+			printf(" Pixel Pos: (%f, %f)", pos.x, pos.y); // positions de chaque pixels qui composent les contours de la molécule
+		}*/
 	}
 }
 
 void Gas::destroy()
 {
-	for (auto& molecule : m_moleculeList)
+	for (int i = 0; i < m_moleculeList.size() && i < m_moleculeBodyList.size(); i++)
 	{
-		delete molecule;
+		delete m_moleculeList[i];
+		delete m_moleculeBodyList[i];
 	}
 	m_moleculeList.clear();
+	m_moleculeBodyList.clear();
 }
 
 void Gas::renderGui()
@@ -99,9 +116,9 @@ void Gas::renderGui()
 
 void Gas::update(float deltaTime)
 { 
-	for (auto& molecule : m_moleculeList)
+	for (int i = 0; i < m_moleculeList.size() && i < m_moleculeBodyList.size(); i++)
 	{
-		molecule->position += deltaTime * molecule->velocity;
+		m_moleculeList[i]->position = m_moleculeBodyList[i]->getPosition();
 	}
 }
 

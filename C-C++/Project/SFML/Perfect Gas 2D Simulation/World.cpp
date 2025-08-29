@@ -6,7 +6,8 @@ World::World()
 
 void World::create()
 {
-	m_nMolecules = 100;
+	m_physics = new Physics();
+	m_nMolecules = 1;
 	m_volume = 1.0f; // mètre cube
 	m_temperature = 300.0f; // Kelvin
 
@@ -19,6 +20,9 @@ void World::create()
 
 void World::createContainer()
 {
+	// Taille du conteneur
+	m_containerSize = { (float)WIN_WIDTH, (float)WIN_HEIGHT };
+
 	m_container.vertices.setPrimitiveType(sf::LineStrip);
 	m_container.vertices.resize(5); // 4 coins + 1 pour fermer le rectangle
 
@@ -38,10 +42,27 @@ void World::createContainer()
 
 	// Épaisseur des lignes (pixel)
 	m_container.outlineThickness = 1.0f;
+
+	// Création du corps physique du conteneur
+	m_containerBody = new Body();
+	Shape containerShape;
+	containerShape.setType(Shape::Type::Rectangle);
+	m_containerBody->setShape(&containerShape);
+	m_containerBody->setPosition(m_container.vertices[0].position);
+	m_containerBody->setSize(m_containerSize);
+	/*
+	printf("Container position : (%f, %f)\n", m_container.vertices[0].position.x, m_container.vertices[0].position.y);
+	auto boundaries = m_containerBody->getBoundaries();
+	for (auto pos : boundaries)
+	{
+		printf(" Pixel Pos : (%f, %f)", pos.x, pos.y);
+	}*/
 }
 
 void World::update(float deltaTime)
-{	m_gas->update(deltaTime * m_timeScale);
+{	
+	m_physics->update(deltaTime * m_timeScale, m_numericalApproximationMethod);
+	m_gas->update(deltaTime * m_timeScale);
 }
 
 void World::render(Renderer& renderer)
@@ -58,6 +79,12 @@ void World::renderGui()
 	if (ImGui::CollapsingHeader("World Settings"))
 	{
 		ImGui::SliderFloat("Time Scale", &m_timeScale, 0.0f, 100.0f);
+		
+		// Combo Box
+		const char* items[] = { "Explicit Euler" };
+		static int item_current = 1;
+		ImGui::ListBox("Numerical Approximation Method", &item_current, items, IM_ARRAYSIZE(items));
+		m_numericalApproximationMethod = items[item_current - 1];
 	}
 	m_gas->renderGui();
 }

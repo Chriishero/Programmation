@@ -12,6 +12,7 @@ class World
 		World();
 
 		void create();
+		void reload();
 		void createContainer();
 		void update(float deltaTime);
 		void render(Renderer& renderer);

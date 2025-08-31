@@ -63,6 +63,8 @@ void Gas::create()
 		moleculeShape.setType(Shape::Type::Circle);
 		m_moleculeBody->setShape(&moleculeShape);
 		m_moleculeBody->setPosition(m_molecule->position);
+		m_moleculeBody->setVelocity(m_molecule->velocity);
+		m_moleculeBody->setAcceleration(m_molecule->acceleration);
 		m_moleculeBody->setSize(m_molecule->size);
 		m_moleculeBodyList.push_back(m_moleculeBody);
 		/*
@@ -103,15 +105,6 @@ void Gas::renderGui()
 		ImGui::SliderFloat("Maximal Velocity on Y axis", &m_cpyGasParams[10], -1000.0f, 1000.0f);
 		ImGui::SliderFloat("Percentage of surface area occupied by the molecules", &m_cpyGasParams[11], 0.0f, 1.0f);
 	}
-	if (ImGui::Button("Reload Gas"))
-	{
-		for (int i = 0; i < m_cpyGasParams.size() && i < m_cpyGasParams.size(); i++)
-		{
-			*m_gasParams[i] = m_cpyGasParams[i];
-		}
-		destroy();
-		create();
-	}
 }
 
 void Gas::update(float deltaTime)
@@ -131,7 +124,30 @@ void Gas::render(Renderer& renderer)
 	}
 }
 
+void Gas::setNewInitialCondition()
+{
+	for (int i = 0; i < m_cpyGasParams.size() && i < m_cpyGasParams.size(); i++)
+	{
+		*m_gasParams[i] = m_cpyGasParams[i];
+	}
+}
+
 void Gas::setm_moleculeRadius(float radius)
 {
 	m_moleculeRadius = radius;
+}
+
+const float Gas::getMoleculeRadius() const
+{
+	return m_moleculeRadius;
+}
+
+void Gas::setMoleculeBodyList(std::vector<Body*> bodies)
+{
+	m_moleculeBodyList = bodies;
+}
+
+const std::vector<Body*> Gas::getMoleculeBodyList() const
+{
+	return m_moleculeBodyList;
 }

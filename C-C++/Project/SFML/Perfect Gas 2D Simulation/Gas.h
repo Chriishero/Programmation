@@ -15,8 +15,13 @@ class Gas // LA STRUCT MOLECULE NE CONTIENT PAS VEL ET ACC, C'EST QUE LE BODY, I
 		void renderGui();
 		void update(float deltaTime);
 		void render(Renderer& renderer);
+		void setNewInitialCondition();
 
 		void setm_moleculeRadius(float radius);
+		const float getMoleculeRadius() const;
+
+		void setMoleculeBodyList(std::vector<Body*> bodies);
+		const std::vector<Body*> getMoleculeBodyList() const;
 
 		typedef struct {
 			sf::CircleShape shape;

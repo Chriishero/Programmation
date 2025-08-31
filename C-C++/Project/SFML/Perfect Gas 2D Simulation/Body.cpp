@@ -33,6 +33,26 @@ const sf::Vector2f Body::getPosition() const
 	return m_position;
 }
 
+void Body::setVelocity(const sf::Vector2f velocity)
+{
+	m_velocity = velocity;
+}
+
+const sf::Vector2f Body::getVelocity() const
+{
+	return m_velocity;
+}
+
+void Body::setAcceleration(const sf::Vector2f acceleration)
+{
+	m_acceleration = acceleration;
+}
+
+const sf::Vector2f Body::getAcceleration() const
+{
+	return m_acceleration;
+}
+
 const std::vector<sf::Vector2f> Body::getBoundaries() const
 {
 	std::vector<sf::Vector2f> boundaries;

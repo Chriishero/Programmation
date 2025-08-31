@@ -6,14 +6,28 @@ World::World()
 
 void World::create()
 {
-	m_physics = new Physics();
-	m_nMolecules = 1;
+	m_nMolecules = 5;
 	m_volume = 1.0f; // mètre cube
 	m_temperature = 300.0f; // Kelvin
 
 	m_gas = new Gas(m_nMolecules, m_volume, m_temperature);
- 
 	m_gas->create();
+
+	m_physics = new Physics(m_gas->getMoleculeBodyList());
+
+	createContainer();
+}
+
+void World::reload()
+{
+	m_gas->setNewInitialCondition();
+	m_gas->destroy();
+	m_gas->create();
+
+	delete m_physics;
+	delete m_containerBody;
+
+	m_physics = new Physics(m_gas->getMoleculeBodyList());
 
 	createContainer();
 }
@@ -62,6 +76,7 @@ void World::createContainer()
 void World::update(float deltaTime)
 {	
 	m_physics->update(deltaTime * m_timeScale, m_numericalApproximationMethod);
+	m_gas->setMoleculeBodyList(m_physics->getMoleculeBodyList());
 	m_gas->update(deltaTime * m_timeScale);
 }
 
@@ -87,4 +102,8 @@ void World::renderGui()
 		m_numericalApproximationMethod = items[item_current - 1];
 	}
 	m_gas->renderGui();
+	if (ImGui::Button("Reload Gas"))
+	{
+		reload();
+	}
 }

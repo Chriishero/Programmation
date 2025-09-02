@@ -1,59 +1,39 @@
 import numpy as np
 
-class SVM:
-    def __init__(self, n_iteration=100, kernel="polynomial", regularization=1.0, gamma=1.0, polynom_degree=4, polynomial_constant=1.0):
+class SoftmaxRegressor:
+    def __init__(self, n_iteration=100, learning_rate=0.3):
         self.n_iteration = n_iteration
-        self.kernel = kernel
-        self.C = regularization
-        self.gamma = gamma
-        self.polynom_degree = polynom_degree
-        self.polynomial_constant = polynomial_constant
+        self.learning_rate = learning_rate
 
-        self.X_train = self.y_train = None
-        self.K = None
-        self.alpha = None
-        self.b = None
+        self.method = None
 
-    def _kernel_function(self, X, Z):
-        if self.kernel == "linear":
-            return X @ Z.T
-        elif self.kernel == "polynomial":
-            return (X @ Z.T + self.polynomial_constant)**self.polynom_degree
-        elif self.kernel == "RBF":
-            return np.exp(-self.gamma * np.linalg.norm((X[:, np.newaxis, :] - Z), axis=2)**2)
-        
-    def _dual_objective_function(self, X, y):
-        return np.sum(self.alpha) - 1/2 * self.alpha @ ((np.outer(y, y) * self.K) @ self.alpha)
+    def _softmax(self, X):
+        logits = X @ self.theta
+        exp_logits = np.exp(logits - np.max(logits, axis=1, keepdims=True))
+        return exp_logits / np.sum(exp_logits, axis=1, keepdims=True)
     
-    def _sequential_minimal_optimisation(self, X, y):
+    def _loss_function(self, X, y):
         m, n = X.shape
-        self.alpha = np.zeros(m)
-        self.b = 0
-        for iter in range(self.n_iteration):
-            for i in range(m):
-                j = np.random.choice([k for k in range(m) if k != i])
+        proba = self._softmax(X)
+        y_true = proba[np.arange(m), y]
+        return 1/m * np.sum(-np.log(y_true + 1e-15))
+    
+    def _gradient_function(self, X, y):
+        m, n = X.shape
+        proba = self._softmax(X)
+        y_onehot = np.zeros_like(proba)
+        y_onehot[np.arange(m), y] = 1
+        return 1/m * X.T @ (proba - y_onehot)
+    
+    def _gradient_descent(self, X, y):
+        m, n = X.shape
+        k = np.unique(y).shape[0]
+        self.theta = np.zeros((n, k))
+        for i in range(self.n_iteration):
+            self.theta -= self.learning_rate * self._gradient_function(X, y)
 
-                old_alpha_i = self.alpha[i]
-                old_alpha_j = self.alpha[j]
-
-                zeta = self.alpha[i] * y[i] + self.alpha[j] * y[j]
-                self.alpha[j] = (1 - y[i] * self.K[i, j] * zeta) / (self.K[j, j] - self.K[i, j])
-                self.alpha[j] = np.clip(self.alpha[j], 0, self.C)
-
-                self.alpha[i] += y[i] * y[j] * (old_alpha_j - self.alpha[j])
-                self.alpha[i] = np.clip(self.alpha[i], 0, self.C)
-
-                E_i = np.sum(y.ravel() * self.K[i, :] * self.alpha) + self.b - y[i]
-                E_j = np.sum(y.ravel() * self.K[j, :] * self.alpha) + self.b - y[j]
-                b1 = self.b - E_i - y[i] * (self.alpha[i] - old_alpha_i) * self.K[i, j] - y[j] * (self.alpha[j] - old_alpha_j) * self.K[i, j]
-                b2 = self.b - E_j - y[i] * (self.alpha[i] - old_alpha_i) * self.K[i, j] - y[j] * (self.alpha[j] - old_alpha_j) * self.K[j, j]
-                self.b = (b1 + b2) / 2
-        
     def fit(self, X, y):
-        X, y = self.X_train, self.y_train = np.array(X), np.array(y)
-        self.K = self._kernel_function(X, X)
-        self._sequential_minimal_optimisation(X, y)
+        self._gradient_descent(np.array(X), np.array(y))
 
     def predict(self, X):
-        K = self._kernel_function(np.array(X), self.X_train)
-        return np.sign(np.sum(self.y_train * K * self.alpha, axis=1) + self.b)
+        return np.argmax(self._softmax(X), axis=1)

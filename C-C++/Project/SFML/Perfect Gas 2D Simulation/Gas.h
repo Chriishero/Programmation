@@ -63,5 +63,6 @@ class Gas // LA STRUCT MOLECULE NE CONTIENT PAS VEL ET ACC, C'EST QUE LE BODY, I
 
 		Body* m_moleculeBody;
 		std::vector<Body*> m_moleculeBodyList{};
+		Shape* m_moleculeShape;
 };
 

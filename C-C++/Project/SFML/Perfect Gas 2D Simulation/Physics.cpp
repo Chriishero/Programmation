@@ -22,9 +22,9 @@ void Physics::checkMoleculesCollisions()
 					if ((sf::Vector2i)b1 == (sf::Vector2i)b2)
 					{
 						printf("Collisions entre molécule %d et molécule %d.\n", i, j);
-						//m_moleculeBodyList[i]->setVelocity({ 0, 0 });
-						//m_moleculeBodyList[j]->setVelocity({ 0, 0 });
-						j++;
+						m_moleculeBodyList[i]->setVelocity({ 0, 0 });
+						m_moleculeBodyList[j]->setVelocity({ 0, 0 });
+						break;
 					}
 				}
 			}
@@ -40,6 +40,11 @@ void Physics::update(float deltaTime, std::string method)
 		molecule->setVelocity(molecule->getVelocity() + molecule->getAcceleration() * deltaTime);
 		molecule->setPosition(molecule->getPosition() + molecule->getVelocity() * deltaTime);
 	}
+}
+
+void Physics::setMoleculeBodyList(std::vector<Body*> moleculeBodyList)
+{
+	m_moleculeBodyList = moleculeBodyList;
 }
 
 const std::vector<Body*> Physics::getMoleculeBodyList() const

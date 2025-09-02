@@ -59,9 +59,9 @@ void Gas::create()
 		
 		// Création du corps physique de la molécule
 		m_moleculeBody = new Body();
-		Shape moleculeShape;
-		moleculeShape.setType(Shape::Type::Circle);
-		m_moleculeBody->setShape(&moleculeShape);
+		m_moleculeShape = new Shape();
+		m_moleculeShape->setType(Shape::Type::Circle);
+		m_moleculeBody->setShape(m_moleculeShape);
 		m_moleculeBody->setPosition(m_molecule->position);
 		m_moleculeBody->setVelocity(m_molecule->velocity);
 		m_moleculeBody->setAcceleration(m_molecule->acceleration);
@@ -84,6 +84,7 @@ void Gas::destroy()
 		delete m_moleculeList[i];
 		delete m_moleculeBodyList[i];
 	}
+	delete m_moleculeShape;
 	m_moleculeList.clear();
 	m_moleculeBodyList.clear();
 }
@@ -119,7 +120,7 @@ void Gas::render(Renderer& renderer)
 {
 	for (auto& molecule : m_moleculeList)
 	{
-		renderer.draw(molecule->texture, molecule->position, molecule->size); 
+		renderer.draw(molecule->texture, molecule->position, molecule->size);
 		//printf("Molecule position : (%f, %f)\n", molecule->position.x, molecule->position.y);
 	}
 }

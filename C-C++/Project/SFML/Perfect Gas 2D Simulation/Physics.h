@@ -13,6 +13,7 @@ class Physics
 		void checkMoleculesCollisions();
 		void update(float deltaTime, std::string method); 
 
+		void setMoleculeBodyList(std::vector<Body*> moleculeBodyList);
 		const std::vector<Body*> getMoleculeBodyList() const;
 
 	private:

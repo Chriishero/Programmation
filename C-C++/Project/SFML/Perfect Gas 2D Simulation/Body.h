@@ -24,7 +24,7 @@ class Body // C'EST UNIQUEMENT LE CORPS QUI A POS VEL ET ACC DE MODIFIER ET QUI 
 		void setAcceleration(const sf::Vector2f acceleration);
 		const sf::Vector2f getAcceleration() const;
 
-		const std::vector<sf::Vector2f> getBoundaries() const;
+		const std::vector<sf::Vector2f> getBoundaries();
 		
 	private:
 		Shape* m_shape;

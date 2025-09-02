@@ -53,15 +53,15 @@ const sf::Vector2f Body::getAcceleration() const
 	return m_acceleration;
 }
 
-const std::vector<sf::Vector2f> Body::getBoundaries() const
+const std::vector<sf::Vector2f> Body::getBoundaries()
 {
-	std::vector<sf::Vector2f> boundaries;
+	std::vector<sf::Vector2f> boundaries{};
 	if (m_shape->getType() == Shape::Type::Circle)
 	{
-		for (int a = 1; a < 360; a++)
+;		for (int a = 1; a < 360; a++)
 		{
 			float angle = a * M_PI / 180.0f;
-			sf::Vector2f pixelPosition = { m_size.x * cos(angle) + m_position.x, m_size.y * sin(angle) + m_position.y };
+			sf::Vector2f pixelPosition = { m_size.x / 2.f * cos(angle) + m_position.x, m_size.y / 2.f * sin(angle) + m_position.y };
 			boundaries.push_back(pixelPosition);
 		}
 	}

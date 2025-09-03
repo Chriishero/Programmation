@@ -8,7 +8,7 @@ void Physics::checkMapCollisions()
 }
 
 void Physics::checkMoleculesCollisions()
-{
+{/*
 	for (int i = 0; i < m_moleculeBodyList.size(); i++)
 	{
 		std::vector<sf::Vector2f> boundaries1 = m_moleculeBodyList[i]->getBoundaries();
@@ -24,9 +24,26 @@ void Physics::checkMoleculesCollisions()
 						printf("Collisions entre molécule %d et molécule %d.\n", i, j);
 						m_moleculeBodyList[i]->setVelocity({ 0, 0 });
 						m_moleculeBodyList[j]->setVelocity({ 0, 0 });
-						break;
+						return ; // arrêter les deux boucles dès qu'il y a une collision, pour passer à la prochaine molécule
 					}
 				}
+			}
+		}
+	}*/
+	for (int i = 0; i < m_moleculeBodyList.size(); i++)
+	{
+		Body* m1 = m_moleculeBodyList[i];
+		float radius1 = m1->getSize().x;
+		for (int j = i + 1; j < m_moleculeBodyList.size(); j++)
+		{
+			Body* m2 = m_moleculeBodyList[j];
+			float radius2 = m2->getSize().y;
+			float distance = sqrt(pow((m2->getPosition().x - m1->getPosition().x), 2) + pow((m2->getPosition().y - m1->getPosition().y), 2));
+			if ((distance > 0 && distance < radius1 + radius2) || (distance < 0 && -distance < radius1 + radius2))
+			{
+				printf("Collisions entre molécule %d et molécule %d.\n", i, j);
+				m_moleculeBodyList[i]->setVelocity({ 0, 0 });
+				m_moleculeBodyList[j]->setVelocity({ 0, 0 });
 			}
 		}
 	}

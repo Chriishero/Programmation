@@ -20,7 +20,7 @@ void Body::setSize(const sf::Vector2f size)
 
 const sf::Vector2f Body::getSize() const
 {
-	return m_size;
+	return m_size / 2.0f;
 }
 
 void Body::setPosition(const sf::Vector2f position)
@@ -61,7 +61,7 @@ const std::vector<sf::Vector2f> Body::getBoundaries()
 ;		for (int a = 1; a < 360; a++)
 		{
 			float angle = a * M_PI / 180.0f;
-			sf::Vector2f pixelPosition = { m_size.x / 2.f * cos(angle) + m_position.x, m_size.y / 2.f * sin(angle) + m_position.y };
+			sf::Vector2f pixelPosition = { m_size.x * cos(angle) + m_position.x, m_size.y * sin(angle) + m_position.y };
 			boundaries.push_back(pixelPosition);
 		}
 	}

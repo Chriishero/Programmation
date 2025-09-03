@@ -47,7 +47,8 @@ void Gas::create()
 
 		// Initial Position, size
 		m_molecule->position = sf::Vector2f(xPosRNG(gen), yPosRNG(gen));
-		m_molecule->size = sf::Vector2f(m_molecule->shape.getGlobalBounds().width, m_molecule->shape.getGlobalBounds().height);
+		m_molecule->size = sf::Vector2f(m_molecule->shape.getGlobalBounds().width, 
+										m_molecule->shape.getGlobalBounds().height);
 
 		// Initial Velocity
 		m_molecule->velocity = sf::Vector2f(xVelRNG(gen), yVelRNG(gen));

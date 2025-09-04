@@ -20,7 +20,9 @@ void Body::setSize(const sf::Vector2f size)
 
 const sf::Vector2f Body::getSize() const
 {
-	return m_size / 2.0f;
+	if (m_shape->getType() == Shape::Type::Circle)
+		return m_size / 2.0f;
+	return m_size;
 }
 
 void Body::setPosition(const sf::Vector2f position)

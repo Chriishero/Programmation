@@ -7,8 +7,9 @@ class Body;
 class Physics
 {
 	public:
-		Physics(std::vector<Body*> moleculeBodyList);
+		Physics(std::vector<Body*> moleculeBodyList, Body* containerBody);
 
+		void computeNewVelocities(Body* mol1, Body* mol2);
 		void checkMapCollisions();
 		void checkMoleculesCollisions();
 		void update(float deltaTime, std::string method); 
@@ -18,6 +19,7 @@ class Physics
 
 	private:
 		std::vector<Body*> m_moleculeBodyList;
+		Body* m_containerBody;
 		std::vector<std::vector<sf::Vector2f>> m_boundariesList;
 };
 

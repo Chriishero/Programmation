@@ -12,10 +12,9 @@ void World::create()
 
 	m_gas = new Gas(m_nMolecules, m_volume, m_temperature);
 	m_gas->create();
-
-	m_physics = new Physics(m_gas->getMoleculeBodyList());
-
 	createContainer();
+
+	m_physics = new Physics(m_gas->getMoleculeBodyList(), m_containerBody);
 }
 
 void World::reload()
@@ -27,9 +26,8 @@ void World::reload()
 	delete m_physics;
 	delete m_containerBody;
 
-	m_physics = new Physics(m_gas->getMoleculeBodyList());
-
 	createContainer();
+	m_physics = new Physics(m_gas->getMoleculeBodyList(), m_containerBody);
 }
 
 void World::createContainer()
@@ -59,11 +57,12 @@ void World::createContainer()
 
 	// Création du corps physique du conteneur
 	m_containerBody = new Body();
-	Shape containerShape;
-	containerShape.setType(Shape::Type::Rectangle);
-	m_containerBody->setShape(&containerShape);
+	m_containerShape = new Shape();
+	m_containerShape->setType(Shape::Type::Rectangle);
+	m_containerBody->setShape(m_containerShape);
 	m_containerBody->setPosition(m_container.vertices[0].position);
 	m_containerBody->setSize(m_containerSize);
+	printf("%d", m_containerBody->getSize().x);
 	/*
 	printf("Container position : (%f, %f)\n", m_container.vertices[0].position.x, m_container.vertices[0].position.y);
 	auto boundaries = m_containerBody->getBoundaries();

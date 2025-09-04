@@ -38,6 +38,7 @@ class World
 
 		Container m_container;
 		Body* m_containerBody;
+		Shape* m_containerShape;
 		sf::Vector2f m_containerSize;
 };
 

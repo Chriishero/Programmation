@@ -19,7 +19,7 @@ int main() {
 	world.create();
 	while (window.isOpen()) {
 		float frameTime = deltaClock.getElapsedTime().asSeconds();
-		std::cout << "Frame time : " << frameTime << " seconds" << std::endl;
+		//std::cout << "Frame time : " << frameTime << " seconds" << std::endl;
 		deltaClock.restart();
 
 		sf::Event event;

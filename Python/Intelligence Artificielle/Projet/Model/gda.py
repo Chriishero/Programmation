@@ -12,13 +12,13 @@ class GDA:
         m_c = len(X_c)
         return 1/m_c * np.sum(X_c, axis=0)
     
-    def _covariance_matrix(self, X, y, c):
-        m, n = X.shape
-        return 1/m * np.sum((X - self._mean(X[y == c]))**2, axis=0)
+    def _covariance_matrix(self, X_c):
+        m, n = X_c.shape
+        return 1/m * (X_c - self._mean(X_c)).T @ (X_c - self._mean(X_c))
 
     def fit(self, X, y):
         X, y = np.array(X), np.array(y)
-        m, n, k = X.shape[0], X.shape[1], np.max(y) + 1
+        m, n, k = X.shape[0], X.shape[1], np.unique(y).shape[0]
         self.phi = np.zeros(k)
         self.mu = np.zeros((k, n))
         self.sigma = np.zeros((k, n, n))
@@ -27,10 +27,10 @@ class GDA:
             X_c = X[y == c]
             self.phi[c] = self._prior_probability(X_c, y)
             self.mu[c] = self._mean(X_c)
-            self.sigma[c] = np.cov(X_c.T)
+            self.sigma[c] = self._covariance_matrix(X_c)
 
     def _bayes_rules(self, X):
-        m, n, k = X.shape[0], X.shape[1], np.max(y) + 1
+        m, n, k = X.shape[0], X.shape[1], self.phi.shape[0]
 
         X = np.reshape(X, (1, m, n, 1))
         self.phi = np.reshape(self.phi, (k, 1, 1, 1))
@@ -47,7 +47,7 @@ class GDA:
         return np.argmax(self._bayes_rules(np.array(X)), axis=0).flatten()
 
 from sklearn.datasets import make_classification
-X, y = make_classification(n_samples=500, n_features=10, n_informative=8, n_classes=2, random_state=0)
+X, y = make_classification(n_samples=500, n_features=10, n_classes=2, random_state=0)
 
 model = GDA()
 model.fit(X, y)

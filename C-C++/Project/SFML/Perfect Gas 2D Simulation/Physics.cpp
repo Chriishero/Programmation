@@ -6,33 +6,39 @@ Physics::Physics(std::vector<Body*> moleculeBodyList, Body* containerBody)
 
 void Physics::computeNewVelocities(Body* mol1, Body* mol2)
 {
-	// Vitesses scalaires
-	float v1 = sqrt(mol1->getVelocity().x * mol1->getVelocity().x + mol1->getVelocity().y * mol1->getVelocity().y);
-	float v2 = sqrt(mol2->getVelocity().x * mol2->getVelocity().x + mol2->getVelocity().y * mol2->getVelocity().y);
-	// Angle depuis l'origine
-	float theta1 = atan2(mol1->getPosition().y, mol1->getPosition().x);
-	float theta2 = atan2(mol2->getPosition().y, mol2->getPosition().x);
-	// Angle de contact des deux molécules
-	float posX = mol1->getPosition().x - mol2->getPosition().x;
-	float posY = mol1->getPosition().y - mol2->getPosition().y;
-	float phi = atan2(posY, posX);
+	// Positions
+	float x1 = mol1->getPosition().x;
+	float y1 = mol1->getPosition().y;
+	float x2 = mol2->getPosition().x;
+	float y2 = mol2->getPosition().y;
+	// Vitesses vectorielles initiales
+	sf::Vector2f v1_i = mol1->getVelocity();
+	sf::Vector2f v2_i = mol2->getVelocity();
+	// Masses
 	float m1 = 1;
 	float m2 = 1;
-
-	// Nouvelle vitesse de la molécule 1
-	float v1X_prime = (v1 * cos(theta1 - phi) * (m1 - m2) + 2 * m2 * v2 * cos(theta2 - phi)) / (m1 + m2) 
-				* (cos(phi) + v1 * sin(theta1 - phi) * cos(phi + M_PI / 2));
-	float v1Y_prime = (v1 * cos(theta1 - phi) * (m1 - m2) + 2 * m2 * v2 * cos(theta2 - phi)) / (m1 + m2)
-		* (sin(phi) + v1 * sin(theta1 - phi) * sin(phi + M_PI / 2));
-	mol1->setVelocity({ v1X_prime, v1Y_prime });
-
-	// Nouvelle vitesse de la molécule 2
-	float v2X_prime = (v2 * cos(theta2 - phi) * (m2 - m1) + 2 * m1 * v1 * cos(theta1 - phi)) / (m2 + m1)
-		* (cos(phi) + v2 * sin(theta2 - phi) * cos(phi + M_PI / 2));
-	float v2Y_prime = (v2 * cos(theta1 - phi) * (m2 - m1) + 2 * m1 * v1 * cos(theta1 - phi)) / (m2 + m1)
-		* (sin(phi) + v2 * sin(theta1 - phi) * sin(phi + M_PI / 2));
-	printf("v2_prime : (%f, %f)", v2X_prime, v2Y_prime);
-	mol2->setVelocity({ v2X_prime, v2Y_prime });
+	// Angle molécule 1
+	float alpha1 = atan2(y2 - y1, x2 - x1);
+	float beta1 = atan2(v1_i.y, v1_i.x);
+	float gamma1 = beta1 - alpha1;
+	// Angles molécule 2
+	float alpha2 = atan2(y1 - y2, x1 - x2);
+	float beta2 = atan2(v2_i.y, v2_i.x);
+	float gamma2 = beta2 - alpha2;
+	// Normes des vitesses initiales
+	float v12_i = sqrt(v1_i.x * v1_i.x + v1_i.y * v1_i.y) * cos(gamma1); // vitesse transmise au corps 2 par le corps 1
+	float v11_i = sqrt(v1_i.x * v1_i.x + v1_i.y * v1_i.y) * sin(gamma1); // vitesse conservé du corps 1
+	float v21_i = sqrt(v2_i.x * v2_i.x + v2_i.y * v2_i.y) * cos(gamma2);
+	float v22_i = sqrt(v2_i.x * v2_i.x + v2_i.y * v2_i.y) * sin(gamma2);
+	// Normes des vitesses finales
+	float v12_f = ((m1 - m2) * v12_i - 2 * m2 * v21_i) / (m1 + m2);
+	float v21_f = ((m2 - m1) * v21_i - 2 * m1 * v12_i) / (m1 + m2);
+	// Vitesses vectorielles finales
+	sf::Vector2f v1_f = v11_i * sf::Vector2f{ -sin(alpha1), cos(alpha1) } + v12_f * sf::Vector2f{ cos(alpha1), sin(alpha1) };
+	sf::Vector2f v2_f = v22_i * sf::Vector2f{ -sin(alpha2), cos(alpha2) } + v21_f * sf::Vector2f{ cos(alpha2), sin(alpha2) };
+	// Application des vitesses finales
+	mol1->setVelocity(v1_f);
+	mol2->setVelocity(v2_f);
 }
 
 void Physics::checkMapCollisions()
@@ -43,9 +49,13 @@ void Physics::checkMapCollisions()
 		Body* m = m_moleculeBodyList[i];
 		if (m->getPosition().x <= m_containerBody->getPosition().x
 			|| m->getPosition().x + m->getSize().x * 2 >= m_containerBody->getPosition().x + m_containerBody->getSize().x
-			|| m->getPosition().y <= m_containerBody->getPosition().y
+			|| m->getPosition().y <= m_containerBody->getPosition().y	
 			|| m->getPosition().y + m->getSize().y * 2 >= m_containerBody->getPosition().y + m_containerBody->getSize().y)
 		{
+			float m1 = 1;
+			float m2 = 1;
+			float theta = atan2(m->getPosition().y, m->getPosition().x);
+			sf::Vector2f v1_prime = m->getVelocity() * sqrt(m1 * m1 + m2 * m2 + 2 * m1 * m2 * cos(theta)) / (m1 + m1);
 			m->setVelocity(-m->getVelocity());
 		}
 	}
@@ -87,6 +97,7 @@ void Physics::checkMoleculesCollisions()
 			{
 				printf("Collisions entre molécule %d et molécule %d.\n", i, j);
 				computeNewVelocities(m1, m2);
+
 				sf::Vector2f v1 = m1->getVelocity();
 				sf::Vector2f v2 = m2->getVelocity();
 				//m_moleculeBodyList[i]->setVelocity(v2);

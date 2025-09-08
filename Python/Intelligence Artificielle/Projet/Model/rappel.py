@@ -1,138 +1,59 @@
 import numpy as np
+from sklearn.datasets import make_classification
+X, y = make_classification(n_samples=500, n_features=10, n_informative=8, n_classes=2, random_state=0)
 
-class TreeNode:
-    def __init__(self, feature_index=None, threshold=None, left=None, right=None, value=None):
-        self.feature_index = feature_index
-        self.threshold = threshold
-        self.left = left
-        self.right = right
-        self.value = value
+class GDA:
+    def __init__(self):
+        self.phi = None
+        self.mu = None
+        self.sigma = None
 
-class DecisionTreeClassifier:
-    def __init__(self, max_features, max_depth, min_samples_leaf, min_samples_split):
-        self.max_features = max_features
-        self.max_depth = max_depth
-        self.min_samples_leaf = min_samples_leaf
-        self.min_samples_split = min_samples_split
-
-        self.tree = None
-
-    def _loss_function(self, y):
+    def _prior_probability(self, X_c, y):
         m = len(y)
-        mean = 1/m * np.sum(y)
-        return 1/m * np.sum(y - mean)
-    
-    def _gain_function(self, y, y_left, y_right):
-        m = len(y)
-        loss_node = self._loss_function(y)
-        loss_left = self._loss_function(y_left)
-        loss_right = self._loss_function(y_right)
-        return loss_node - (len(y_left) / m * loss_left + len(y_right) / m * loss_right)
-    
-    def _split_function(self, X, y):
-        m, n = X.shape
-        best_gain = float("-inf")
-        best_split = None
-        indices = np.arange(n)
+        return 1/m * X_c.shape[0]
 
-        if isinstance(self.max_features, int):
-            indices = np.random.choice(n, self.max_features, replace=False)
-        elif self.max_features == "sqrt":
-            indices = np.random.choice(n, int(np.sqrt(n)), replace=False)
-        elif self.max_features == "log2":
-            indices = np.random.choice(n, int(np.log2(n)), replace=False)
-
-        for feature_index in indices:
-            thresholds = np.unique(X[:, feature_index])
-            for threshold in thresholds:
-                left_mask = X[:, feature_index] < threshold
-                right_mask = ~left_mask
-
-                if self.min_samples_leaf is not None and (len(y[left_mask]) < self.min_samples_leaf or
-                                                          len(y[right_mask]) < self.min_samples_leaf):
-                    continue
-
-                gain = self._gain_function(y, y[left_mask], y[right_mask])
-                if gain > best_gain:
-                    best_gain = gain
-                    best_split = feature_index, threshold
-
-        return best_split
-    
-    def _tree_function(self, X, y, depth=0):
-        def _leaf_value():
-            return TreeNode(value=np.bincount(y).argmax())
-        
-        if self.max_depth is not None and self.max_depth < depth:
-            return _leaf_value()
-        
-        split = self._split_function(X, y)
-        if split is None:
-            return _leaf_value()
-        
-        feature_index, threshold = split
-        left_mask = X[:, feature_index] < threshold
-        right_mask = ~left_mask
-
-        if self.min_samples_split is not None and (len(y[left_mask]) < self.min_samples_split or
-                                                   len(y[right_mask]) < self.min_samples_split):
-            return _leaf_value()
-        
-        if len(y[left_mask]) == 0 or len(y[right_mask]) == 0:
-            return _leaf_value()
-        
-        left_tree = self._tree_function(X[left_mask], y[left_mask], depth+1)
-        right_tree = self._tree_function(X[right_mask], y[right_mask], depth+1)
-
-        return TreeNode(feature_index, threshold, left_tree, right_tree)
-    
-    def _predict_sample(self, x, tree):
-        if tree.value is not None:
-            return tree.value
-        elif x[tree.feature_index] < tree.threshold:
-            return self._predict_sample(x, tree.left)
-        else:
-            return self._predict_sample(x, tree.right)
-        
-    def fit(self, X, y):
-        X, y = np.array(X), np.array(y)
-        self.tree = self._tree_function(X, y)
-
-    def predict(self, X):
-        return np.array([self._predict_sample(x, self.tree) for x in np.array(X)])
-    
-class RandomForestClassifier:
-    def __init__(self, n_estimator=400, max_features="log2", max_depth=4, min_samples_leaf=5, min_samples_split=10):
-        self.n_estimator = n_estimator
-        self.max_features = max_features
-        self.max_depth = max_depth
-        self.min_samples_leaf = min_samples_leaf
-        self.min_samples_split = min_samples_split
-
-        self.model_list = []
-
-    def _bootstrap_sample(self, X, y):
-        m, n = X.shape
-        random_index = np.random.choice(m, m, replace=True)
-        return X[random_index], y[random_index]
-    
-    def _train_estimators(self, X, y):
-        for i in range(self.n_estimator):
-            X_sub, y_sub = self._bootstrap_sample(X, y)
-            model = DecisionTreeClassifier(self.max_features, self.max_depth, self.min_samples_leaf, self.min_samples_split)
-            model.fit(X_sub, y_sub)
-            self.model_list.append(model)
+    def _mean(self, X_c):
+        m_c = len(X_c)
+        return 1/m_c * np.sum(X_c, axis=0)
 
     def fit(self, X, y):
-        self._train_estimators(np.array(X), np.array(y))
+        m, n, k = X.shape[0], X.shape[1], np.unique(y).shape[0]
+        self.phi = np.zeros(k)
+        self.mu = np.zeros((k, n))
+        self.sigma = np.zeros((k, n, n))
 
+        for c in range(k):
+            X_c = X[c == y]
+            self.phi[c] = self._prior_probability(X_c, y)
+            self.mu[c] = self._mean(X_c)
+            self.sigma[c] = np.cov(X_c.T)
+
+    def _bayes_rules(self, X):
+        m, n, k = X.shape[0], X.shape[1], self.phi.shape[0]
+
+        X = np.reshape(X, (1, m, n, 1))
+        self.phi = np.reshape(self.phi, (k, 1, 1, 1))
+        self.mu = np.reshape(self.mu, (k, 1, n, 1))
+        self.sigma = np.reshape(self.sigma, (k, 1, n, n))
+
+        p_y = self.phi
+        p_x_y = (1 / (np.sqrt((2 * np.pi)**n * np.linalg.det(self.sigma))).reshape((k, 1, 1, 1)) *
+                 np.exp(-1/2 * (X - self.mu).transpose([0, 1, 3, 2]) @ np.linalg.inv(self.sigma) @ (X - self.mu)))
+        p_y_x = p_x_y * p_y
+        return p_y_x
+    
     def predict(self, X):
         X = np.array(X)
-        predictions_list = np.array([model.predict(X) for model in self.model_list])
+        return np.argmax(self._bayes_rules(X), axis=0).flatten()
 
-        majority_votes = []
-        for i in range(predictions_list.shape[1]):
-            value, count = np.unique(predictions_list[i], return_counts=True)
-            majority_vote = value[np.argmax(count)]
-            majority_votes.append(majority_vote)
-        return majority_votes
+
+model = GDA()
+model.fit(X, y)
+y_pred = model.predict(X)
+
+import matplotlib.pyplot as plt
+plt.scatter(X[:, 0], y)
+plt.plot(X[:, 0], y_pred,color="red")
+from sklearn.metrics import accuracy_score
+plt.title(f"{accuracy_score(y, y_pred)}")
+plt.show()

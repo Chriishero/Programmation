@@ -6,7 +6,7 @@ World::World()
 
 void World::create()
 {
-	m_nMolecules = 5;
+	m_nMolecules = 10;
 	m_volume = 1.0f; // mètre cube
 	m_temperature = 300.0f; // Kelvin
 

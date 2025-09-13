@@ -27,17 +27,17 @@ class GDA:
             X_c = X[y == c]
             self.phi[c] = self._prior_probability(X_c, y)
             self.mu[c] = self._mean(X_c)
-            self.sigma[c] = self._covariance_matrix(X_c)
+            self.sigma[c] = self._covariance_matrix(X_c) + np.eye(n)
 
     def _bayes_rules(self, X):
         m, n, k = X.shape[0], X.shape[1], self.phi.shape[0]
 
         X = np.reshape(X, (1, m, n, 1))
-        self.phi = np.reshape(self.phi, (k, 1, 1, 1))
+        self.phi = np.reshape(self.phi, (k, 1))
         self.mu = np.reshape(self.mu, (k, 1, n, 1))
         self.sigma = np.reshape(self.sigma, (k, 1, n, n))
 
-        p_y = self.phi
+        p_y = np.tile(self.phi, (1, m)).reshape((k, m, 1, 1))
         p_x_y = (1 / (np.sqrt((2 * np.pi)**n * np.linalg.det(self.sigma))).reshape((k, 1, 1, 1))
                  * np.exp(-1/2 * (X - self.mu).transpose([0, 1, 3, 2]) @ np.linalg.inv(self.sigma) @ (X - self.mu)))
         p_y_x = p_x_y * p_y
@@ -47,7 +47,7 @@ class GDA:
         return np.argmax(self._bayes_rules(np.array(X)), axis=0).flatten()
 
 from sklearn.datasets import make_classification
-X, y = make_classification(n_samples=500, n_features=10, n_classes=2, random_state=0)
+X, y = make_classification(n_samples=500, n_features=10, n_informative=8, n_classes=2, random_state=0)
 
 model = GDA()
 model.fit(X, y)

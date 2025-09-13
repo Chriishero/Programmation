@@ -35,7 +35,7 @@ void Physics::computeNewVelocities(Body* mol1, Body* mol2)
 	float v21_f = ((m2 - m1) * v21_i - 2 * m1 * v12_i) / (m1 + m2);
 	// Vitesses vectorielles finales
 	sf::Vector2f v1_f = v11_i * sf::Vector2f{ -sin(alpha1), cos(alpha1) } + v12_f * sf::Vector2f{ cos(alpha1), sin(alpha1) };
-	sf::Vector2f v2_f = v22_i * sf::Vector2f{ -sin(alpha2), cos(alpha2) } + v21_f * sf::Vector2f{ cos(alpha2), sin(alpha2) };
+	sf::Vector2f v2_f = v22_i * sf::Vector2f{ -sin(alpha2), cos(alpha2) } - v21_f * sf::Vector2f{ cos(alpha2), sin(alpha2) };
 	// Application des vitesses finales
 	mol1->setVelocity(v1_f);
 	mol2->setVelocity(v2_f);

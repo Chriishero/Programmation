@@ -92,13 +92,13 @@ void World::renderGui()
 {
 	if (ImGui::CollapsingHeader("World Settings"))
 	{
-		ImGui::SliderFloat("Time Scale", &m_timeScale, 0.0f, 100.0f);
+		ImGui::SliderFloat("Time Scale", &m_timeScale, -10.0f, 10.0f);
 		
 		// Combo Box
-		const char* items[] = { "Explicit Euler" };
-		static int item_current = 1;
-		ImGui::ListBox("Numerical Approximation Method", &item_current, items, IM_ARRAYSIZE(items));
-		m_numericalApproximationMethod = items[item_current - 1];
+		const char* items[] = { "Forward Time-Driven", "Backward Time-Driven", "Event-Driven" };
+		static int item_current = 0;
+		ImGui::ListBox("Simulation Method", &item_current, items, IM_ARRAYSIZE(items));
+		m_numericalApproximationMethod = items[item_current];
 	}
 	m_gas->renderGui();
 	if (ImGui::Button("Reload Gas"))

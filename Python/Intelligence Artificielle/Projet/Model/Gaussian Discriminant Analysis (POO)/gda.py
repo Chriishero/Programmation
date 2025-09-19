@@ -19,6 +19,7 @@ class GDA:
     def fit(self, X, y):
         X, y = np.array(X), np.array(y)
         m, n, k = X.shape[0], X.shape[1], np.unique(y).shape[0]
+        
         self.phi = np.zeros(k)
         self.mu = np.zeros((k, n))
         self.sigma = np.zeros((k, n, n))
@@ -30,7 +31,7 @@ class GDA:
             self.sigma[c] = self._covariance_matrix(X_c) + np.eye(n)
 
     """
-    NOTATION VECTORIELLE ; 
+    NOTATION VECTORIELLE : 
     def _bayes_rules(self, X):
         m, n, k = X.shape[0], X.shape[1], self.phi.shape[0]
 

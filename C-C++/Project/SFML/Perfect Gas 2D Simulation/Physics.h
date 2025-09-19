@@ -10,8 +10,10 @@ class Physics
 		Physics(std::vector<Body*> moleculeBodyList, Body* containerBody);
 
 		void computeNewVelocities(Body* mol1, Body* mol2);
-		void checkMapCollisions();
-		void checkMoleculesCollisions();
+		int distanceBetweenMolecules(Body* mol1, Body* mol2);
+		bool backtrackToCollision(Body* mol1, Body* mol2);
+		void updateMapCollisions(std::string method, float deltaTime);
+		void updateMoleculesCollisions(std::string method, float deltaTime);
 		void update(float deltaTime, std::string method); 
 
 		void setMoleculeBodyList(std::vector<Body*> moleculeBodyList);

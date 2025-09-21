@@ -1,26 +1,67 @@
 #include "Gas.h"
 
+long double boltzmann_constant = 1.380649e-23l; // joule per kelvin
+
 Gas::Gas(float nMolecules, float volume, float temperature) 
 	: m_nMolecules(nMolecules), m_volume(volume), m_temperature(temperature)
 {
-	long double boltzmann_constant = 1.380649e-23l; // joule per kelvin
-	m_pressure = (nMolecules * boltzmann_constant * temperature) / volume; // pascal
-
 	m_xPosMax = (float)WIN_WIDTH;
 	m_yPosMax = (float)WIN_HEIGHT;
 
-	m_gasParams = { &m_nMolecules, &m_volume, &m_temperature,
+	m_pressure = (nMolecules * boltzmann_constant * temperature) / volume; // pascal
+
+	m_gasParams = { &m_nMolecules, &m_pressure, &m_volume, &m_temperature,
 									&m_xPosMin, &m_xPosMax, &m_yPosMin, &m_yPosMax,
 									&m_xVelMin, &m_xVelMax, &m_yVelMin, &m_yVelMax,
 									&m_moleculeSizePercentage };
-	m_cpyGasParams = { m_nMolecules, m_volume, m_temperature,
+	m_cpyGasParams = { m_nMolecules, m_pressure, m_volume, m_temperature,
 									m_xPosMin, m_xPosMax, m_yPosMin, m_yPosMax,
 									m_xVelMin, m_xVelMax, m_yVelMin, m_yVelMax, 
 									m_moleculeSizePercentage };
 }
 
+void Gas::computeGasParameters()
+{
+	float* N = &m_cpyGasParams[0];
+	float* P = &m_cpyGasParams[1];
+	float* V = &m_cpyGasParams[2];
+	float* T = &m_cpyGasParams[3];
+
+	if (*P != *m_gasParams[1]) // Pression
+		*P /= m_pressureScaling; // remise à l'échelle pour que les valeurs des autres quantité soient cohérentes
+
+	std::vector<int> unchangedParamsIdx{};
+
+	for (int i = 0; i < 4; i++) // N, P, V, T
+	{
+		if (m_cpyGasParams[i] == *m_gasParams[i])
+			unchangedParamsIdx.push_back(i);
+	}
+	if (unchangedParamsIdx.empty())
+		// Tous les paramètres ont changé, je choisis arbitrairement que N soit celui qui soit recalculé
+		unchangedParamsIdx.push_back(0); // ajoute N : nombre de molécule
+
+	if (unchangedParamsIdx.size() == 4)
+		return;
+
+	int idx = unchangedParamsIdx[0]; // un seul paramètres à recalculer
+
+	if (idx == 0)
+		*N = (*V * *P) / (boltzmann_constant * *T);
+	else if (idx == 1)
+		*P = (*N * boltzmann_constant * *T) / *V;
+	else if (idx == 2)
+		*V = (*N * boltzmann_constant * *T) / *P;
+	else if (idx == 3)
+		*T = (*V * *P) / (boltzmann_constant * *N);
+	*P *= m_pressureScaling; // Constante pour avoir une valeur affichable, car le nombre de molécule est trop faible
+}
+
 void Gas::create()
 {
+	computeGasParameters();
+	setNewInitialCondition();
+
 	m_moleculeRadius = sqrt((m_moleculeSizePercentage * WIN_WIDTH * WIN_HEIGHT) / (M_PI * m_nMolecules));
 	std::random_device gen;
 	for (int i = 0; i < m_nMolecules; i++)
@@ -94,18 +135,19 @@ void Gas::renderGui()
 {
 	if (ImGui::CollapsingHeader("Gas Settings"))
 	{
-		ImGui::SliderFloat("Number of Molecules", &m_cpyGasParams[0], 1.0f, 10000.0f);
-		ImGui::SliderFloat("Volume", &m_cpyGasParams[1], 0.01f, 10.0f);
-		ImGui::SliderFloat("Temperature", &m_cpyGasParams[2], -273.0f, 1000.0f);
-		ImGui::SliderFloat("Minimal Position on X axis", &m_cpyGasParams[3], 0.0f, WIN_WIDTH);
-		ImGui::SliderFloat("Maximal Position on X axis", &m_cpyGasParams[4], 0.0f, WIN_WIDTH);
-		ImGui::SliderFloat("Minimal Position on Y axis", &m_cpyGasParams[5], 0.0f, WIN_HEIGHT);
-		ImGui::SliderFloat("Maximal Position on Y axis", &m_cpyGasParams[6], 0.0f, WIN_HEIGHT);
-		ImGui::SliderFloat("Minimal Velocity on X axis", &m_cpyGasParams[7], -1000.0f, 1000.0f);
-		ImGui::SliderFloat("Maximal Velocity on X axis", &m_cpyGasParams[8], -1000.0f, 1000.0f);
-		ImGui::SliderFloat("Minimal Velocity on Y axis", &m_cpyGasParams[9], -1000.0f, 1000.0f);
-		ImGui::SliderFloat("Maximal Velocity on Y axis", &m_cpyGasParams[10], -1000.0f, 1000.0f);
-		ImGui::SliderFloat("Percentage of surface area occupied by the molecules", &m_cpyGasParams[11], 0.0f, 1.0f);
+		ImGui::SliderFloat("Number of Molecules", &m_cpyGasParams[0], 1.0f, 1e4f);
+		ImGui::SliderFloat("Pressure", &m_cpyGasParams[1], 0.0f, 1e3f);
+		ImGui::SliderFloat("Volume", &m_cpyGasParams[2], 0.0f, 1e3f);
+		ImGui::SliderFloat("Temperature", &m_cpyGasParams[3], -273.0f, 1e3f);
+		ImGui::SliderFloat("Minimal Position on X axis", &m_cpyGasParams[4], 0.0f, WIN_WIDTH);
+		ImGui::SliderFloat("Maximal Position on X axis", &m_cpyGasParams[5], 0.0f, WIN_WIDTH);
+		ImGui::SliderFloat("Minimal Position on Y axis", &m_cpyGasParams[6], 0.0f, WIN_HEIGHT);
+		ImGui::SliderFloat("Maximal Position on Y axis", &m_cpyGasParams[7], 0.0f, WIN_HEIGHT);
+		ImGui::SliderFloat("Minimal Velocity on X axis", &m_cpyGasParams[8], -1000.0f, 1000.0f);
+		ImGui::SliderFloat("Maximal Velocity on X axis", &m_cpyGasParams[9], -1000.0f, 1000.0f);
+		ImGui::SliderFloat("Minimal Velocity on Y axis", &m_cpyGasParams[10], -1000.0f, 1000.0f);
+		ImGui::SliderFloat("Maximal Velocity on Y axis", &m_cpyGasParams[11], -1000.0f, 1000.0f);
+		ImGui::SliderFloat("Percentage of surface area occupied by the molecules", &m_cpyGasParams[12], 0.0f, 1.0f);
 	}
 }
 
@@ -128,7 +170,7 @@ void Gas::render(Renderer& renderer)
 
 void Gas::setNewInitialCondition()
 {
-	for (int i = 0; i < m_cpyGasParams.size() && i < m_cpyGasParams.size(); i++)
+	for (int i = 0; i < m_cpyGasParams.size(); i++)
 	{
 		*m_gasParams[i] = m_cpyGasParams[i];
 	}

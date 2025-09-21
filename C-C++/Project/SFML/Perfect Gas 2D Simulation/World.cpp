@@ -19,7 +19,6 @@ void World::create()
 
 void World::reload()
 {
-	m_gas->setNewInitialCondition();
 	m_gas->destroy();
 	m_gas->create();
 

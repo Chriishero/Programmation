@@ -10,6 +10,7 @@ class Gas // LA STRUCT MOLECULE NE CONTIENT PAS VEL ET ACC, C'EST QUE LE BODY, I
 	public:
 		Gas(float nMolecules, float volume, float temperature);
 
+		void computeGasParameters();
 		void create();
 		void destroy();
 		void renderGui();
@@ -40,6 +41,7 @@ class Gas // LA STRUCT MOLECULE NE CONTIENT PAS VEL ET ACC, C'EST QUE LE BODY, I
 		float m_temperature;
 
 		float m_pressure = {};
+		float m_pressureScaling = 1e20f;
 
 		// Simulation Parameters
 		float m_xPosMin = 0.0f;

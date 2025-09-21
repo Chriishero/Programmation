@@ -84,6 +84,7 @@ bool Physics::backtrackToCollision(Body* mol1, Body* mol2)
 	float t1 = (-b + sqrt(disc)) / (2 * a);
 	float t2 = (-b - sqrt(disc)) / (2 * a);
 
+	// Choisi la solution négative la plus proche de 0 (retour en arrière minimal)
 	if (t1 < 0 && t2 < 0)
 		collisionTime = (t1 > t2) ? t1 : t2;
 	else

@@ -100,19 +100,68 @@ bool Physics::backtrackToCollision(Body* mol1, Body* mol2)
 	return true;
 }
 
+bool Physics::backtrackToWallCollision(Body* mol)
+{
+	// Conteneur / Murs
+	Body* walls = m_containerBody;
+	// Positions vectorielles
+	sf::Vector2f q = mol->getPosition(); // au centre
+	sf::Vector2f w = walls->getPosition();
+	// Rayon molécule
+	float r = mol->getSize().x;
+	// Taille du conteneur
+	sf::Vector2f c_size = walls->getSize();
+	// Vitesse vectorielle
+	sf::Vector2f v = mol->getVelocity();
+
+	float best_t = -INFINITY;
+	float t = 0.0f;
+
+	// Si la molécule chevauche/dépasse le mur gauche, et si la vitesse est dans cette direction
+	if (q.x - r <= w.x && v.x < 0) // Horizontal gauche
+	{
+		t = (w.x - (q.x - r)) / v.x;
+		if (t < 0 && t > best_t) best_t = t;
+	}
+	if (q.x + r >= w.x + c_size.x && v.x > 0) // Horizontal droit
+	{
+		t = ((w.x + c_size.x) - (q.x + r)) / v.x;
+		if (t < 0 && t > best_t) best_t = t;
+	}
+	if (q.y - r <= w.y && v.y < 0) // Vertical haut
+	{
+		t = (w.y - (q.y - r)) / v.y;
+		if (t < 0 && t > best_t) best_t = t;
+	}
+	if (q.y + r >= w.y + c_size.y && v.y > 0) // Vertical bas
+	{
+		t = ((w.y + c_size.y) - (q.y + r)) / v.y;
+		if (t < 0 && t > best_t) best_t = t;
+	}
+	if (best_t == -INFINITY)
+		return false;
+
+	// Application de la nouvelle position
+	mol->setPosition(q + v * best_t);
+
+	return true;
+}
+
 void Physics::updateMapCollisions(std::string method, float deltaTime)
 {
 	//printf("%d", m_containerBody->getPosition().x + m_containerBody->getSize().x);
 	for (int i = 0; i < m_moleculeBodyList.size(); i++)
 	{
 		Body* m = m_moleculeBodyList[i];
-		if (m->getPosition().x <= m_containerBody->getPosition().x
-			|| m->getPosition().x + m->getSize().x * 2 >= m_containerBody->getPosition().x + m_containerBody->getSize().x)
+		if (method == "Backward Time-Driven")
+			backtrackToWallCollision(m);
+		if (m->getPosition().x - m->getSize().x <= m_containerBody->getPosition().x
+			|| m->getPosition().x + m->getSize().x >= m_containerBody->getPosition().x + m_containerBody->getSize().x)
 		{
 			m->setVelocity({ -m->getVelocity().x, m->getVelocity().y });
 		}
-		else if (m->getPosition().y <= m_containerBody->getPosition().y
-			|| m->getPosition().y + m->getSize().y * 2 >= m_containerBody->getPosition().y + m_containerBody->getSize().y)
+		else if (m->getPosition().y - m->getSize().y <= m_containerBody->getPosition().y
+			|| m->getPosition().y + m->getSize().y >= m_containerBody->getPosition().y + m_containerBody->getSize().y)
 		{
 			m->setVelocity({ m->getVelocity().x, -m->getVelocity().y });
 		}
@@ -151,9 +200,8 @@ void Physics::updateMoleculesCollisions(std::string method, float deltaTime)
 			if (distanceBetweenMolecules(mol1, mol2) <= 0) // true
 			{
 				if (method == "Backward Time-Driven")
-				{
 					backtrackToCollision(mol1, mol2);
-				}
+
 				printf("Collisions entre molécule %d et molécule %d.\n", i, j);
 				computeNewVelocities(mol1, mol2);
 			}

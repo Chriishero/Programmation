@@ -5,7 +5,7 @@
 class Renderer;
 class Body;
 
-class Gas // LA STRUCT MOLECULE NE CONTIENT PAS VEL ET ACC, C'EST QUE LE BODY, IDEM POUR LA MISE À JOUR
+class Gas
 {
 	public:
 		Gas(float nMolecules, float volume, float temperature);

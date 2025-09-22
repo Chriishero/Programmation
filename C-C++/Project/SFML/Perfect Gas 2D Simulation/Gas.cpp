@@ -163,7 +163,7 @@ void Gas::render(Renderer& renderer)
 {
 	for (auto& molecule : m_moleculeList)
 	{
-		renderer.draw(molecule->texture, molecule->position, molecule->size);
+		renderer.draw(molecule->texture, molecule->position, molecule->size, molecule->size / 2.f); // origine au centre
 		//printf("Molecule position : (%f, %f)\n", molecule->position.x, molecule->position.y);
 	}
 }

@@ -95,7 +95,7 @@ void World::renderGui()
 		
 		// Combo Box
 		const char* items[] = { "Forward Time-Driven", "Backward Time-Driven", "Event-Driven" };
-		static int item_current = 0;
+		static int item_current = 1;
 		ImGui::ListBox("Simulation Method", &item_current, items, IM_ARRAYSIZE(items));
 		m_numericalApproximationMethod = items[item_current];
 	}

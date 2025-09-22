@@ -4,6 +4,7 @@
 #include <iostream>
 #include <optional>
 #include <random>
+#include <cmath>
 #include <SFML/Graphics.hpp>
 #include <ImGui/imgui.h>
 #include <ImGui/imgui-SFML.h>

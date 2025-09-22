@@ -12,6 +12,7 @@ class Physics
 		void computeNewVelocities(Body* mol1, Body* mol2);
 		int distanceBetweenMolecules(Body* mol1, Body* mol2);
 		bool backtrackToCollision(Body* mol1, Body* mol2);
+		bool backtrackToWallCollision(Body* mol);
 		void updateMapCollisions(std::string method, float deltaTime);
 		void updateMoleculesCollisions(std::string method, float deltaTime);
 		void update(float deltaTime, std::string method); 

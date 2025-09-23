@@ -67,8 +67,8 @@ void Gas::create()
 	for (int i = 0; i < m_nMolecules; i++)
 	{
 		// Random Generator
-		std::uniform_real_distribution<float> xPosRNG(m_xPosMin + m_moleculeRadius * 2, m_xPosMax - m_moleculeRadius * 2);
-		std::uniform_real_distribution<float> yPosRNG(m_yPosMin + m_moleculeRadius * 2, m_yPosMax - m_moleculeRadius * 2);
+		std::uniform_real_distribution<float> xPosRNG(m_xPosMin + m_moleculeRadius * 4, m_xPosMax - m_moleculeRadius * 4);
+		std::uniform_real_distribution<float> yPosRNG(m_yPosMin + m_moleculeRadius * 4, m_yPosMax - m_moleculeRadius * 4);
 		std::uniform_real_distribution<float> xVelRNG(m_xVelMin, m_xVelMax);
 		std::uniform_real_distribution<float> yVelRNG(m_yVelMin, m_yVelMax);
 

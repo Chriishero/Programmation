@@ -147,6 +147,124 @@ bool Physics::backtrackToWallCollision(Body* mol)
 	return true;
 }
 
+float Physics::nextMoleculesCollision(Body* mol1, Body* mol2)
+{
+	// Positions vectorielles
+	sf::Vector2f q1 = mol1->getPosition();
+	sf::Vector2f q2 = mol2->getPosition();
+	// Vitesses vectorielles
+	sf::Vector2f v1 = mol1->getVelocity();
+	sf::Vector2f v2 = mol2->getVelocity();
+	// Rayons
+	float r1 = mol1->getSize().x;
+	float r2 = mol2->getSize().x;
+
+	// Différences des positions vectorielles
+	sf::Vector2f dq = { q1.x - q2.x, q1.y - q2.y };
+	// Différences des vitesses vectorielles
+	sf::Vector2f dv = { v1.x - v2.x, v1.y - v2.y };
+
+	// Termes quadratiques
+	float a = dv.x * dv.x + dv.y * dv.y;
+	float b = 2 * (dq.x * dv.x + dq.y * dv.y);
+	float c = dq.x * dq.x + dq.y * dq.y - (r1 + r2) * (r1 + r2);
+	// Discriminant
+	float disc = b * b - 4 * a * c;
+
+	if (a == 0)
+		return INFINITY;
+	if (disc < 0) // Aucune collision
+		return INFINITY;
+
+	// Moment exact de la collision (2 solutions)
+	float collisionTime = 1.0f;
+	float t1 = (-b + sqrt(disc)) / (2 * a);
+	float t2 = (-b - sqrt(disc)) / (2 * a);
+
+	// Choisi la solution positive la plus petite
+	if (t1 > 0 && t2 > 0)
+		collisionTime = (t1 < t2) ? t1 : t2;
+	else
+		collisionTime = (t1 > t2) ? t1 : t2;
+
+	if (collisionTime < 0)
+		return INFINITY;
+
+	return collisionTime;
+}
+
+float Physics::nextWallCollision(Body* mol)
+{
+	// Conteneur / Murs
+	Body* walls = m_containerBody;
+	// Positions vectorielles
+	sf::Vector2f q = mol->getPosition(); // au centre
+	sf::Vector2f w = walls->getPosition();
+	// Rayon molécule
+	float r = mol->getSize().x;
+	// Taille du conteneur
+	sf::Vector2f c_size = walls->getSize();
+	// Vitesse vectorielle
+	sf::Vector2f v = mol->getVelocity();
+
+	float t;
+	float best_t = INFINITY;
+
+	// Quand la molécule percutera le mur droit
+	t = (w.x - (q.x - r)) / v.x;
+	if (t > 0 && t < best_t) best_t = t;
+	// Quand la molécule percutera le mur droit
+	t = ((w.x + c_size.x) - (q.x + r)) / v.x;
+	if (t > 0 && t < best_t) best_t = t;
+	// Quand la molécule percutera le mur haut
+	t = (w.y - (q.y - r)) / v.y;
+	if (t > 0 && t < best_t) best_t = t;
+	// Quand la molécule percutera le mur droit bas
+	t = ((w.y + c_size.y) - (q.y + r)) / v.y;
+	if (t > 0 && t < best_t) best_t = t;
+
+	return best_t;
+}
+
+float Physics::nextEventTime()
+{
+	if (eventArray == nullptr)
+	{
+		eventArray = new EventArray();
+		for (int i = 0; i < m_moleculeBodyList.size(); i++) // taille m_nMolecules
+		{
+			Body* mol1 = m_moleculeBodyList[i];
+			for (int j = i; j < m_moleculeBodyList.size(); j++) // // taille m_nMolecules
+			{
+				Body* mol2 = m_moleculeBodyList[j];
+				Event* event = new Event(nextMoleculesCollision(mol1, mol2), mol1, mol2, false);
+				eventArray->addEvent(event);
+			}
+			Event* event = new Event(nextWallCollision(mol1), mol1, nullptr, true);
+			eventArray->addEvent(event);
+		}
+	}
+	else
+	{
+		std::vector<Body*> lastBodiesCollisions = { eventArray->getLastDeletedEvent()->body1, eventArray->getLastDeletedEvent()->body2};
+		for (int i = 0; i < lastBodiesCollisions.size(); i++) // taille 2
+		{
+			Body* mol1 = m_moleculeBodyList[i];
+			if (mol1 == nullptr)
+				break;
+			for (int j = i; j < m_moleculeBodyList.size(); j++) // taille m_nMolecules
+			{
+				Body* mol2 = m_moleculeBodyList[j];
+				Event* event = new Event(nextMoleculesCollision(mol1, mol2), mol1, mol2, false);
+				eventArray->addEvent(event);
+			}
+			Event* event = new Event(nextWallCollision(mol1), mol1, nullptr, true);
+			eventArray->addEvent(event);
+		}
+	}
+	return eventArray->nextEvent()->time;
+}
+
 void Physics::updateMapCollisions(std::string method, float deltaTime)
 {
 	//printf("%d", m_containerBody->getPosition().x + m_containerBody->getSize().x);
@@ -158,11 +276,13 @@ void Physics::updateMapCollisions(std::string method, float deltaTime)
 		if (m->getPosition().x - m->getSize().x <= m_containerBody->getPosition().x
 			|| m->getPosition().x + m->getSize().x >= m_containerBody->getPosition().x + m_containerBody->getSize().x)
 		{
+			//printf("Molécule %d est en collision horizontale avec le conteneur.\n", i);
 			m->setVelocity({ -m->getVelocity().x, m->getVelocity().y });
 		}
 		else if (m->getPosition().y - m->getSize().y <= m_containerBody->getPosition().y
 			|| m->getPosition().y + m->getSize().y >= m_containerBody->getPosition().y + m_containerBody->getSize().y)
 		{
+			//printf("Molécule %d est en collision verticale avec le conteneur.\n", i);
 			m->setVelocity({ m->getVelocity().x, -m->getVelocity().y });
 		}
 	}
@@ -202,7 +322,7 @@ void Physics::updateMoleculesCollisions(std::string method, float deltaTime)
 				if (method == "Backward Time-Driven")
 					backtrackToCollision(mol1, mol2);
 
-				printf("Collisions entre molécule %d et molécule %d.\n", i, j);
+				//printf("Collisions entre molécule %d et molécule %d.\n", i, j);
 				computeNewVelocities(mol1, mol2);
 			}
 		}
@@ -213,6 +333,13 @@ void Physics::update(float deltaTime, std::string method)
 {
 	updateMapCollisions(method, deltaTime);
 	updateMoleculesCollisions(method, deltaTime);
+
+	if (method == "Event-Driven")
+	{
+		deltaTime = nextEventTime();
+		eventArray->deleteEvent(eventArray->getNextEvent());
+	}
+
 	for (auto& molecule : m_moleculeBodyList)
 	{
 		molecule->setVelocity(molecule->getVelocity() + molecule->getAcceleration() * deltaTime);

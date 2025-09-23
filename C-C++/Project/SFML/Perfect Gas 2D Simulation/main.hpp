@@ -9,6 +9,7 @@
 #include <ImGui/imgui.h>
 #include <ImGui/imgui-SFML.h>
 #include "Renderer.h"
+#include "EventArray.h"
 #include "Physics.h"
 #include "Body.h"
 #include "Shape.h"

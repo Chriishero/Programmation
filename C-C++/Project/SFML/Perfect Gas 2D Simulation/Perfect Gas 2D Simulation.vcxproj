@@ -140,6 +140,7 @@
   <ItemGroup>
     <ClCompile Include="Body.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="EventArray.cpp" />
     <ClCompile Include="Gas.cpp" />
     <ClCompile Include="include\ImGui\imgui-SFML.cpp" />
     <ClCompile Include="include\ImGui\imgui.cpp" />
@@ -156,6 +157,7 @@
   <ItemGroup>
     <ClInclude Include="Body.h" />
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="EventArray.h" />
     <ClInclude Include="Gas.h" />
     <ClInclude Include="main.hpp" />
     <ClInclude Include="Physics.h" />

@@ -13,6 +13,8 @@ void EventArray::addEvent(Event* e)
 
 void EventArray::deleteEvent(Event* e)
 {
+	if (e == nullptr)
+		return;
 	int eventPos = 0;
 	for (eventPos; eventPos < array.size(); eventPos++)
 		if (array[eventPos] == e)
@@ -29,6 +31,7 @@ void EventArray::deleteBodyEvent(Body* b)
 		{
 			m_lastDeletedEvent = array[i];
 			array.erase(std::begin(array) + i);
+			i--;	
 		}
 	}
 }

@@ -5,6 +5,8 @@
 #include <optional>
 #include <random>
 #include <cmath>
+#include <chrono>
+#include <thread>
 #include <SFML/Graphics.hpp>
 #include <ImGui/imgui.h>
 #include <ImGui/imgui-SFML.h>

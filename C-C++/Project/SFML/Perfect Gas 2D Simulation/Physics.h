@@ -19,10 +19,10 @@ class Physics
 		// Event-Driven
 		float nextMoleculesCollision(Body* mol1, Body* mol2);
 		float nextWallCollision(Body* mol);
-		float nextEventTime();
+		void computeNextEvents();
 		// Mise à jour des vitesses après collisions
-		void updateMapCollisions(std::string method, float deltaTime);
-		void updateMoleculesCollisions(std::string method, float deltaTime);
+		void updateMapCollisions(std::string method);
+		void updateMoleculesCollisions(std::string method);
 		// Update principale
 		void update(float deltaTime, std::string method); 
 
@@ -34,5 +34,7 @@ class Physics
 		Body* m_containerBody;
 		std::vector<std::vector<sf::Vector2f>> m_boundariesList;
 
+		Event* m_event;
+		Event* m_nextEvent = nullptr;
 		EventArray* eventArray = nullptr;
 };

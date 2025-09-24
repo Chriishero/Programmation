@@ -33,6 +33,6 @@ public:
 private:
 	std::vector<Event*> array{};
 	Event* m_lastDeletedEvent = nullptr;
-	Event* m_nextEvent;
+	Event* m_nextEvent = nullptr;
 };
 

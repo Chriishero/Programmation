@@ -187,7 +187,7 @@ float Physics::nextMoleculesCollision(Body* mol1, Body* mol2)
 	else
 		collisionTime = (t1 > t2) ? t1 : t2;
 
-	if (collisionTime <= 0)
+	if (collisionTime <= 0.f)
 		return INFINITY;
 
 	//printf("mol collision time : %f\n", collisionTime);
@@ -216,25 +216,25 @@ float Physics::nextWallCollision(Body* mol)
 	if (v.x < 0)
 	{
 		t = (w.x - (q.x - r)) / v.x;
-		if (t > 0 && t < best_t) best_t = t;
+		if (t > 0.f && t < best_t) best_t = t;
 	}
 	// Quand la molécule percutera le mur droit
 	if (v.x > 0)
 	{
 		t = ((w.x + c_size.x) - (q.x + r)) / v.x;
-		if (t > 0 && t < best_t) best_t = t;
+		if (t > 0.f && t < best_t) best_t = t;
 	}
 	// Quand la molécule percutera le mur haut
 	if (v.y < 0)
 	{
 		t = (w.y - (q.y - r)) / v.y;
-		if (t > 0 && t < best_t) best_t = t;
+		if (t > 0.f && t < best_t) best_t = t;
 	}
 	// Quand la molécule percutera le mur bas
 	if (v.y > 0)
 	{
 		t = ((w.y + c_size.y) - (q.y + r)) / v.y;
-		if (t > 0 && t < best_t) best_t = t;
+		if (t > 0.f && t < best_t) best_t = t;
 	}
 
 	//printf("wall collision time : %f\n", best_t);
@@ -252,7 +252,7 @@ void Physics::computeNextEvents()
 			Body* mol1 = m_moleculeBodyList[i];
 			for (int j = i + 1; j < m_moleculeBodyList.size(); j++) // // taille m_nMolecules
 			{
-				Body* mol2 = m_moleculeBodyList[j];;
+				Body* mol2 = m_moleculeBodyList[j];
 				m_event = new Event(nextMoleculesCollision(mol1, mol2), mol1, mol2, false);
 				eventArray->addEvent(m_event);
 			}
@@ -264,15 +264,17 @@ void Physics::computeNextEvents()
 	{
 		std::vector<Body*> lastBodiesCollisions = { m_nextEvent->body1, m_nextEvent->body2};
 		// Supprime tous les events où les molécules associés au dernier event sont impliquées : ils ne sont plus valable
-		eventArray->deleteEvent(eventArray->getNextEvent());
-		for (int i = 0; i < m_moleculeBodyList.size(); i++) // taille 2
+		eventArray->deleteEvent(eventArray->nextEvent());
+		eventArray->deleteBodyEvent(lastBodiesCollisions[0]);
+		eventArray->deleteBodyEvent(lastBodiesCollisions[1]);
+		for (int i = 0; i < m_moleculeBodyList.size(); i++) // taille m_nMolecules
 		{
 			Body* mol1 = m_moleculeBodyList[i];
-			for (int j = 0; j < lastBodiesCollisions.size(); j++) // taille m_nMolecules
+			for (int j = 0; j < lastBodiesCollisions.size(); j++) // taille 2
 			{
 				Body* mol2 = lastBodiesCollisions[j];
 				if (mol2 == nullptr || mol1 == mol2)
-					break;
+					continue;
 				m_event = new Event(nextMoleculesCollision(mol1, mol2), mol1, mol2, false);
 				eventArray->addEvent(m_event);
 			}
@@ -361,8 +363,9 @@ void Physics::update(float deltaTime, std::string method)
 		}
 		computeNextEvents();
 		deltaTime = m_nextEvent->time;
-		printf("Next event time : %f\n", deltaTime);
-		//std::this_thread::sleep_for(std::chrono::seconds(1));
+		printf("Next event time : %f : ", deltaTime);
+		printf("Wall? : %d\n", m_nextEvent->wall);
+		//std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 	}
 	else
 	{

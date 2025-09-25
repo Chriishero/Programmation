@@ -13,25 +13,29 @@ void EventArray::addEvent(Event* e)
 
 void EventArray::deleteEvent(Event* e)
 {
+	int eventPos = 0;
 	if (e == nullptr)
 		return;
-	int eventPos = 0;
 	for (eventPos; eventPos < array.size(); eventPos++)
 		if (array[eventPos] == e)
 			break;
+	if (eventPos == array.size())
+		return;
 	m_lastDeletedEvent = array[eventPos];
 	array.erase(std::begin(array) + eventPos);
 }
 
 void EventArray::deleteBodyEvent(Body* b)
 {
+	if (b == nullptr)
+		return;
 	for (int i = 0; i < array.size(); i++)
 	{
-		if (array[i]->body1 == b || array[i]->body2 == b)
+		if ((array[i]->body1 == b || array[i]->body2 == b))
 		{
 			m_lastDeletedEvent = array[i];
 			array.erase(std::begin(array) + i);
-			i--;	
+			i--;
 		}
 	}
 }
@@ -42,7 +46,10 @@ void EventArray::findNextEvent()
 
 	for (auto const& event : array)
 	{
-		if (event->time < time)
+		//printf("potential next event time %f : ", event->time);
+		if (event->time <= 0.0f || event->body1 == nullptr)
+			continue;
+		else if (event->time < time && event->time > 0.0f)
 		{
 			time = event->time;
 			m_nextEvent = event;

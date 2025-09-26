@@ -65,8 +65,13 @@ Event* EventArray::getNextEvent()
 Event* EventArray::nextEvent()
 {
 	findNextEvent();
-
-	return getNextEvent();
+	printf("nextEvent\n");
+	while (m_nextEvent->time <= 0.0f)
+	{
+		deleteEvent(m_nextEvent);
+		findNextEvent();
+	}
+	return m_nextEvent;
 }
 
 Event* EventArray::getLastDeletedEvent()

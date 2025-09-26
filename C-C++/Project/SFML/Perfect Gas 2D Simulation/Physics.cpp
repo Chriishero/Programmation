@@ -39,6 +39,9 @@ void Physics::computeNewVelocities(Body* mol1, Body* mol2)
 	// Application des vitesses finales
 	mol1->setVelocity(v1_f);
 	mol2->setVelocity(v2_f);
+	// Éloigment des molécules pour éviter des collisions inutiles
+	mol1->setPosition(sf::Vector2f{ x1, y1 } + v1_f * 0.001f);
+	mol2->setPosition(sf::Vector2f{ x2, y2 } + v2_f * 0.001f);
 }
 
 int Physics::distanceBetweenMolecules(Body* mol1, Body* mol2)
@@ -177,18 +180,20 @@ float Physics::nextMoleculesCollision(Body* mol1, Body* mol2)
 		return INFINITY;
 
 	// Moment exact de la collision (2 solutions)
-	float collisionTime = 1.0f;
+	float collisionTime = INFINITY;
 	float t1 = (-b + sqrt(disc)) / (2 * a);
 	float t2 = (-b - sqrt(disc)) / (2 * a);
 
 	// Choisi la solution positive la plus petite
-	if (t1 > 0 && t2 > 0)
+	if (t1 > 0.0f && t2 > 0.0f)
 		collisionTime = (t1 < t2) ? t1 : t2;
 	else
 		collisionTime = (t1 > t2) ? t1 : t2;
 
-	if (collisionTime <= 0.f)
+	if (collisionTime <= 0.0f)
 		return INFINITY;
+	if (collisionTime < m_minEventTime)
+		collisionTime = m_minEventTime;
 
 	//printf("mol collision time : %f\n", collisionTime);
 
@@ -209,33 +214,36 @@ float Physics::nextWallCollision(Body* mol)
 	// Vitesse vectorielle
 	sf::Vector2f v = mol->getVelocity();
 
-	float t{};
+	float t = INFINITY;
 	float best_t = INFINITY;
 
 	// Quand la molécule percutera le mur gauche
 	if (v.x < 0)
 	{
 		t = (w.x - (q.x - r)) / v.x;
-		if (t > 0.f && t < best_t) best_t = t;
+		if (t > 0.0f && t < best_t) best_t = t;
 	}
 	// Quand la molécule percutera le mur droit
 	if (v.x > 0)
 	{
 		t = ((w.x + c_size.x) - (q.x + r)) / v.x;
-		if (t > 0.f && t < best_t) best_t = t;
+		if (t > 0.0f && t < best_t) best_t = t;
 	}
 	// Quand la molécule percutera le mur haut
 	if (v.y < 0)
 	{
 		t = (w.y - (q.y - r)) / v.y;
-		if (t > 0.f && t < best_t) best_t = t;
+		if (t > 0.0f && t < best_t) best_t = t;
 	}
 	// Quand la molécule percutera le mur bas
 	if (v.y > 0)
 	{
 		t = ((w.y + c_size.y) - (q.y + r)) / v.y;
-		if (t > 0.f && t < best_t) best_t = t;
+		if (t > 0.0f && t < best_t) best_t = t;
 	}
+
+	if (best_t < m_minEventTime)
+		best_t = m_minEventTime;
 
 	//printf("wall collision time : %f\n", best_t);
 

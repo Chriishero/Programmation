@@ -1,63 +1,51 @@
 import numpy as np
 
-class LocallyWeightedRegression:
-    def __init__(self, n_iteration=100, learning_rate=0.2, tau=0.5, method="gradient_descent"):
-        self.n_iteration = n_iteration
-        self.learning_rate = learning_rate
-        self.tau = tau
-        self.method = method
+class GDA:
+    def __init__(self):
+        self.phi = None
+        self.mu = None
+        self.sigma = None
 
-        self.W = self.theta = None
-
-    def _hypothesis(self, X):
-        return X @ self.theta
+    def _prior_probability(self, X_c, y):
+        m = len(y)
+        return 1/m * X_c.shape[0]
     
-    def _weight_function(self, X, x):
-        return np.diag(np.exp(-np.sum((X - x)**2, axis=1) / (2 * self.tau**2)))
-
-    def _cost_function(self, X, y):
-        m, n = X.shape
-        h = self._hypothesis(X)
-        return 1/m * np.sum(self.W @ (h - y)**2)
+    def _mean(self, X_c):
+        m_c, n = X_c.shape
+        return 1/m_c * np.sum(X_c, axis=0)
     
-    def _gradient_function(self, X, y):
-        m, n = X.shape
-        h = self._hypothesis(X)
-        return 1/m * X.T @ self.W @ (h - y)
+    def _covariance_matrix(self, X_c):
+        m_c, n = X_c.shape
+        mu = self._mean(X_c)
+        return 1/m_c * (X_c - mu).T @ (X_c - mu)
     
-    def _gradient_descent(self, X, y):
-        m, n = X.shape
-        self.theta = np.zeros((n, 1))
-        for i in range(self.n_iteration):
-            self.theta -= self.learning_rate * self._gradient_function(X, y)
-
-    def _normal_equation(self, X, y):
-        self.theta = np.linalg.inv(X.T @ self.W @ X) @ X.T @ self.W @ y
-
-    def predict(self, X, y, x):
+    def fit(self, X, y):
         X, y = np.array(X), np.array(y)
-        x = x.reshape(1, -1)
-        self.W = self._weight_function(X, x)
+        m, n, k = X.shape[0], X.shape[1], np.unique(y).shape[0]
+
+        self.phi = np.zeros((k))
+        self.mu = np.zeros((k, n))
+        self.sigma = np.zeros((k, n, n))
+
+        for c in range(k):
+            X_c = X[c == y]
+
+            self.phi[c] = self._prior_probability(X_c, y)
+            self.mu[c] = self._mean(X_c)
+            self.sigma[c] = self._covariance_matrix(X_c) + np.eye(n)
+
+    def _bayes_rules(self, X):
+        m, n, k = X.shape[0], X.shape[1], self.phi.shape[0]
+
+        p_y = self.phi
+        p_y_x = np.zeros((m, k))
         
-        if self.method == "gradient_descent":
-            self._gradient_descent(X, y)
-        elif self.method == "normal_equation":
-            self._normal_equation(X, y)
+        for c in range(k):
+            p_x_y = (1 / np.sqrt((2 * np.pi)**n * np.linalg.det(self.sigma[c])) * 
+                     (-1/2 * (X - self.mu[c]) @ np.linalg.inv(self.sigma[c]) @ (X - self.mu[c]).T))
+            p_y_x[:, :] = p_x_y * p_y[c]
 
-        return self._hypothesis(x)
+        return p_y_x
     
-X = np.linspace(-3, 3, 500).reshape(-1, 1)
-y = X**3 - 3 * X + np.random.randn(*X.shape) * 0.5
-X = np.hstack((X, np.ones_like(X)))
-
-model = LocallyWeightedRegression()
-y_pred = [model.predict(X, y, x).item() for x in X]
-
-import matplotlib.pyplot as plt
-from sklearn.metrics import r2_score
-plt.figure()
-plt.scatter(X[:, 0], y)
-plt.plot(X[:, 0], y_pred, c="red")
-plt.title(f"{r2_score(y, y_pred)}")
-plt.legend()
-plt.show()
+    def predict(self, X):
+        return np.argmax(self._bayes_rules(np.array(X)), axis=1)

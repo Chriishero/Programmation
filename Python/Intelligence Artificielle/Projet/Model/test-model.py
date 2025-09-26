@@ -4,8 +4,8 @@ from sklearn.metrics import accuracy_score, r2_score
 from sklearn.model_selection import train_test_split
 from rappel import *
 
-type = "regression"
-model = LinearRegression()
+type = "classif"
+model = GDA()
 
 plt.figure()
 if type == "regression":

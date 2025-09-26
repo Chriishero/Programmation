@@ -37,4 +37,6 @@ class Physics
 		Event* m_event;
 		Event* m_nextEvent = nullptr;
 		EventArray* eventArray = nullptr;
+		
+		float m_minEventTime = 0.000001f;
 };

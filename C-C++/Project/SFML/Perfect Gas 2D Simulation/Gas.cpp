@@ -9,6 +9,7 @@ Gas::Gas(float nMolecules, float volume, float temperature)
 	m_yPosMax = (float)WIN_HEIGHT;
 
 	m_pressure = (nMolecules * boltzmann_constant * temperature) / volume; // pascal
+	m_pressure *= m_pressureScaling;
 
 	m_gasParams = { &m_nMolecules, &m_pressure, &m_volume, &m_temperature,
 									&m_xPosMin, &m_xPosMax, &m_yPosMin, &m_yPosMax,
@@ -22,13 +23,13 @@ Gas::Gas(float nMolecules, float volume, float temperature)
 
 void Gas::computeGasParameters()
 {
-	float* N = &m_cpyGasParams[0];
-	float* P = &m_cpyGasParams[1];
-	float* V = &m_cpyGasParams[2];
-	float* T = &m_cpyGasParams[3];
+	float* N = &m_cpyGasParams[0]; // sans unité
+	float* P = &m_cpyGasParams[1]; // Pascal, multiplié par 1e20
+	float* V = &m_cpyGasParams[2]; // Litre
+	float* T = &m_cpyGasParams[3]; // Kelvin
 
 	if (*P != *m_gasParams[1]) // Pression
-		*P /= m_pressureScaling; // remise à l'échelle pour que les valeurs des autres quantité soient cohérentes
+		*P /= m_pressureScaling; // remise à l'échelle réel pour que les valeurs des autres quantité soient cohérentes
 
 	std::vector<int> unchangedParamsIdx{};
 
@@ -63,6 +64,7 @@ void Gas::create()
 	setNewInitialCondition();
 
 	m_moleculeRadius = sqrt((m_moleculeSizePercentage * WIN_WIDTH * WIN_HEIGHT) / (M_PI * m_nMolecules));
+	m_moleculeRadius = (m_moleculeRadius < 1) ? 1 : m_moleculeRadius;
 	std::random_device gen;
 	for (int i = 0; i < m_nMolecules; i++)
 	{
@@ -137,7 +139,7 @@ void Gas::renderGui()
 	{
 		ImGui::SliderFloat("Number of Molecules", &m_cpyGasParams[0], 0.0f, 1e4f);
 		ImGui::SliderFloat("Pressure", &m_cpyGasParams[1], 0.0f, 1e3f);
-		ImGui::SliderFloat("Volume", &m_cpyGasParams[2], 0.0f, 1e3f);
+		ImGui::SliderFloat("Volume", &m_cpyGasParams[2], 0.000001f, 10.f);
 		ImGui::SliderFloat("Temperature", &m_cpyGasParams[3], -273.0f, 1e3f);
 		ImGui::SliderFloat("Minimal Position on X axis", &m_cpyGasParams[4], 0.0f, WIN_WIDTH);
 		ImGui::SliderFloat("Maximal Position on X axis", &m_cpyGasParams[5], 0.0f, WIN_WIDTH);

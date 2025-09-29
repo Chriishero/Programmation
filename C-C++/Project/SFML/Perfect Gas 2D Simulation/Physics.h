@@ -10,6 +10,7 @@ class Physics
 {
 	public:
 		Physics(std::vector<Body*> moleculeBodyList, Body* containerBody);
+		~Physics();
 
 		void computeNewVelocities(Body* mol1, Body* mol2);
 		int distanceBetweenMolecules(Body* mol1, Body* mol2);

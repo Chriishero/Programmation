@@ -4,6 +4,18 @@ Physics::Physics(std::vector<Body*> moleculeBodyList, Body* containerBody)
 	: m_moleculeBodyList(moleculeBodyList), m_containerBody(containerBody)
 {}
 
+Physics::~Physics()
+{
+	/*
+	for (int i = 0; i < m_moleculeBodyList.size(); i++)
+		delete m_moleculeBodyList[i];
+	delete m_containerBody;
+	delete m_event;
+	delete m_nextEvent;
+	delete eventArray;
+	*/
+}
+
 void Physics::computeNewVelocities(Body* mol1, Body* mol2)
 {
 	// Positions
@@ -40,8 +52,8 @@ void Physics::computeNewVelocities(Body* mol1, Body* mol2)
 	mol1->setVelocity(v1_f);
 	mol2->setVelocity(v2_f);
 	// Éloigment des molécules pour éviter des collisions inutiles
-	mol1->setPosition(sf::Vector2f{ x1, y1 } + v1_f * 0.001f);
-	mol2->setPosition(sf::Vector2f{ x2, y2 } + v2_f * 0.001f);
+	mol1->setPosition(sf::Vector2f{ x1, y1 } + v1_f * m_minEventTime);
+	mol2->setPosition(sf::Vector2f{ x2, y2 } + v2_f * m_minEventTime);
 }
 
 int Physics::distanceBetweenMolecules(Body* mol1, Body* mol2)
@@ -118,7 +130,7 @@ bool Physics::backtrackToWallCollision(Body* mol)
 	sf::Vector2f v = mol->getVelocity();
 
 	float best_t = -INFINITY;
-	float t = 0.0f;
+	float t = -INFINITY;
 
 	// Si la molécule chevauche/dépasse le mur gauche, et si la vitesse est dans cette direction
 	if (q.x - r <= w.x && v.x < 0) // Horizontal gauche
@@ -360,7 +372,28 @@ void Physics::updateMoleculesCollisions(std::string method)
 
 void Physics::update(float deltaTime, std::string method)
 {
-	if (method == "Event-Driven")
+	auto motion = [&]() -> void // mets à jour vitesses et positions des molécules
+	{
+		for (auto& molecule : m_moleculeBodyList)
+		{
+			molecule->setVelocity(molecule->getVelocity() + molecule->getAcceleration() * deltaTime);
+			molecule->setPosition(molecule->getPosition() + molecule->getVelocity() * deltaTime);
+
+			if (method == "Backward Time-Driven")
+				backtrackToWallCollision(molecule);
+		}
+	};
+
+	if (method == "Forward Time-Driven" || method == "Backward Time-Driven")
+	{
+		// Déteciton des collisions puis mise à jour des vélocités en conséquence
+		updateMapCollisions(method);
+		updateMoleculesCollisions(method);
+		// Mets à jour les positions
+		motion();
+	}
+
+	else if (method == "Event-Driven")
 	{
 		if (m_nextEvent != nullptr) // si ce n'est pas la première itération
 		{
@@ -371,20 +404,12 @@ void Physics::update(float deltaTime, std::string method)
 		}
 		computeNextEvents();
 		deltaTime = m_nextEvent->time;
-		printf("Next event time : %f : ", deltaTime);
-		printf("Wall? : %d\n", m_nextEvent->wall);
+		//printf("Next event time : %f : ", deltaTime);
+		//printf("Wall? : %d\n", m_nextEvent->wall);
 		//std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-	}
-	else
-	{
-		updateMapCollisions(method);
-		updateMoleculesCollisions(method);
-	}
 
-	for (auto& molecule : m_moleculeBodyList)
-	{
-		molecule->setVelocity(molecule->getVelocity() + molecule->getAcceleration() * deltaTime);
-		molecule->setPosition(molecule->getPosition() + molecule->getVelocity() * deltaTime);
+		// Mets à jour les positions
+		motion();
 	}
 }
 

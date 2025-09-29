@@ -9,6 +9,7 @@ class Gas
 {
 	public:
 		Gas(float nMolecules, float volume, float temperature);
+		~Gas();
 
 		void computeGasParameters();
 		void create();

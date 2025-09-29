@@ -21,6 +21,7 @@ class EventArray
 {
 public:
 	EventArray();
+	~EventArray();
 
 	void addEvent(Event* e);
 	void deleteEvent(Event* e);

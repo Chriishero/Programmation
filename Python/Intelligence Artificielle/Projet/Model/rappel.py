@@ -29,7 +29,6 @@ class GDA:
 
         for c in range(k):
             X_c = X[c == y]
-
             self.phi[c] = self._prior_probability(X_c, y)
             self.mu[c] = self._mean(X_c)
             self.sigma[c] = self._covariance_matrix(X_c) + np.eye(n)
@@ -37,13 +36,13 @@ class GDA:
     def _bayes_rules(self, X):
         m, n, k = X.shape[0], X.shape[1], self.phi.shape[0]
 
-        p_y = self.phi
         p_y_x = np.zeros((m, k))
-        
+        p_y = self.phi
+
         for c in range(k):
-            p_x_y = (1 / np.sqrt((2 * np.pi)**n * np.linalg.det(self.sigma[c])) * 
-                     (-1/2 * (X - self.mu[c]) @ np.linalg.inv(self.sigma[c]) @ (X - self.mu[c]).T))
-            p_y_x[:, :] = p_x_y * p_y[c]
+            p_x_y = (1 / np.sqrt((2 * np.pi)**n * np.linalg.det(self.sigma[c])) *
+                     np.exp(-1/2 * np.sum((X - self.mu[c]) @ np.linalg.inv(self.sigma[c]) * (X - self.mu[c]), axis=1)))
+            p_y_x[:, c] = p_x_y * p_y[c]
 
         return p_y_x
     

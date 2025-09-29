@@ -6,6 +6,14 @@ Event::Event(float time, Body* body1, Body* body2, bool wall) : time(time), body
 EventArray::EventArray()
 {}
 
+EventArray::~EventArray()
+{
+	for (int i = 0; i < array.size(); i++)
+		delete array[i];
+	delete m_nextEvent;
+	delete m_lastDeletedEvent;
+}
+
 void EventArray::addEvent(Event* e)
 {
 	array.push_back(e);
@@ -65,7 +73,6 @@ Event* EventArray::getNextEvent()
 Event* EventArray::nextEvent()
 {
 	findNextEvent();
-	printf("nextEvent\n");
 	while (m_nextEvent->time <= 0.0f)
 	{
 		deleteEvent(m_nextEvent);

@@ -34,7 +34,7 @@ class World
 		float m_temperature;
 
 		float m_timeScale = 1.0f;
-		std::string m_numericalApproximationMethod;
+		std::string m_numericalApproximationMethod = "Backward Time-Driven";
 
 		Container m_container;
 		Body* m_containerBody;

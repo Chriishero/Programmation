@@ -21,6 +21,11 @@ Gas::Gas(float nMolecules, float volume, float temperature)
 									m_moleculeSizePercentage };
 }
 
+Gas::~Gas()
+{
+	
+}
+
 void Gas::computeGasParameters()
 {
 	float* N = &m_cpyGasParams[0]; // sans unité

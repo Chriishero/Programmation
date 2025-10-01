@@ -2,7 +2,7 @@ import numpy as np
 from sklearn.tree import DecisionTreeClassifier
 
 class AdaBoostClassifier:
-    def __init__(self, n_estimators):
+    def __init__(self, n_estimators=100):
         self.n_estimators = n_estimators
 
         self.w_ = None
@@ -15,7 +15,7 @@ class AdaBoostClassifier:
 
         self.w_ = np.ones(m) / m
         for i in range(self.n_estimators):
-            model = DecisionTreeClassifier(depth=1)
+            model = DecisionTreeClassifier(max_depth=1)
             model.fit(X, y, sample_weight=self.w_)
             y_pred = model.predict(X)
 

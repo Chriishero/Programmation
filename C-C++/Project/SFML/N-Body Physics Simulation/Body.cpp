@@ -19,7 +19,9 @@ void Body::begin() {
 }
 
 void Body::update(float deltaTime) {
-
+	m_velocity += m_acceleration * deltaTime;
+	m_position += m_velocity * deltaTime;
+	m_position += m_velocity * deltaTime;
 }
 
 void Body::render(Renderer& renderer) {
@@ -29,6 +31,46 @@ void Body::render(Renderer& renderer) {
 sf::Vector2f Body::getm_position()
 {
 	return m_position;
+}
+
+sf::Vector2f Body::getm_velocity()
+{
+	return m_velocity;
+}
+
+sf::Vector2f Body::getm_acceleration()
+{
+	return m_acceleration;
+}
+
+float Body::getm_weight()
+{
+	return m_weight;
+}
+
+void Body::setm_size(float size)
+{
+	m_size = size;
+}
+
+void Body::setm_position(sf::Vector2f position)
+{
+	m_position = position;
+}
+
+void Body::setm_velocity(sf::Vector2f velocity)
+{
+	m_velocity = velocity;
+}
+
+void Body::setm_acceleration(sf::Vector2f acceleration)
+{
+	m_acceleration = acceleration;
+}
+
+void Body::setm_weight(float weight)
+{
+	m_weight = weight;
 }
 
 float Body::getm_size()

@@ -15,7 +15,7 @@ int main() {
 	tgui::GuiSFML gui(window);
 
 	Renderer renderer(window);
-	World world(1e3, 10, "Explicit Euler");
+	World world(500, 10, "Explicit Euler");
 	world.create();
 	world.setGui(gui);
 

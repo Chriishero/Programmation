@@ -1,8 +1,10 @@
 #include "World.h"
 
 World::World()
-{
-}
+{}
+
+World::~World()
+{}
 
 void World::create()
 {
@@ -13,7 +15,7 @@ void World::create()
 	m_gas = new Gas(m_nMolecules, m_volume, m_temperature);
 	m_gas->create();
 	createContainer();
-
+	
 	m_physics = new Physics(m_gas->getMoleculeBodyList(), m_containerBody);
 }
 

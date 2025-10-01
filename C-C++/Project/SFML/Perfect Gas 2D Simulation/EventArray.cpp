@@ -10,8 +10,6 @@ EventArray::~EventArray()
 {
 	for (int i = 0; i < array.size(); i++)
 		delete array[i];
-	delete m_nextEvent;
-	delete m_lastDeletedEvent;
 }
 
 void EventArray::addEvent(Event* e)

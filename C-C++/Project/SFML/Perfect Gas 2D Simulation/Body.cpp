@@ -3,6 +3,9 @@
 Body::Body()
 {}
 
+Body::~Body()
+{}
+
 void Body::setShape(Shape *shape)
 {
 	m_shape = shape;

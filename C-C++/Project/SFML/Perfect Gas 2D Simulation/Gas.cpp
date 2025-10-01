@@ -23,7 +23,12 @@ Gas::Gas(float nMolecules, float volume, float temperature)
 
 Gas::~Gas()
 {
-	
+	for (int i = 0; i < m_moleculeList.size(); i++)
+	{
+		delete m_moleculeList[i];
+		delete m_moleculeBodyList[i];
+		delete m_moleculeShapeList[i];
+	}
 }
 
 void Gas::computeGasParameters()
@@ -103,8 +108,6 @@ void Gas::create()
 
 		// Initial Acceleration
 		m_molecule->acceleration = sf::Vector2f(0.0f, 0.0f);
-
-		m_moleculeList.push_back(m_molecule);
 		
 		// Création du corps physique de la molécule
 		m_moleculeBody = new Body();
@@ -115,6 +118,10 @@ void Gas::create()
 		m_moleculeBody->setVelocity(m_molecule->velocity);
 		m_moleculeBody->setAcceleration(m_molecule->acceleration);
 		m_moleculeBody->setSize(m_molecule->size);
+
+		// Ajout des composants des molécules dans des vecteurs
+		m_moleculeList.push_back(m_molecule);
+		m_moleculeShapeList.push_back(m_moleculeShape);
 		m_moleculeBodyList.push_back(m_moleculeBody);
 		/*
 		printf("Molecule Position : (%f, %f)\n", m_moleculeBody->getPosition().x, m_moleculeBody->getPosition().y);

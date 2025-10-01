@@ -66,6 +66,8 @@ class Gas
 
 		Body* m_moleculeBody;
 		std::vector<Body*> m_moleculeBodyList{};
+
 		Shape* m_moleculeShape;
+		std::vector<Shape*> m_moleculeShapeList{};
 };
 

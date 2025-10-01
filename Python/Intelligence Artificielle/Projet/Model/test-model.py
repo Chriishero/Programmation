@@ -3,7 +3,9 @@ from sklearn.datasets import make_classification, make_regression
 from sklearn.metrics import accuracy_score, r2_score
 from sklearn.model_selection import train_test_split
 from rappel import *
-from adaboostregressor import *
+from adaboostclassifier import *
+from sklearn.ensemble import AdaBoostRegressor
+
 
 type = "classif"
 model = AdaBoostClassifier()
@@ -22,8 +24,8 @@ if type == "regression":
     plt.title(f'{r2_score(y_test, y_pred)}')
 elif type == "classif":
     X, y = make_classification(n_samples=500, n_features=10, n_informative=8, n_classes=2, random_state=0)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=0)
     y = y * 2 - 1
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=0)
 
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)

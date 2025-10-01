@@ -6,14 +6,7 @@ Physics::Physics(std::vector<Body*> moleculeBodyList, Body* containerBody)
 
 Physics::~Physics()
 {
-	/*
-	for (int i = 0; i < m_moleculeBodyList.size(); i++)
-		delete m_moleculeBodyList[i];
-	delete m_containerBody;
-	delete m_event;
-	delete m_nextEvent;
 	delete eventArray;
-	*/
 }
 
 void Physics::computeNewVelocities(Body* mol1, Body* mol2)

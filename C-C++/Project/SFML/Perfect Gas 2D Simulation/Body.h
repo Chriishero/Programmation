@@ -8,6 +8,7 @@ class Body // C'EST UNIQUEMENT LE CORPS QUI A POS VEL ET ACC DE MODIFIER ET QUI 
 {
 	public:
 		Body();
+		~Body();
 
 		void setShape(Shape *shape);
 		const Shape& getShape() const;

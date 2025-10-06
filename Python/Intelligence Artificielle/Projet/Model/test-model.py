@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 from sklearn.datasets import make_classification, make_regression
 from sklearn.metrics import accuracy_score, r2_score
 from sklearn.model_selection import train_test_split
+from rappel import *
 from adaboostclassifier import *
 
 type = "classif"
@@ -9,7 +10,7 @@ model = AdaBoostClassifier()
 
 plt.figure()
 if type == "regression":
-    X, y = make_regression(n_samples=500, n_features=10, noise=10, random_state=0)
+    X, y = make_regression(n_samples=1000, n_features=10, noise=10, random_state=0)
     y = y.reshape(-1, 1) # sauf pour le XGBoostRegressor
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=0)
 

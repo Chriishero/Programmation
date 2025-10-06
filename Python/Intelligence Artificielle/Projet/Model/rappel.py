@@ -1,38 +1,52 @@
 import numpy as np
-from sklearn.tree import DecisionTreeClassifier
 
-class AdaBoostClassifier:
-    def __init__(self, n_estimators=100):
-        self.n_estimators = n_estimators
+class GDA:
+    def __init__(self):
+        self.phi = None
+        self.mu = None
+        self.sigma = None
 
-        self.w_ = None
-        self.models_ = []
-        self.models_w_ = []
-
+    def _prior_probability(self, X_c, y):
+        m = len(y)
+        return 1/m * X_c.shape[0]
+    
+    def _means(self, X_c):
+        m_c, n = X_c.shape
+        return 1/m_c * np.sum(X_c, axis=0)
+    
+    def _covariance_matrix(self, X_c):
+        m_c, n = X_c.shape
+        mu = self._means(X_c)
+        return 1/m_c * (X_c - mu).T @ (X_c - mu)
+    
     def fit(self, X, y):
         X, y = np.array(X), np.array(y)
-        m, n = X.shape
+        m, n, k = X.shape[0], X.shape[1], np.unique(y).shape[0]
 
-        self.w_ = np.ones(m) / m
-        for i in range(self.n_estimators):
-            model = DecisionTreeClassifier(max_depth=1)
-            model.fit(X, y, sample_weight=self.w_)
-            y_pred = model.predict(X)
+        self.phi = np.zeros((k))
+        self.mu = np.zeros((k, n))
+        self.sigma = np.zeros((k, n, n))
 
-            err = np.sum(self.w_ * (y_pred != y)) / np.sum(y)
-            model_weight = 1/2 * np.log((1 - err) / (err + 1e-15))
+        for c in range(k):
+            X_c = X[c == y]
+            self.phi[c] = self._prior_probability(X_c, y)
+            self.mu[c] = self._means(X_c)
+            self.sigma[c] = self._covariance_matrix(X_c) + np.eye(n)
 
-            self.w_ *= np.exp(-model_weight * y * y_pred)
-            self.w_ *= np.sum(self.w_)
+    def _bayes_rules(self, X):
+        m, n, k = X.shape[0], X.shape[1], self.phi.shape[0]
 
-            self.models_.append(model)
-            self.models_w_.append(model_weight)
+        p_y_x = np.zeros((m, k))
+        p_y = self.phi
 
+        for c in range(k):
+            p_x_y = ( 1 / np.sqrt((2 * np.pi)**n * np.linalg.det(self.sigma[c])) * 
+                           np.exp(-1/2 * np.sum((X - self.mu[c]) @ np.linalg.inv(self.sigma[c]) * (X - self.mu[c]), axis=1)))
+            p_y_x[:, c] = p_y[c] * p_x_y
+
+        return p_y_x
+    
     def predict(self, X):
-        X = np.array(X)
+        return np.argmax(self._bayes_rules(np.array(X)), axis=1)
 
-        strong_preds = np.zeros(X.shape[0])
-        for model, weight in zip(self.models_, self.models_w_):
-            strong_preds += weight * model.predict(X)
-        return np.sign(strong_preds)
-            
+from sklearn.ensemble import AdaBoostClassifier

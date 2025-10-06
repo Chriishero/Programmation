@@ -3,9 +3,8 @@ from inspect import Parameter, isclass, signature
 from sklearn.tree import DecisionTreeClassifier
 
 class AdaBoostClassifier:
-    def __init__(self, estimator=DecisionTreeClassifier, n_estimators=200, learning_rate=1.0, random_state=None):
+    def __init__(self, estimator=DecisionTreeClassifier, n_estimators=200, random_state=None):
         self.estimator = estimator
-        self.learning_rate = learning_rate
         self.n_estimators = n_estimators
         self.random_state = random_state
 
@@ -13,45 +12,35 @@ class AdaBoostClassifier:
         self.w_ = None # samples weights
         self.estimators_ = []
         self.estimators_err = []
-        self.alphas_ = [] # estimators weights
+        self.alphas_ = []
 
     def _has_parameter(self, estimator, params):
         return params in signature(estimator).parameters
 
     def _validate_estimator(self, estimator):
-        if "sample_weight" not in signature(estimator.fit).parameters:
+        if self._has_parameter(estimator, "sample_weight"):
                 return [False, "sample_weight"]
-        if not self._has_parameter(estimator, "random_state"):
-            return [False, "random_state"]
         
         return [True, ""]
-    
-    def _make_estimator(self, estimator):
-        model = None
-
-        if not self._validate_estimator(estimator)[0]:
-            raise AttributeError(f"This estimator does not support {self._validate_estimator(estimator)[1]}.")
-        else: 
-            model = estimator(random_state=self.random_state)
-        if issubclass(estimator, DecisionTreeClassifier):
-            model = estimator(max_depth=1, random_state=self.random_state)
-        
-        return model
 
     def _train_estimators(self, X, y):
         m, n, self.k = X.shape[0], X.shape[1], np.unique(y).shape[0]
         self.w_ = np.ones(m) / m
 
         for _ in range(self.n_estimators):
-            model = self._make_estimator(self.estimator)    
+            model = self.estimator()
+            if not self._validate_estimator(model)[0]:
+                raise TypeError(f"This estimator does not support {self._validate_estimator(model)[1]}.")
+            if issubclass(self.estimator, DecisionTreeClassifier):
+                model = self.estimator(max_depth=1, random_state=self.random_state)
+                
             model.fit(X, y, sample_weight=self.w_)
             y_pred = model.predict(X)
 
             err = np.sum(self.w_ * (y_pred != y)) / np.sum(self.w_)
-            if err > 1 - 1 / self.k or err <= 1e-15: # if estimator is too bad or too good
-                print(f"Estimator skipped due to over-/under-fit.")
-                continue
-            alpha = self.learning_rate * (np.log((1 - err) / err) + np.log(self.k - 1))
+            if err > 1 - 1 / self.k or err <= 1e-15:
+                break
+            alpha = np.log((1 - err) / err) + np.log(self.k - 1)
 
             self.estimators_.append(model)
             self.alphas_.append(alpha)

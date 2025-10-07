@@ -1,6 +1,6 @@
 import numpy as np
 from inspect import Parameter, isclass, signature
-from sklearn.tree import DecisionTreeClassifier
+from decisiontreeclassifier import DecisionTreeClassifier
 
 class AdaBoostClassifier:
     def __init__(self, estimator=DecisionTreeClassifier, n_estimators=200, learning_rate=1.0, random_state=None):
@@ -17,9 +17,12 @@ class AdaBoostClassifier:
 
     def _has_parameter(self, estimator, params):
         return params in signature(estimator).parameters
+    
+    def _fit_has_parameter(self, estimator, params):
+        return params in signature(estimator.fit).parameters
 
     def _validate_estimator(self, estimator):
-        if "sample_weight" not in signature(estimator.fit).parameters:
+        if not self._fit_has_parameter(estimator, "sample_weight"):
                 return [False, "sample_weight"]
         if not self._has_parameter(estimator, "random_state"):
             return [False, "random_state"]

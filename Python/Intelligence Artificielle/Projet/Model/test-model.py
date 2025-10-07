@@ -4,9 +4,10 @@ from sklearn.metrics import accuracy_score, r2_score
 from sklearn.model_selection import train_test_split
 from rappel import *
 from adaboostclassifier import *
+from decisiontreeclassifier import DecisionTreeClassifier
 
 type = "classif"
-model = AdaBoostClassifier()
+model = DecisionTreeClassifier(max_features="log2", splitter="random", random_state=0)
 
 plt.figure()
 if type == "regression":
